@@ -1,0 +1,55 @@
+# Devops
+services:
+  # PHP service
+  php:
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    container_name: site_de_vente_php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DB_HOST: mysql
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:?DB_NAME must be set}
+      DB_USER: ${DB_USER:?DB_USER must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - site_de_vente
+
+  # MySQL service
+  mysql:
+    # Official docker certified MySQL image from Docker Hub
+    image: mysql:8.0
+    container_name: site_de_vente_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+      MYSQL_DATABASE: ${DB_NAME:?DB_NAME must be set}
+      MYSQL_USER: ${DB_USER:?DB_USER must be set}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    # Healthcheck to ensure MySQL is ready before PHP tries to connect
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - site_de_vente
+# Named volume to persist MySQL data even if the container is removed
+volumes:
+  mysql_data:
+    # Create a custom network for the services to communicate
+    # So then php can connect to mysql using the service name 'mysql' as the hostname (Docker DNS resolution)
+networks:
+  site_de_vente:

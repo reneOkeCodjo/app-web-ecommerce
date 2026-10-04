@@ -198,6 +198,28 @@ $success = $auth->login('username', 'password');
 
 ---
 
+### Interface utilisateur
+
+La page de login permet aux utilisateurs de s'authentifier.
+
+**Fichiers :**
+- `public/index.php` — Page de login avec formulaire HTML
+- `public/styles.css` — Styles CSS modernes et responsive
+
+**Fonctionnement :**
+- Formulaire HTML avec champs username et password
+- Connexion à la base de données via `Database::connect()`
+- Authentification via `Auth::login()`
+- Affichage des messages de feedback (succès/erreur)
+- Gestion des exceptions avec try/catch
+
+**Accès :**
+```
+http://localhost:8080/index.php
+```
+
+---
+
 ### Modèle de données
 
 L'entité `User` représente un utilisateur dans le système.

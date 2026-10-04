@@ -16,17 +16,16 @@ final class UserDaoTest extends TestCase
     protected function setUp(): void
     {
         $this->connection = Database::connect();
+        $this->connection->begin_transaction();
         $this->connection->query(
-            'CREATE TEMPORARY TABLE users (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL
-            )'
+            "INSERT INTO compte (compte_type, compte_description)
+             VALUES ('dao-test', 'DAO integration test account')"
         );
+        $compteId = $this->connection->insert_id;
+
         $this->connection->query(
-            "INSERT INTO users (username, email, password)
-             VALUES ('dao_test_user', 'dao-test@example.com', 'hashed-password')"
+            "INSERT INTO users (user_login, user_mail, user_password, user_compte_id)
+             VALUES ('dao_test_user', 'dao-test@example.com', 'hashed-password', {$compteId})"
         );
 
         $this->repository = new UserRepository($this->connection);
@@ -34,6 +33,7 @@ final class UserDaoTest extends TestCase
 
     protected function tearDown(): void
     {
+        $this->connection->rollback();
         $this->connection->close();
     }
 

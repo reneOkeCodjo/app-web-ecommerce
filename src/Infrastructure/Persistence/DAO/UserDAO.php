@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\DAO;
 
 use App\Domain\Model\User;
@@ -30,16 +31,25 @@ class UserRepository implements UserRepositoryInterface
 
     public function findByUsername(string $username): ?User
     {
-        $stmt = $this->connection->prepare('SELECT * FROM users WHERE username = ?');
+
+        $stmt = $this->connection->prepare(
+            'SELECT user_id AS id, user_login AS username, user_mail AS email, user_password AS password
+             FROM users
+             WHERE user_login = ?'
+        );
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
+
         if ($result->num_rows === 0) {
+            $stmt->close();
             return null;
         }
 
         $row = $result->fetch_assoc();
+        $stmt->close();
+
         return new User($row['id'], $row['username'], $row['email'], $row['password']);
     }
 }

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `compte` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table des utilisateurs
-CREATE TABLE IF NOT EXISTS `user` (
+CREATE TABLE IF NOT EXISTS `users` (
     `user_id` INT NOT NULL AUTO_INCREMENT,
     `user_login` TEXT NOT NULL,
     `user_password` LONGTEXT NOT NULL,

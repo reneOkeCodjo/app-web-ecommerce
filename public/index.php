@@ -45,27 +45,35 @@
 
                 // Encapsulate the login request data in a DTO
                 $LoginDto = new LoginRequestDTO($username, $password);
-    
-                $connection = Database::connect();
-                echo '<p class="feedback feedback-info" role="status">Attempting to connect to the database...</p>';
-                $userRepository = new UserRepository($connection);
-                $auth = new Auth($userRepository);
-
                 try {
-                    // Attempt to authenticate the user
-                    $auth_response = $auth->login($LoginDto->getUsername(), $LoginDto->getPassword());
+                    $connection = Database::connect();
 
-                    if ($auth_response) {
-                        echo '<p class="feedback feedback-success" role="status">Login successful!</p>';
-                    } else {
-                        echo '<p class="feedback feedback-error" role="alert">Invalid username or password.</p>';
+                    try {
+
+                        $userRepository = new UserRepository($connection);
+                        $auth = new Auth($userRepository);
+                        $auth_response = $auth->login($LoginDto->getUsername(), $LoginDto->getPassword());
+                        // Attempt to authenticate the user
+                        if ($auth_response) {
+                            echo '<p class="feedback feedback-success" role="status">Login successful!</p>';
+                        } else {
+                            echo '<p class="feedback feedback-error" role="alert">Invalid username or password.</p>';
+                        }
+                    } catch (Throwable $e) {
+
+                        // Handle any exceptions that occur during the login process
+                        echo '<p class="feedback feedback-error" role="alert">An error occurred during login. Please try again later.</p> ' ;
                     }
-                } catch (Throwable $exception) {
-                    // Send server error response
-                    echo '<p class="feedback feedback-error" role="alert">Unable to complete login. Please try again.</p>';
+                } catch (Exception $e) {
+
+                    // Handle database connection error
+                    echo '<p class="feedback feedback-error" role="alert">Database connection failed. Please try again later.</p>';
                 } finally {
-                    // Finally close the database connection
-                    $connection->close();
+
+                    // Ensure the connection is closed in case of an exception
+                    if (isset($connection)) {
+                        $connection->close();
+                    }
                 }
             }
             ?>

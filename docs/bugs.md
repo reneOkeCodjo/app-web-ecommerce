@@ -6,8 +6,6 @@
 **Date de découverte :** 2026-10-04
 **Sévérité :** Critique
 
----
-
 ### Description
 
 La méthode `login()` est déclarée `static` dans l'interface `AuthInterface` et la classe `Auth`, mais elle utilise `self::$userRepository` qui est initialisé dans le constructeur.
@@ -34,10 +32,10 @@ class Auth implements AuthInterface {
 
 ### Conséquences
 
-| Appel | Résultat |
-|---|---|
-| `$auth = new Auth($repo); $auth->login(...)` | ✅ Fonctionne |
-| `Auth::login(...)` (statique) | ❌ `self::$userRepository` = null → Erreur fatale |
+| Appel                                          | Résultat                                           |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `$auth = new Auth($repo); $auth->login(...)` | ✅ Fonctionne                                       |
+| `Auth::login(...)` (statique)                | ❌`self::$userRepository` = null → Erreur fatale |
 
 ### Fichiers affectés
 
@@ -47,6 +45,7 @@ class Auth implements AuthInterface {
 ### Correction proposée
 
 **Option 1 : Rendre `login()` non-static**
+
 ```php
 // Interface
 public function login(string $username, string $password): bool;
@@ -59,6 +58,7 @@ public function login(string $username, string $password): bool {
 ```
 
 **Option 2 : Injecter le repository en paramètre**
+
 ```php
 public static function login(string $username, string $password, UserRepositoryInterface $repo): bool
 ```

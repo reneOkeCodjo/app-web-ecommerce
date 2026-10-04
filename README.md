@@ -7,7 +7,7 @@ Le projet utilise MySQL comme base de données et Docker pour l'environnement de
 
 ## État actuel du projet
 
-### ✅ Initialisation du projet
+### Initialisation du projet
 
 Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
@@ -34,7 +34,7 @@ Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
 ---
 
-### ✅ Connexion à la base de données
+### Connexion à la base de données
 
 La connexion à la base de données est gérée par la classe `Database` dans `config/database.php`.
 
@@ -61,7 +61,7 @@ $connection = Database::connect();
 
 ---
 
-### ✅ Test de connexion à la base de données
+### Test de connexion à la base de données
 
 Le projet utilise PHPUnit pour tester la connexion à la base de données.
 
@@ -80,7 +80,7 @@ Le projet utilise PHPUnit pour tester la connexion à la base de données.
 
 ---
 
-### ✅ Environnement Docker
+### Environnement Docker
 
 Deux services conteneurisés ont été initialisés pour créer un environnement de test et de déploiement de l'application PHP et de la base de données MySQL.
 
@@ -108,6 +108,28 @@ Deux services conteneurisés ont été initialisés pour créer un environnement
 
 ---
 
+### Modèle de données
+
+L'entité `User` représente un utilisateur dans le système.
+
+**Fichier :** `src/Domain/Model/User.php`
+
+**Propriétés :**
+- `id` (int) — Identifiant unique de l'utilisateur
+- `username` (string) — Nom d'utilisateur
+- `email` (string) — Adresse email
+- `password` (string) — Mot de passe (hashé)
+
+**Utilisation :**
+```php
+use App\Domain\Model\User;
+
+$user = new User(1, 'john_doe', 'john@example.com', 'hashed_password');
+echo $user->getUsername(); // john_doe
+```
+
+---
+
 ## Environnement
 
 ### Prérequis
@@ -131,16 +153,26 @@ docker-compose up -d
 
 ```
 src/
-├── Domain/Model/              → Entités métier
+├── Domain/
+│   └── Model/
+│       └── User.php           → Entité User
 ├── Application/
 │   ├── DTO/                   → Objets de transfert
 │   └── Services/              → Logique métier
 └── Infrastructure/
     └── Persistence/DAO/       → Accès données
 
+config/
+└── database.php               → Connexion à la base de données
+
 database/
 └── migrations/               → Scripts SQL de migration
     └── 001_create_users_table.sql
+
+tests/
+└── integration/
+    └── db/
+        └── DatabaseConnectionTest.php → Test de connexion DB
 ```
 
 ---

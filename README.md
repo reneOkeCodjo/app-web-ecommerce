@@ -34,6 +34,34 @@ Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
 ---
 
+### ✅ Environnement Docker
+
+Deux services conteneurisés ont été initialisés pour créer un environnement de test et de déploiement de l'application PHP et de la base de données MySQL.
+
+**Service PHP (`php`) :**
+- Image basée sur `php:8.3-apache`
+- Extensions installées : `mysqli`, `pdo_mysql`, `zip`, `mbstring`
+- Composer installé globalement
+- Apache configuré pour servir le dossier `/public`
+- Port exposé : `8080:80`
+- Volume monté : `./` → `/var/www/html` (code source en temps réel)
+
+**Service MySQL (`mysql`) :**
+- Image officielle `mysql:8.0`
+- Port exposé : `3306:3306`
+- Volume persistant : `mysql_data` → `/var/lib/mysql`
+- Healthcheck : `mysqladmin ping` (intervalle 5s, timeout 5s, 20 retries)
+- Démarrage conditionnel : PHP attend que MySQL soit healthy
+
+**Réseau interne :**
+- Réseau bridge `site_de_vente` permettant la communication PHP ↔ MySQL via le nom de service `mysql`
+
+**Fichiers de configuration :**
+- `php/Dockerfile` — Définition de l'image PHP personnalisée
+- `docker-compose.yml` — Orchestration des services PHP et MySQL
+
+---
+
 ## Environnement
 
 ### Prérequis
@@ -63,6 +91,10 @@ src/
 │   └── Services/              → Logique métier
 └── Infrastructure/
     └── Persistence/DAO/       → Accès données
+
+database/
+└── migrations/               → Scripts SQL de migration
+    └── 001_create_users_table.sql
 ```
 
 ---

@@ -30,7 +30,7 @@ class UserRepository implements UserRepositoryInterface
 
     public function findByUsername(string $username): ?User
     {
-        $stmt = $this->connection->prepare('SELECT * FROM users WHERE username = ?');
+        $stmt = $this->connection->prepare('SELECT * FROM user WHERE username = ?');
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();

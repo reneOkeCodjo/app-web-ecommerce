@@ -34,6 +34,52 @@ Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
 ---
 
+### ✅ Connexion à la base de données
+
+La connexion à la base de données est gérée par la classe `Database` dans `config/database.php`.
+
+**Fonctionnement :**
+- Espace de noms `Db_config`
+- Connexion via `mysqli` avec gestion d'erreurs
+- Configuration chargée depuis le fichier `.env` via `vlucas/phpdotenv`
+- Valeurs par défaut appliquées si les variables sont absentes
+
+**Variables utilisées :**
+- `DB_HOST` — Hôte de la base de données (défaut: `localhost`)
+- `DB_PORT` — Port de la base de données (défaut: `3306`)
+- `DB_NAME` — Nom de la base de données (défaut: `my_database`)
+- `DB_USER` — Utilisateur de la base de données (défaut: `root`)
+- `DB_PASSWORD` — Mot de passe de la base de données (défaut: ``)
+
+**Utilisation :**
+```php
+use Db_config\Database;
+
+$connection = Database::connect();
+// $connection est une instance de \mysqli
+```
+
+---
+
+### ✅ Test de connexion à la base de données
+
+Le projet utilise PHPUnit pour tester la connexion à la base de données.
+
+**Configuration (`phpunit.xml`) :**
+- Suite "Integration tests" → `tests/integration`
+
+**Test d'intégration :**
+- `tests/integration/db/DatabaseConnectionTest.php` — Test de connexion DB
+  - Vérifie que la connexion MySQL fonctionne en exécutant `SELECT 1`
+
+**Exécution :**
+```bash
+# Test de connexion DB
+./vendor/bin/phpunit tests/integration/db/DatabaseConnectionTest.php
+```
+
+---
+
 ### ✅ Environnement Docker
 
 Deux services conteneurisés ont été initialisés pour créer un environnement de test et de déploiement de l'application PHP et de la base de données MySQL.

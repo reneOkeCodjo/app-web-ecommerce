@@ -108,6 +108,32 @@ Deux services conteneurisés ont été initialisés pour créer un environnement
 
 ---
 
+### Accès aux données (DAO)
+
+Le projet utilise le pattern Repository pour accéder aux données.
+
+**Fichier :** `src/Infrastructure/Persistence/DAO/UserDAO.php`
+
+**Interface :** `UserRepositoryInterface`
+- `findByUsername(string $username): ?User` — Recherche un utilisateur par son nom d'utilisateur
+
+**Implémentation :** `UserRepository`
+- Connexion via `mysqli`
+- Requêtes préparées pour éviter les injections SQL
+- Retourne `null` si l'utilisateur n'est pas trouvé
+
+**Test d'intégration :** `tests/integration/dao/UserDaoTest.php`
+- `testFindByUsernameReturnsSeededUser` — Vérifie le retour d'un utilisateur existant
+- `testFindByUsernameReturnsNullForUnknownUser` — Vérifie le retour null pour un utilisateur inconnu
+- Utilise une table temporaire MySQL pour isoler les tests
+
+**Exécution :**
+```bash
+./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
+```
+
+---
+
 ### Modèle de données
 
 L'entité `User` représente un utilisateur dans le système.

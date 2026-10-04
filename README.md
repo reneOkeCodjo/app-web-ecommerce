@@ -203,10 +203,12 @@ $success = $auth->login('username', 'password');
 La page de login permet aux utilisateurs de s'authentifier.
 
 **Fichiers :**
+
 - `public/index.php` — Page de login avec formulaire HTML
 - `public/styles.css` — Styles CSS modernes et responsive
 
 **Fonctionnement :**
+
 - Formulaire HTML avec champs username et password
 - Connexion à la base de données via `Database::connect()`
 - Authentification via `Auth::login()`
@@ -214,9 +216,31 @@ La page de login permet aux utilisateurs de s'authentifier.
 - Gestion des exceptions avec try/catch
 
 **Accès :**
+
 ```
 http://localhost:8080/index.php
 ```
+
+---
+
+### Bug connu : Connexion de login
+
+**Fichier :** `src/Application/Services/Auth.php`
+
+**Problème :**
+La méthode `login()` est déclarée `static` dans l'interface et la classe, mais elle utilise `self::$userRepository` qui est initialisé dans le constructeur.
+
+**Conséquence :**
+- Si `Auth::login()` est appelé statiquement (sans instance), `self::$userRepository` est `null` → erreur fatale
+- L'appel via instance `$auth->login()` fonctionne, mais ce n'est pas cohérent avec la déclaration `static`
+
+**Correction nécessaire :**
+- Rendre `login()` non-static (méthode d'instance)
+- OU injecter le repository en paramètre de la méthode statique
+
+**Fichiers affectés :**
+- `src/Application/Services/Auth.php`
+- `tests/unit/service/AuthServiceTest.php`
 
 ---
 

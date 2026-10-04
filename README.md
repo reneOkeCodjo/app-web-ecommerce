@@ -223,27 +223,6 @@ http://localhost:8080/index.php
 
 ---
 
-### Bug connu : Connexion de login
-
-**Fichier :** `src/Application/Services/Auth.php`
-
-**Problème :**
-La méthode `login()` est déclarée `static` dans l'interface et la classe, mais elle utilise `self::$userRepository` qui est initialisé dans le constructeur.
-
-**Conséquence :**
-- Si `Auth::login()` est appelé statiquement (sans instance), `self::$userRepository` est `null` → erreur fatale
-- L'appel via instance `$auth->login()` fonctionne, mais ce n'est pas cohérent avec la déclaration `static`
-
-**Correction nécessaire :**
-- Rendre `login()` non-static (méthode d'instance)
-- OU injecter le repository en paramètre de la méthode statique
-
-**Fichiers affectés :**
-- `src/Application/Services/Auth.php`
-- `tests/unit/service/AuthServiceTest.php`
-
----
-
 ### Modèle de données
 
 L'entité `User` représente un utilisateur dans le système.

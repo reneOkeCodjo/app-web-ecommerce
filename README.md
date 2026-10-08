@@ -202,6 +202,10 @@ $success = $auth->login('username', 'password');
 
 La page de login permet aux utilisateurs de s'authentifier.
 
+**Maquette Figma (lecture seule) :**
+
+- [Login — Figma](https://www.figma.com/design/IUNoBVcRSL0D5sNNFnaWtr/Login?node-id=0-1&m=dev)
+
 **Fichiers :**
 
 - `public/index.php` — Page de login avec formulaire HTML

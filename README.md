@@ -5,6 +5,12 @@
 Application e-commerce en PHP 8.3 avec architecture DDD (Domain-Driven Design).
 Le projet utilise MySQL comme base de données et Docker pour l'environnement de développement.
 
+## Design
+
+**Maquette Figma (lecture seule) :**
+
+- [Login — Figma](https://www.figma.com/design/IUNoBVcRSL0D5sNNFnaWtr/Login?node-id=0-1&m=dev)
+
 ## État actuel du projet
 
 ### ✅ Initialisation du projet

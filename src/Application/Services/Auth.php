@@ -15,14 +15,14 @@ interface AuthInterface {
 }
 
 class Auth implements AuthInterface {
-    private static UserRepositoryInterface $userRepository;
+    private UserRepositoryInterface $userRepository;
 
     public function __construct(UserRepositoryInterface $userRepository) {
-        self::$userRepository = $userRepository;;
+        $this->userRepository = $userRepository;;
     }
 
     public function login(string $username, string $password): bool {
-        $user = self::$userRepository->findByUsername($username);
+        $user = $this->userRepository->findByUsername($username);
 
         if (!$user) {
             return false; // User not found

@@ -31,49 +31,48 @@
 
             <?php
 
-
             require_once __DIR__ . '/../vendor/autoload.php';
 
             use App\Application\DTO\LoginRequestDTO;
             use App\Application\Services\Auth;
+            use App\Infrastructure\Http\NativeSessionStore;
             use App\Infrastructure\Persistence\DAO\UserRepository;
             use Db_config\Database;
 
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $username = $_POST['username'];
-                $password = $_POST['password'];
+            $session = new NativeSessionStore();
 
-                // Encapsulate the login request data in a DTO
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $username = $_POST['username'] ?? '';
+                $password = $_POST['password'] ?? '';
+
                 $LoginDto = new LoginRequestDTO($username, $password);
                 try {
                     $connection = Database::connect();
 
                     try {
-
                         $userRepository = new UserRepository($connection);
-                        $auth = new Auth($userRepository);
+                        $auth = new Auth($userRepository, $session);
                         $auth_response = $auth->login($LoginDto->getUsername(), $LoginDto->getPassword());
-                        // Attempt to authenticate the user
+
                         if ($auth_response) {
                             echo '<p class="feedback feedback-success" role="status">Login successful!</p>';
                         } else {
                             echo '<p class="feedback feedback-error" role="alert">Invalid username or password.</p>';
                         }
                     } catch (Throwable $e) {
-
-                        // Handle any exceptions that occur during the login process
-                        echo '<p class="feedback feedback-error" role="alert">An error occurred during login. Please try again later.</p> ' ;
+                        echo '<p class="feedback feedback-error" role="alert">An error occurred during login. Please try again later.</p>';
                     }
                 } catch (Exception $e) {
-
-                    // Handle database connection error
                     echo '<p class="feedback feedback-error" role="alert">Database connection failed. Please try again later.</p>';
                 } finally {
-
-                    // Ensure the connection is closed in case of an exception
                     if (isset($connection)) {
                         $connection->close();
                     }
+                }
+            } else {
+                $userId = $session->get('user_id');
+                if (is_numeric($userId) && (int) $userId > 0) {
+                    echo '<p class="feedback feedback-success" role="status">You are already signed in.</p>';
                 }
             }
             ?>

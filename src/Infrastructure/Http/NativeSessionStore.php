@@ -95,13 +95,18 @@ class NativeSessionStore implements SessionStoreInterface
      */
     private function configureSecureSession(): void
     {
+        // only use cookies for session management
         ini_set('session.use_only_cookies', '1');
         ini_set('session.use_strict_mode', '1');
         ini_set('session.use_trans_sid', '0');
+        // prevent XSS attacks by JavaScript
         ini_set('session.cookie_httponly', '1');
+        // prevent CSRF attacks
         ini_set('session.cookie_samesite', self::COOKIE_SAMESITE);
+        // only send cookies over HTTPS
         ini_set('session.cookie_secure', $this->isHttps() ? '1' : '0');
 
+        // configure session cookie parameters
         session_set_cookie_params([
             'lifetime' => self::COOKIE_LIFETIME,
             'path' => self::COOKIE_PATH,
@@ -111,6 +116,9 @@ class NativeSessionStore implements SessionStoreInterface
         ]);
     }
 
+    /**
+     * Check if the request is HTTPS.
+     */
     private function isHttps(): bool
     {
         return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';

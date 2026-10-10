@@ -20,7 +20,7 @@ Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
 - `composer.json` — Définition des dépendances et autoloading PSR-4
 - `composer.lock` — Verrouillage des versions des dépendances
-- `.gitignore` — Exclusion des fichiers sensibles (`.env`, `vendor/`, cache)
+- `.gitignore` — Exclusion des secrets, dépendances et fichiers d’éditeur (`.env`, `vendor/`, `node_modules/`, `.cursor/`, `.vscode/`, caches)
 - `.env.example` — Template des variables d'environnement requises
 
 **Structure de l'autoloading :**
@@ -152,22 +152,77 @@ Le projet utilise le pattern Repository pour accéder aux données.
 
 ---
 
+### Gestion des sessions
+
+L'état d'authentification est stocké côté serveur via les sessions PHP (`session_start()` / `$_SESSION`).
+Le navigateur ne conserve que le cookie de session `PHPSESSID` géré par PHP.
+
+**Fichiers :**
+
+- `src/Infrastructure/Http/SessionStoreInterface.php` — Contrat d'accès à la session
+- `src/Infrastructure/Http/NativeSessionStore.php` — Implémentation native PHP
+
+**Interface :** `SessionStoreInterface`
+
+- `set(string $key, mixed $value): void` — Écrit une valeur en session
+- `get(string $key): mixed` — Lit une valeur (ou `null`)
+- `remove(string $key): void` — Supprime une clé
+- `regenerate(): void` — Régénère l'id de session (`session_regenerate_id(true)`)
+- `destroy(): void` — Vide et détruit la session
+
+**Sécurité appliquée avant `session_start()` :**
+
+| Paramètre | Valeur | Rôle |
+|-----------|--------|------|
+| `use_only_cookies` | `1` | Pas d'id de session dans l'URL |
+| `use_strict_mode` | `1` | Rejette les ids de session inconnus |
+| `use_trans_sid` | `0` | Pas de réécriture d'URL avec SID |
+| `cookie_httponly` | `true` | Cookie inaccessible en JavaScript |
+| `cookie_samesite` | `Lax` | Limite les envois cross-site (CSRF) |
+| `cookie_secure` | `true` si HTTPS | Cookie uniquement en HTTPS |
+| `cookie_path` | `/` | Valable pour toute l'application |
+| `cookie_lifetime` | `0` | Expire à la fermeture du navigateur |
+
+**Utilisation :**
+
+```php
+use App\Infrastructure\Http\NativeSessionStore;
+
+$session = new NativeSessionStore(); // démarre la session de façon sécurisée
+$session->set('user_id', 1);
+$userId = $session->get('user_id');
+```
+
+**Redirection vers une autre page :**
+
+1. Au login : écrire `user_id` en session, puis `header('Location: /page.php'); exit;`
+2. Sur la page cible : instancier `NativeSessionStore` (→ `session_start()`), puis vérifier `Auth::isAuthenticated()`
+3. Si non authentifié : rediriger vers `index.php`
+
+Aucun paramètre d'auth n'est passé dans l'URL : le cookie `PHPSESSID` suffit pour retrouver la session serveur.
+
+---
+
 ### Service d'authentification
 
-Le service `Auth` gère l'authentification des utilisateurs.
+Le service `Auth` gère l'authentification des utilisateurs et persiste l'état en session.
 
 **Fichier :** `src/Application/Services/Auth.php`
 
 **Interface :** `AuthInterface`
 
-- `login(string $username, string $password): bool` — Authentifie un utilisateur
+- `login(string $username, string $password): bool` — Authentifie et enregistre `user_id` en session
+- `logout(): void` — Supprime `user_id` et détruit la session
+- `isAuthenticated(): bool` — Indique si un `user_id` valide est présent en session
+- `getAuthenticatedUserId(): ?int` — Retourne l'id utilisateur en session, ou `null`
 
-**Implémentation :`Auth`
+**Implémentation :** `Auth`
 
-- Constructeur injecte un `UserRepositoryInterface`
-- Vérifie l'existence de l'utilisateur via `findByUsername()`
+- Constructeur injecte `UserRepositoryInterface` et `SessionStoreInterface`
+- Vérifie l'utilisateur via `findByUsername()`
 - Vérifie le mot de passe avec `password_verify()`
-- Retourne `true` si authentifié, `false` sinon
+- En cas de succès : `session_regenerate_id(true)` puis `$_SESSION['user_id'] = …`
+- En cas d'échec : ne touche pas à la session
 
 **DTO :** `src/Application/DTO/LoginRequestDTO.php`
 
@@ -177,18 +232,29 @@ Le service `Auth` gère l'authentification des utilisateurs.
 
 ```php
 use App\Application\Services\Auth;
+use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\UserRepository;
 
-$auth = new Auth(new UserRepository($connection));
-$success = $auth->login('username', 'password');
+$session = new NativeSessionStore();
+$auth = new Auth(new UserRepository($connection), $session);
+
+if ($auth->login('username', 'password')) {
+    header('Location: /products.php');
+    exit;
+}
+
+if ($auth->isAuthenticated()) {
+    $userId = $auth->getAuthenticatedUserId();
+}
 ```
 
 **Test unitaire :** `tests/unit/service/AuthServiceTest.php`
 
-- `testLoginSucceedsWithValidCredentials` — Login réussi avec bonnes credentials
-- `testLoginRejectsInvalidPassword` — Rejet avec mauvais mot de passe
-- `testLoginRejectsUnknownUser` — Rejet avec utilisateur inconnu
-- Utilise des mocks pour isoler le service
+- `testLoginSucceedsWithValidCredentialsAndStoresSession` — Login OK + écriture session + regenerate
+- `testLoginRejectsInvalidPasswordAndDoesNotStoreSession` — Rejet mauvais mot de passe
+- `testLoginRejectsUnknownUser` — Rejet utilisateur inconnu
+- `testLogoutClearsSession` — Logout vide et détruit la session
+- Utilise un store de session en mémoire (mock) pour isoler le service
 
 **Exécution :**
 
@@ -200,22 +266,26 @@ $success = $auth->login('username', 'password');
 
 ### Interface utilisateur
 
-La page de login permet aux utilisateurs de s'authentifier.
+La page de login permet aux utilisateurs de s'authentifier (maquette Figma).
 
 **Maquette Figma (lecture seule) :**
 
 - [Login — Figma](https://www.figma.com/design/IUNoBVcRSL0D5sNNFnaWtr/Login?node-id=0-1&m=dev)
 
-**Fichiers :**
+**Fichiers (état `develop` / session) :**
 
-- `public/index.php` — Page de login avec formulaire HTML
-- `public/styles.css` — Styles CSS modernes et responsive
+- `public/index.php` — Page de login + démarrage de session
+- `public/styles.css` — Styles de la page de login
+
+Les styles modulaires (`public/styles/*`), tooltip, feedback et toggle mot de passe sont livrés sur la branche `feature/ui`.
 
 **Fonctionnement :**
 
 - Formulaire HTML avec champs username et password
+- Démarrage de session via `NativeSessionStore`
 - Connexion à la base de données via `Database::connect()`
-- Authentification via `Auth::login()`
+- Authentification via `Auth::login()` (persistance en session)
+- Message « already signed in » si `user_id` est déjà en session (GET)
 - Affichage des messages de feedback (succès/erreur)
 - Gestion des exceptions avec try/catch
 
@@ -223,6 +293,26 @@ La page de login permet aux utilisateurs de s'authentifier.
 
 ```
 http://localhost:8080/index.php
+```
+
+---
+
+### Validation des entrées
+
+La validation du formulaire de login est livrée sur la branche `feature/validator`.
+
+**Principe :**
+
+- Une règle atomique = une classe (`RequiredValidator`, `MinLengthValidator`, `MaxLengthValidator`, `RegexValidator`)
+- Un champ = un validateur composé (`UsernameValidator`, `PasswordValidator`)
+- `Validation` orchestre les validateurs et renvoie un `ValidationResult` (+ `LoginRequestDTO` normalisé)
+
+**Règles password :** 8–72 caractères, majuscule, minuscule, chiffre, caractère spécial.
+
+**Tests :** `tests/unit/service/ValidationServiceTest.php`
+
+```bash
+./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
 ```
 
 ---
@@ -271,6 +361,22 @@ docker-compose up -d
 - Application : http://localhost:8080
 - MySQL : localhost:3306
 
+### Tests
+
+```bash
+# Tous les tests
+./vendor/bin/phpunit
+
+# Auth (sessions)
+./vendor/bin/phpunit tests/unit/service/AuthServiceTest.php
+
+# DAO utilisateurs
+./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
+
+# Connexion DB
+./vendor/bin/phpunit tests/integration/db/DatabaseConnectionTest.php
+```
+
 ---
 
 ## Architecture
@@ -279,37 +385,56 @@ docker-compose up -d
 src/
 ├── Domain/
 │   └── Model/
-│       └── User.php                    → Entité User
+│       └── User.php                         → Entité User
 ├── Application/
 │   ├── DTO/
-│   │   └── LoginRequestDTO.php         → DTO de login
+│   │   └── LoginRequestDTO.php              → DTO de login
 │   └── Services/
-│       └── Auth.php                    → Service d'authentification
+│       └── Auth.php                         → Auth + AuthInterface (session)
 └── Infrastructure/
+    ├── Http/
+    │   ├── SessionStoreInterface.php        → Contrat session
+    │   └── NativeSessionStore.php           → session_start() sécurisé
     └── Persistence/
         └── DAO/
-            └── UserDAO.php             → UserRepository + Interface
+            └── UserDAO.php                  → UserRepository + Interface
 
 config/
-└── database.php                        → Connexion à la base de données
+└── database.php                             → Connexion à la base de données
 
 database/
 └── migrations/
-    └── 001_create_users_table.sql      → Tables compte + user
+    └── 001_create_users_table.sql           → Tables compte + user
+
+public/
+├── index.php                                → Page de login (+ session)
+└── styles.css                               → Styles UI
 
 php/
-└── Dockerfile                          → Image PHP 8.3 + Apache
+└── Dockerfile                               → Image PHP 8.3 + Apache
 
 tests/
 ├── integration/
 │   ├── dao/
-│   │   └── UserDaoTest.php             → Test intégration DAO
+│   │   └── UserDaoTest.php                  → Test intégration DAO
 │   └── db/
-│       └── DatabaseConnectionTest.php  → Test connexion DB
+│       └── DatabaseConnectionTest.php       → Test connexion DB
 └── unit/
     └── service/
-        └── AuthServiceTest.php         → Test unitaire Auth
+        └── AuthServiceTest.php              → Test unitaire Auth / session
+
+docs/
+└── bugs.md                                  → Journal des bugs connus / corrigés
 ```
+
+---
+
+## Branches
+
+- `develop` — Intégration (sessions + auth)
+- `feature/session` — Sessions PHP sécurisées + auth persistée en session (fusionnée dans `develop`)
+- `feature/ui` — UI login Figma (styles modulaires, tooltip, feedback, toggle password)
+- `feature/validator` — Validateurs par règle / par champ + tests
 
 ---
 

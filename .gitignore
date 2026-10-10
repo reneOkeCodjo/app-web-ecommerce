@@ -1,3 +1,25 @@
+# Environment
 .env
-.phpunit.result.cache
+.env.local
+.env.*.local
+
+# PHP / Composer
 /vendor/
+.phpunit.result.cache
+.phpunit.cache/
+
+# Node
+/node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.cursor/
+
+# Logs & temp
+*.log
+*.tmp
+*.swp
+*~

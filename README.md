@@ -272,22 +272,25 @@ La page de login permet aux utilisateurs de s'authentifier (maquette Figma).
 
 - [Login — Figma](https://www.figma.com/design/IUNoBVcRSL0D5sNNFnaWtr/Login?node-id=0-1&m=dev)
 
-**Fichiers (état `develop` / session) :**
+**Fichiers :**
 
-- `public/index.php` — Page de login + démarrage de session
-- `public/styles.css` — Styles de la page de login
-
-Les styles modulaires (`public/styles/*`), tooltip, feedback et toggle mot de passe sont livrés sur la branche `feature/ui`.
+- `public/index.php` — Page de login (session + feedback)
+- `public/styles.css` — Point d’entrée CSS (`@import`)
+- `public/styles/base.css` — Tokens + layout
+- `public/styles/header.css` — Titre Login
+- `public/styles/form.css` — Champs / labels
+- `public/styles/button.css` — Bouton submit + toggle œil
+- `public/styles/tooltip.css` — Tooltip règles password
+- `public/styles/feedback.css` — Alertes succès / erreur
+- `public/scripts/password-toggle.js` — Afficher / masquer le mot de passe
 
 **Fonctionnement :**
 
-- Formulaire HTML avec champs username et password
+- Formulaire HTML (labels flottants, tooltip, toggle password)
 - Démarrage de session via `NativeSessionStore`
-- Connexion à la base de données via `Database::connect()`
-- Authentification via `Auth::login()` (persistance en session)
-- Message « already signed in » si `user_id` est déjà en session (GET)
-- Affichage des messages de feedback (succès/erreur)
-- Gestion des exceptions avec try/catch
+- Connexion DB + `Auth::login()` (persistance en session)
+- Messages de feedback (succès / erreur)
+- Contraintes HTML (`required`, `minlength`, `maxlength`) côté client
 
 **Accès :**
 
@@ -299,21 +302,7 @@ http://localhost:8080/index.php
 
 ### Validation des entrées
 
-La validation du formulaire de login est livrée sur la branche `feature/validator`.
-
-**Principe :**
-
-- Une règle atomique = une classe (`RequiredValidator`, `MinLengthValidator`, `MaxLengthValidator`, `RegexValidator`)
-- Un champ = un validateur composé (`UsernameValidator`, `PasswordValidator`)
-- `Validation` orchestre les validateurs et renvoie un `ValidationResult` (+ `LoginRequestDTO` normalisé)
-
-**Règles password :** 8–72 caractères, majuscule, minuscule, chiffre, caractère spécial.
-
-**Tests :** `tests/unit/service/ValidationServiceTest.php`
-
-```bash
-./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
-```
+La validation serveur est livrée sur la branche `feature/validator` (règles atomiques + validateurs par champ + tests).
 
 ---
 
@@ -370,6 +359,9 @@ docker-compose up -d
 # Auth (sessions)
 ./vendor/bin/phpunit tests/unit/service/AuthServiceTest.php
 
+# Validation (branche feature/validator)
+./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
+
 # DAO utilisateurs
 ./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
 
@@ -389,8 +381,9 @@ src/
 ├── Application/
 │   ├── DTO/
 │   │   └── LoginRequestDTO.php              → DTO de login
-│   └── Services/
-│       └── Auth.php                         → Auth + AuthInterface (session)
+│   ├── Services/
+│   │   └── Auth.php                         → Auth + AuthInterface (session)
+│   └── Validation/                          → (feature/validator)
 └── Infrastructure/
     ├── Http/
     │   ├── SessionStoreInterface.php        → Contrat session
@@ -408,7 +401,10 @@ database/
 
 public/
 ├── index.php                                → Page de login (+ session)
-└── styles.css                               → Styles UI
+├── styles.css                               → Imports CSS
+├── styles/                                  → base, header, form, button, tooltip, feedback
+└── scripts/
+    └── password-toggle.js                   → Toggle visibilité password
 
 php/
 └── Dockerfile                               → Image PHP 8.3 + Apache
@@ -421,7 +417,8 @@ tests/
 │       └── DatabaseConnectionTest.php       → Test connexion DB
 └── unit/
     └── service/
-        └── AuthServiceTest.php              → Test unitaire Auth / session
+        ├── AuthServiceTest.php              → Test unitaire Auth / session
+        └── ValidationServiceTest.php        → (feature/validator)
 
 docs/
 └── bugs.md                                  → Journal des bugs connus / corrigés
@@ -432,9 +429,9 @@ docs/
 ## Branches
 
 - `develop` — Intégration (sessions + auth)
-- `feature/session` — Sessions PHP sécurisées + auth persistée en session (fusionnée dans `develop`)
-- `feature/ui` — UI login Figma (styles modulaires, tooltip, feedback, toggle password)
-- `feature/validator` — Validateurs par règle / par champ + tests
+- `feature/session` — Sessions PHP (fusionnée dans `develop`)
+- `feature/ui` — UI login Figma (branche courante)
+- `feature/validator` — Validateurs + tests
 
 ---
 

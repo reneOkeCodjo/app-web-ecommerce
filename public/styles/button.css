@@ -1,0 +1,52 @@
+.login-form__actions button {
+  background-color: transparent;
+  width: 100%;
+  margin-top: 1rem;
+  border: 1px solid var(--color-accent);
+  color: var(--color-text);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  align-self: center;
+}
+
+.login-form__actions button:hover,
+.login-form__actions button:focus-visible {
+  background-color: var(--color-accent);
+  color: var(--color-text);
+  outline: none;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible,
+.password-toggle[aria-pressed="true"] {
+  color: var(--color-accent);
+  outline: none;
+}
+
+.password-toggle__icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  pointer-events: none;
+}
+
+.password-toggle__icon[hidden] {
+  display: none;
+}

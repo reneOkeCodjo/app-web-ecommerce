@@ -1,0 +1,51 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+
+:root {
+  color-scheme: dark;
+  --color-background: #242429;
+  --color-text: #ffffff;
+  --color-muted: #b2b2b8;
+  --color-underline: #a6a6ad;
+  --color-accent: #f36500;
+  --color-border: #ffffff;
+  --color-success: #86efac;
+  --color-success-background: rgb(22 101 52 / 35%);
+  --color-error: #fca5a5;
+  --color-error-background: rgb(127 29 29 / 40%);
+  --font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --form-width: 15rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  font-family: Verdana, Geneva, Tahoma;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+}
+
+.auth-page {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 20rem;
+}

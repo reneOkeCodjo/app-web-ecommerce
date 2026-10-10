@@ -18,7 +18,7 @@ final class AuthServiceTest extends TestCase
 
         $auth = new Auth($repository);
 
-        self::assertTrue($auth::login('auth_test_user', $password));
+        self::assertTrue($auth->login('auth_test_user', $password));
     }
 
     public function testLoginRejectsInvalidPassword(): void
@@ -27,7 +27,7 @@ final class AuthServiceTest extends TestCase
 
         $auth = new Auth($repository);
 
-        self::assertFalse($auth::login('auth_test_user', 'wrong-password'));
+        self::assertFalse($auth->login('auth_test_user', 'wrong-password'));
     }
 
     public function testLoginRejectsUnknownUser(): void
@@ -37,7 +37,7 @@ final class AuthServiceTest extends TestCase
 
         $auth = new Auth($repository);
 
-        self::assertFalse($auth::login('missing_auth_test_user', 'correct-password'));
+        self::assertFalse($auth->login('missing_auth_test_user', 'correct-password'));
     }
 
     private function repositoryReturningUser(string $password): UserRepositoryInterface

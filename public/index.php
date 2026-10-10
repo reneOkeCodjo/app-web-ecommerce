@@ -2,23 +2,31 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Application\DTO\LoginRequestDTO;
 use App\Application\Services\Auth;
+use App\Application\Services\Validation;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\UserRepository;
 use Db_config\Database;
 
 $session = new NativeSessionStore();
+$validation = new Validation();
 $feedbackHtml = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $validationResult = $validation->validateLogin(
+        $_POST['username'] ?? null,
+        $_POST['password'] ?? null
+    );
 
-    if (!is_string($username) || !is_string($password)) {
-        $feedbackHtml = '<p class="feedback feedback-error" role="alert">Invalid form data.</p>';
+    if (!$validationResult->isValid()) {
+        $message = htmlspecialchars(
+            (string) $validationResult->getFirstError(),
+            ENT_QUOTES,
+            'UTF-8'
+        );
+        $feedbackHtml = '<p class="feedback feedback-error" role="alert">' . $message . '</p>';
     } else {
-        $loginDto = new LoginRequestDTO($username, $password);
+        $loginDto = $validationResult->getLoginRequest();
 
         try {
             $connection = Database::connect();

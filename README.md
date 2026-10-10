@@ -302,7 +302,27 @@ http://localhost:8080/index.php
 
 ### Validation des entrées
 
-La validation serveur est livrée sur la branche `feature/validator` (règles atomiques + validateurs par champ + tests).
+Validation serveur avant l’appel à `Auth::login()`.
+
+**Principe (SRP) :**
+
+- Une règle atomique = une classe : `RequiredValidator`, `MinLengthValidator`, `MaxLengthValidator`, `RegexValidator`
+- Un champ = un validateur composé : `UsernameValidator`, `PasswordValidator`
+- `Validation` orchestre et renvoie un `ValidationResult` (+ `LoginRequestDTO` normalisé)
+
+**Fichiers :**
+
+- `src/Application/Validation/*`
+- `src/Application/Services/Validation.php`
+- `src/Application/Services/ValidationResult.php`
+
+**Règles password :** 8–72 caractères, majuscule, minuscule, chiffre, caractère spécial.
+
+**Test unitaire :** `tests/unit/service/ValidationServiceTest.php`
+
+```bash
+./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
+```
 
 ---
 
@@ -382,8 +402,15 @@ src/
 │   ├── DTO/
 │   │   └── LoginRequestDTO.php              → DTO de login
 │   ├── Services/
-│   │   └── Auth.php                         → Auth + AuthInterface (session)
-│   └── Validation/                          → (feature/validator)
+│   │   ├── Auth.php                         → Auth + AuthInterface (session)
+│   │   ├── Validation.php                   → Orchestration validation login
+│   │   └── ValidationResult.php             → Erreurs + DTO normalisé
+│   └── Validation/
+│       ├── ValidatorInterface.php           → Contrat règle atomique
+│       ├── Required / Min / Max / Regex     → Règles
+│       ├── UsernameValidator.php            → Champ username
+│       ├── PasswordValidator.php            → Champ password
+│       └── FieldResult.php                  → Résultat par champ
 └── Infrastructure/
     ├── Http/
     │   ├── SessionStoreInterface.php        → Contrat session
@@ -418,7 +445,7 @@ tests/
 └── unit/
     └── service/
         ├── AuthServiceTest.php              → Test unitaire Auth / session
-        └── ValidationServiceTest.php        → (feature/validator)
+        └── ValidationServiceTest.php        → Test validateurs + Validation
 
 docs/
 └── bugs.md                                  → Journal des bugs connus / corrigés
@@ -430,8 +457,8 @@ docs/
 
 - `develop` — Intégration (sessions + auth)
 - `feature/session` — Sessions PHP (fusionnée dans `develop`)
-- `feature/ui` — UI login Figma (branche courante)
-- `feature/validator` — Validateurs + tests
+- `feature/ui` — UI login Figma
+- `feature/validator` — Validateurs + tests (branche courante)
 
 ---
 

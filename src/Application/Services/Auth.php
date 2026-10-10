@@ -11,18 +11,18 @@ interface AuthInterface {
      * @param string $password The password of the user to authenticate.
      * @return bool True if the user is authenticated, false otherwise.
      */
-    public static function login(string $username, string $password): bool;
+    public function login(string $username, string $password): bool;
 }
 
 class Auth implements AuthInterface {
-    private static UserRepositoryInterface $userRepository;
+    private UserRepositoryInterface $userRepository;
 
     public function __construct(UserRepositoryInterface $userRepository) {
-        self::$userRepository = $userRepository;;
+        $this->userRepository = $userRepository;;
     }
 
-    public static function login(string $username, string $password): bool {
-        $user = self::$userRepository->findByUsername($username);
+    public function login(string $username, string $password): bool {
+        $user = $this->userRepository->findByUsername($username);
 
         if (!$user) {
             return false; // User not found

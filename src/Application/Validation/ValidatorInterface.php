@@ -10,7 +10,9 @@ namespace App\Application\Validation;
 interface ValidatorInterface
 {
     /**
-     * @return string|null Error message, or null when the value is valid
+     * Validate the value.
+     * @param mixed $value The value to validate.
+     * @return string|null The error message, or null when the value is valid.
      */
     public function validate(mixed $value): ?string;
 }

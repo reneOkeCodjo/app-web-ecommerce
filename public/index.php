@@ -16,27 +16,13 @@ $connection = null;
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $validationResult = $validation->validateLogin(
-            $_POST['user_login'] ?? null,
-            $_POST['user_password'] ?? null
+        $connection = Database::connect();
+        $handler = new LoginHandler(
+            $validation,
+            new UserRepository($connection),
+            $session
         );
-
-        if (!$validationResult->isValid()) {
-            $handler = new LoginHandler(
-                $validation,
-                new NullUserRepository(),
-                $session
-            );
-            $feedbackHtml = $handler->handle('POST', $_POST);
-        } else {
-            $connection = Database::connect();
-            $handler = new LoginHandler(
-                $validation,
-                new UserRepository($connection),
-                $session
-            );
-            $feedbackHtml = $handler->handle('POST', $_POST);
-        }
+        $feedbackHtml = $handler->handle('POST', $_POST);
     } else {
         $handler = new LoginHandler(
             $validation,

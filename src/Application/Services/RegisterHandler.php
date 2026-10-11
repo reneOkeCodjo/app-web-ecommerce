@@ -6,6 +6,7 @@ namespace App\Application\Services;
 
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -21,17 +22,25 @@ final class RegisterHandler
     }
 
     /**
-     * @param array<string, mixed> $post
+     * Handle the request.
+     * @param string $method The HTTP method.
+     * @param array<string, mixed> $post The POST data.
+     * @return string The feedback HTML.
      */
     public function handle(string $method, array $post): string
     {
-        if (strtoupper($method) !== 'POST') {
-            return $this->handleGet();
-        }
-
-        return $this->handlePost($post);
+        return match (strtoupper($method)) {
+            'POST' => $this->handlePost($post),
+            'GET' => $this->handleGet(),
+            default => throw new InvalidArgumentException('Invalid HTTP method.'),
+        };
     }
 
+    /**
+     * Handle the GET request.
+     * Check if the user is already authenticated.
+     * @return string The feedback HTML.
+     */
     private function handleGet(): string
     {
         $auth = new Auth($this->userRepository, $this->session);
@@ -44,6 +53,8 @@ final class RegisterHandler
     }
 
     /**
+     * Handle the POST request.
+     * Validate the request data and register the user.
      * @param array<string, mixed> $post
      */
     private function handlePost(array $post): string
@@ -55,6 +66,7 @@ final class RegisterHandler
             $post['password_confirm'] ?? null
         );
 
+        // If the validation failed, return the error message.
         if (!$validationResult->isValid()) {
             return $this->error((string) $validationResult->getFirstError());
         }
@@ -79,6 +91,11 @@ final class RegisterHandler
         }
     }
 
+    /**
+     * Return the success message.
+     * @param string $message The success message.
+     * @return string The feedback HTML.
+     */
     private function success(string $message): string
     {
         return '<p class="feedback feedback-success" role="status">'
@@ -86,6 +103,11 @@ final class RegisterHandler
             . '</p>';
     }
 
+    /**
+     * Return the error message.
+     * @param string $message The error message.
+     * @return string The feedback HTML.
+     */
     private function error(string $message): string
     {
         return '<p class="feedback feedback-error" role="alert">'

@@ -50,6 +50,12 @@ class Validation implements ValidationInterface
     ) {
     }
 
+    /**
+     * Validate the login payload.
+     * @param mixed $username The username.
+     * @param mixed $password The password.
+     * @return ValidationResult The validation result.
+     */
     public function validateLogin(mixed $username, mixed $password): ValidationResult
     {
         $errors = [];

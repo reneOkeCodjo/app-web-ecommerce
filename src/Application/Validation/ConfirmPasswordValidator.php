@@ -9,6 +9,12 @@ namespace App\Application\Validation;
  */
 final class ConfirmPasswordValidator
 {
+    /**
+     * Validate the password confirmation.
+     * @param mixed $password The password.
+     * @param mixed $confirmation The password confirmation.
+     * @return FieldResult The field result.
+     */
     public function validate(mixed $password, mixed $confirmation): FieldResult
     {
         if (!is_string($confirmation) || $confirmation === '') {

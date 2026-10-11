@@ -117,15 +117,16 @@ doivent donc être vérifiés séparément.
 
 ## Bug : Connexion de login
 
-**Fichier :** `src/Application/Services/Auth.php`
-**Date de découverte :** 2026-10-04
-**Sévérité :** Critique
+**Fichier :** `src/Application/Services/Auth.php`  
+**Date de découverte :** 2026-10-04  
+**Sévérité :** Critique  
+**Statut :** Corrigé
 
 ### Description
 
-La méthode `login()` est déclarée `static` dans l'interface `AuthInterface` et la classe `Auth`, mais elle utilise `self::$userRepository` qui est initialisé dans le constructeur.
+La méthode `login()` était déclarée `static` dans l'interface `AuthInterface` et la classe `Auth`, alors qu'elle utilisait `self::$userRepository` initialisé dans le constructeur.
 
-### Problème
+### Problème (historique)
 
 ```php
 // AuthInterface.php
@@ -136,50 +137,33 @@ class Auth implements AuthInterface {
     private static UserRepositoryInterface $userRepository;
 
     public function __construct(UserRepositoryInterface $userRepository) {
-        self::$userRepository = $userRepository;  // Initialisé ici
+        self::$userRepository = $userRepository;
     }
 
     public static function login(string $username, string $password): bool {
-        $user = self::$userRepository->findByUsername($username);  // ← BUG
+        $user = self::$userRepository->findByUsername($username);
     }
 }
 ```
-
-### Conséquences
 
 | Appel                                          | Résultat                                           |
 | ---------------------------------------------- | --------------------------------------------------- |
 | `$auth = new Auth($repo); $auth->login(...)` | ✅ Fonctionne                                       |
 | `Auth::login(...)` (statique)                | ❌`self::$userRepository` = null → Erreur fatale |
 
-### Fichiers affectés
+### Correction appliquée
 
-- `src/Application/Services/Auth.php`
-- `tests/unit/service/AuthServiceTest.php`
-
-### Correction proposée
-
-**Option 1 : Rendre `login()` non-static**
+`login()`, `register()`, `logout()`, `isAuthenticated()` et `getAuthenticatedUserId()` sont des méthodes d'instance. Le repository et la session sont injectés via le constructeur et utilisés via `$this`.
 
 ```php
-// Interface
-public function login(string $username, string $password): bool;
-
-// Classe
-public function login(string $username, string $password): bool {
+public function login(string $username, string $password): bool
+{
     $user = $this->userRepository->findByUsername($username);
     // ...
 }
 ```
 
-**Option 2 : Injecter le repository en paramètre**
+### Fichiers affectés
 
-```php
-public static function login(string $username, string $password, UserRepositoryInterface $repo): bool
-```
-
-### Statut
-
-- [ ] Non corrigé
-- [ ] En cours de correction
-- [ ] Corrigé
+- `src/Application/Services/Auth.php`
+- `tests/unit/service/AuthServiceTest.php`

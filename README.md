@@ -15,11 +15,13 @@ Le projet a été initialisé avec Composer pour gérer les dépendances PHP.
 
 - `vlucas/phpdotenv` ^5.7 — Gestion des variables d'environnement via fichier `.env`
 - `phpunit/phpunit` ^11.5 — Framework de tests (unitaires et intégration)
+- `browser-sync` ^3.0 — Live reload local (proxifie Apache sur le port 3000)
 
 **Fichiers de configuration :**
 
 - `composer.json` — Définition des dépendances et autoloading PSR-4
 - `composer.lock` — Verrouillage des versions des dépendances
+- `package.json` / `package-lock.json` — Outils front locaux (BrowserSync)
 - `.gitignore` — Exclusion des secrets, dépendances et fichiers d’éditeur (`.env`, `vendor/`, `node_modules/`, `.cursor/`, `.vscode/`, caches)
 - `.env.example` — Template des variables d'environnement requises
 
@@ -130,11 +132,15 @@ Le projet utilise le pattern Repository pour accéder aux données.
 
 **Interface :** `UserRepositoryInterface`
 
-- `findByUsername(string $username): ?User` — Recherche un utilisateur par son nom d'utilisateur
+- `findByUsername(string $username): ?User` — Recherche un utilisateur par login
+- `findByEmail(string $email): ?User` — Recherche un utilisateur par email
+- `create(string $username, string $email, string $passwordHash, int $compteId): User` — Crée un utilisateur
+- `findCompteIdByType(string $type): ?int` — Résout l’id de compte (ex. `client`)
 
 **Implémentation :** `UserRepository`
 
 - Connexion via `mysqli`
+- Colonnes SQL réelles (`user_id`, `user_login`, `user_mail`, `user_password`, `user_compte_id`)
 - Requêtes préparées pour éviter les injections SQL
 - Retourne `null` si l'utilisateur n'est pas trouvé
 
@@ -212,6 +218,7 @@ Le service `Auth` gère l'authentification des utilisateurs et persiste l'état 
 **Interface :** `AuthInterface`
 
 - `login(string $username, string $password): bool` — Authentifie et enregistre `user_id` en session
+- `register(string $username, string $email, string $password): bool` — Crée un user `client` et ouvre la session
 - `logout(): void` — Supprime `user_id` et détruit la session
 - `isAuthenticated(): bool` — Indique si un `user_id` valide est présent en session
 - `getAuthenticatedUserId(): ?int` — Retourne l'id utilisateur en session, ou `null`
@@ -219,14 +226,16 @@ Le service `Auth` gère l'authentification des utilisateurs et persiste l'état 
 **Implémentation :** `Auth`
 
 - Constructeur injecte `UserRepositoryInterface` et `SessionStoreInterface`
-- Vérifie l'utilisateur via `findByUsername()`
-- Vérifie le mot de passe avec `password_verify()`
+- Méthodes d’instance (plus de `static`)
+- Login : `findByUsername()` + `password_verify()`
+- Register : unicité login/email, `findCompteIdByType('client')`, `password_hash()`, `create()`
 - En cas de succès : `session_regenerate_id(true)` puis `$_SESSION['user_id'] = …`
 - En cas d'échec : ne touche pas à la session
 
-**DTO :** `src/Application/DTO/LoginRequestDTO.php`
+**DTO :**
 
-- Encapsule les données de login (username, password)
+- `src/Application/DTO/LoginRequestDTO.php` — username, password
+- `src/Application/DTO/RegisterRequestDTO.php` — username, email, password
 
 **Utilisation :**
 
@@ -253,6 +262,8 @@ if ($auth->isAuthenticated()) {
 - `testLoginSucceedsWithValidCredentialsAndStoresSession` — Login OK + écriture session + regenerate
 - `testLoginRejectsInvalidPasswordAndDoesNotStoreSession` — Rejet mauvais mot de passe
 - `testLoginRejectsUnknownUser` — Rejet utilisateur inconnu
+- `testRegisterCreatesUserAndStoresSession` — Inscription OK + session
+- `testRegisterRejectsExistingUsername` — Rejet login déjà pris
 - `testLogoutClearsSession` — Logout vide et détruit la session
 - Utilise un store de session en mémoire (mock) pour isoler le service
 
@@ -264,9 +275,33 @@ if ($auth->isAuthenticated()) {
 
 ---
 
+### Handlers login / register
+
+La validation se fait dans les pages (`index.php`, `register.php`). Les handlers ne reçoivent que des DTO déjà validés.
+
+**Fichiers :**
+
+- `src/Application/Services/LoginHandler.php`
+- `src/Application/Services/RegisterHandler.php`
+
+**Contrat :**
+
+- `handle('GET')` → `''` (anonyme) ou `null` (déjà connecté → redirection produits)
+- `handle('POST', $dto)` → message d’erreur HTML, ou `null` (succès → redirection produits)
+
+**Flux page :**
+
+1. `Validation::validateLogin()` / `validateRegister()`
+2. Si erreurs de champs → affichage inline sous chaque input
+3. Sinon → handler + DB ; succès → `header('Location: products.php')`
+
+**Tests :** `LoginHandlerTest.php`, `RegisterHandlerTest.php`
+
+---
+
 ### Interface utilisateur
 
-La page de login permet aux utilisateurs de s'authentifier (maquette Figma).
+Pages d’authentification alignées sur la maquette Figma, plus une landing produits après succès.
 
 **Maquette Figma (lecture seule) :**
 
@@ -274,42 +309,54 @@ La page de login permet aux utilisateurs de s'authentifier (maquette Figma).
 
 **Fichiers :**
 
-- `public/index.php` — Page de login (session + feedback)
-- `public/register.php` — Page d’inscription (username, email, password)
+- `public/index.php` — Login (validation champs + feedback serveur)
+- `public/register.php` — Inscription (username, email, password, confirmation)
+- `public/products.php` — Landing post-auth (placeholder catalogue + logout)
 - `public/styles.css` — Point d’entrée CSS (`@import`)
 - `public/styles/base.css` — Tokens + layout
-- `public/styles/header.css` — Titre Login
-- `public/styles/form.css` — Champs / labels
+- `public/styles/header.css` — Titre auth
+- `public/styles/form.css` — Champs / labels flottants
 - `public/styles/button.css` — Bouton submit + toggle œil
-- `public/styles/tooltip.css` — Tooltip règles password
-- `public/styles/feedback.css` — Alertes succès / erreur
+- `public/styles/tooltip.css` — Tooltip règles password (register)
+- `public/styles/feedback.css` — Alertes succès / erreur globales
+- `public/styles/validation.css` — Erreurs par champ (`field--error`, `field__error`)
 - `public/scripts/password-toggle.js` — Afficher / masquer le mot de passe
 
 **Fonctionnement :**
 
-- Formulaire HTML (labels flottants, tooltip, toggle password)
-- Démarrage de session via `NativeSessionStore`
-- Connexion DB + `Auth::login()` (persistance en session)
-- Messages de feedback (succès / erreur)
-- Contraintes HTML (`required`, `minlength`, `maxlength`) côté client
+- Formulaires HTML avec `novalidate` (validation serveur prioritaire)
+- Erreurs de champ sous chaque input (ARIA `aria-invalid` / `aria-describedby`)
+- Session via `NativeSessionStore`
+- Succès login/register → redirection `products.php`
+- Utilisateur déjà connecté sur login/register → redirection `products.php`
+- Logout depuis `products.php` → `index.php`
 
 **Accès :**
 
 ```
 http://localhost:8080/index.php
+http://localhost:8080/register.php
+http://localhost:8080/products.php
+```
+
+**Live reload (optionnel) :**
+
+```bash
+npx browser-sync start --proxy "localhost:8080" --files "**/*.php, **/*.css"
+# → http://localhost:3000
 ```
 
 ---
 
 ### Validation des entrées
 
-Validation serveur avant l’appel à `Auth::login()`.
+Validation serveur dans les pages, avant l’appel aux handlers / `Auth`.
 
 **Principe (SRP) :**
 
 - Une règle atomique = une classe : `RequiredValidator`, `MinLengthValidator`, `MaxLengthValidator`, `RegexValidator`
-- Un champ = un validateur composé : `UsernameValidator`, `PasswordValidator`
-- `Validation` orchestre et renvoie un `ValidationResult` (+ `LoginRequestDTO` normalisé)
+- Un champ = un validateur composé : `UsernameValidator`, `PasswordValidator`, `LoginPasswordValidator`, `EmailValidator`, `ConfirmPasswordValidator`
+- `Validation` orchestre et renvoie un `ValidationResult` (+ DTO normalisé)
 
 **Fichiers :**
 
@@ -317,17 +364,42 @@ Validation serveur avant l’appel à `Auth::login()`.
 - `src/Application/Services/Validation.php`
 - `src/Application/Services/ValidationResult.php`
 
-**Règles password :** 8–72 caractères, majuscule, minuscule, chiffre, caractère spécial.
+**Login (`validateLogin`) :** username requis + password requis / max 72.  
+Pas de règles de complexité au login (un mot de passe faible doit plutôt produire « Invalid username or password » via `Auth`).
 
-**Inscription :** `validateRegister()` + `EmailValidator` + confirmation password ; `Auth::register()` crée un compte `client` et ouvre la session.
+**Register (`validateRegister`) :** email + confirmation ; password 8–72 caractères avec majuscule, minuscule, chiffre et caractère spécial.
 
 **Migration requise :** `database/migrations/002_fix_users_unique_constraints.sql` (login/email uniques, plusieurs users par type de compte).
 
-**Test unitaire :** `tests/unit/service/ValidationServiceTest.php`, `RegisterHandlerTest.php`, tests `Auth::register`
+**Test unitaire :** `ValidationServiceTest.php`, `RegisterHandlerTest.php`, `AuthServiceTest` (`register`)
 
 ```bash
 ./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
+./vendor/bin/phpunit tests/unit/service/LoginHandlerTest.php
+./vendor/bin/phpunit tests/unit/service/RegisterHandlerTest.php
 ```
+
+---
+
+### Back-office (en cours)
+
+Zone d’administration **séparée** du front client (pas le même login que `index.php`).
+
+**Décisions (étape actuelle) :**
+
+| Sujet | Choix |
+|-------|--------|
+| Accès | Compte `admin` uniquement |
+| Périmètre métier | Gestion des **produits** (pour l’instant) |
+| Entrée | Zone dédiée sous `public/admin/` (login admin distinct) |
+
+**Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
+
+**Prochaines étapes prévues (branche `feature/admin`) :**
+
+1. Auth admin : rôle en session + garde `requireAdmin`
+2. Pages `public/admin/` (login + dashboard)
+3. Modèle / DAO / CRUD produits côté admin
 
 ---
 
@@ -390,8 +462,9 @@ docker-compose up -d
 # Validation
 ./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
 
-# Flux login (LoginHandler)
+# Flux login / register
 ./vendor/bin/phpunit tests/unit/service/LoginHandlerTest.php
+./vendor/bin/phpunit tests/unit/service/RegisterHandlerTest.php
 
 # DAO utilisateurs
 ./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
@@ -411,18 +484,22 @@ src/
 │       └── User.php                         → Entité User
 ├── Application/
 │   ├── DTO/
-│   │   └── LoginRequestDTO.php              → DTO de login
+│   │   ├── LoginRequestDTO.php              → DTO de login
+│   │   └── RegisterRequestDTO.php           → DTO d’inscription
 │   ├── Services/
 │   │   ├── Auth.php                         → Auth + AuthInterface (session)
-│   │   ├── LoginHandler.php                 → Flux login → feedback HTML
-│   │   ├── RegisterHandler.php              → Flux inscription → feedback HTML
+│   │   ├── LoginHandler.php                 → Auth login → erreur HTML ou redirect
+│   │   ├── RegisterHandler.php              → Auth register → erreur HTML ou redirect
 │   │   ├── Validation.php                   → Orchestration validation login/register
-│   │   └── ValidationResult.php             → Erreurs + DTO normalisé
+│   │   └── ValidationResult.php             → Erreurs champs + DTO normalisé
 │   └── Validation/
 │       ├── ValidatorInterface.php           → Contrat règle atomique
 │       ├── Required / Min / Max / Regex     → Règles
 │       ├── UsernameValidator.php            → Champ username
-│       ├── PasswordValidator.php            → Champ password
+│       ├── PasswordValidator.php            → Password register (complexité)
+│       ├── LoginPasswordValidator.php       → Password login (requis + max)
+│       ├── EmailValidator.php               → Email register
+│       ├── ConfirmPasswordValidator.php     → Confirmation password
 │       └── FieldResult.php                  → Résultat par champ
 └── Infrastructure/
     ├── Http/
@@ -431,20 +508,22 @@ src/
     └── Persistence/
         └── DAO/
             ├── UserDAO.php                  → UserRepository + Interface
-            └── NullUserRepository.php       → Repo no-op (GET / validation)
+            └── NullUserRepository.php       → Repo no-op (GET anonyme)
 
 config/
 └── database.php                             → Connexion à la base de données
 
 database/
 └── migrations/
-    └── 001_create_users_table.sql           → Tables compte + user
+    ├── 001_create_users_table.sql           → Tables compte + user
+    └── 002_fix_users_unique_constraints.sql → Login/email uniques
 
 public/
-├── index.php                                → Page de login (+ session)
+├── index.php                                → Page de login
 ├── register.php                             → Page d’inscription
+├── products.php                             → Landing post-auth + logout
 ├── styles.css                               → Imports CSS
-├── styles/                                  → base, header, form, button, tooltip, feedback
+├── styles/                                  → base, header, form, button, tooltip, feedback, validation
 └── scripts/
     └── password-toggle.js                   → Toggle visibilité password
 
@@ -461,8 +540,9 @@ tests/
     ├── http/
     │   └── NativeSessionStoreTest.php       → Session PHP sécurisée
     └── service/
-        ├── AuthServiceTest.php              → Auth / session user_id
-        ├── LoginHandlerTest.php             → Flux login + feedback
+        ├── AuthServiceTest.php              → Auth login/register/session
+        ├── LoginHandlerTest.php             → Flux login + redirect
+        ├── RegisterHandlerTest.php          → Flux register + redirect
         └── ValidationServiceTest.php        → Validateurs + Validation
 
 docs/
@@ -473,12 +553,30 @@ docs/
 
 ## Branches
 
-- `develop` — Intégration (sessions, UI, validation, tests)
-- `feature/session` — Sessions PHP (fusionnée)
-- `feature/ui` — UI login Figma (fusionnée)
-- `feature/validator` — Validateurs (fusionnée)
-- `feature/test` — Couverture de tests (fusionnée dans `develop`)
-- `feature/register` — Page d’inscription (branche courante)
+Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
+
+### Branches distantes (`origin`)
+
+| Branche | Rôle |
+|---------|------|
+| `origin/main` | Branche principale publiée |
+| `origin/develop` | Branche d’intégration publiée |
+
+### Branches locales
+
+| Branche | Suivi distant |
+|---------|---------------|
+| `main` | `origin/main` |
+| `develop` | `origin/develop` |
+| `feature/admin` | aucune (locale uniquement) — back-office admin / produits |
+| `feature/register` | aucune (locale uniquement) |
+| `feature/login` | aucune (locale uniquement) |
+| `feature/session` | aucune (locale uniquement) |
+| `feature/ui` | aucune (locale uniquement) |
+| `feature/validator` | aucune (locale uniquement) |
+| `feature/test` | aucune (locale uniquement) |
+
+> Les branches `feature/*` n’ont pas de correspondance distante sur `origin`.
 
 ---
 

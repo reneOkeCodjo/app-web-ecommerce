@@ -38,25 +38,31 @@ $products = (new InMemoryProductRepository())->findAll();
             </div>
 
             <p class="auth-switch">
-                Mock catalog (in-memory). Real DAO comes later.
+                Mock catalog (in-memory) shaped like table <code>produit</code>.
             </p>
 
             <div class="admin-table-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th scope="col">ID</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Price</th>
-                            <th scope="col">Stock</th>
+                            <th scope="col">id_p</th>
+                            <th scope="col">type_p</th>
+                            <th scope="col">designation_p</th>
+                            <th scope="col">prix_ht</th>
+                            <th scope="col">date_in</th>
+                            <th scope="col">times_in</th>
+                            <th scope="col">stock_p</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($products as $product): ?>
                             <tr>
                                 <td><?= htmlspecialchars((string) $product->getId(), ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars($product->getName(), ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars(number_format($product->getPrice(), 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($product->getDesignation(), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars(number_format($product->getPrixHt(), 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($product->getDateIn(), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($product->getTimesIn(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars((string) $product->getStock(), ENT_QUOTES, 'UTF-8') ?></td>
                             </tr>
                         <?php endforeach; ?>

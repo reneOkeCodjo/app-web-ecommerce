@@ -5,39 +5,59 @@ declare(strict_types=1);
 namespace App\Domain\Model;
 
 /**
- * Product entity (domain). Fields are provisional until the real products DAO lands.
+ * Product entity aligned with table `produit`
+ * (id_p, type_p, designation_p, prix_ht, date_in, times_in, stock_p).
  */
 final class Product
 {
     public function __construct(
         private int $id,
-        private string $name,
-        private string $description,
-        private float $price,
-        private int $stock
+        private string $type,
+        private string $designation,
+        private float $prixHt,
+        private string $dateIn,
+        private string $timesIn,
+        private int $stock = 0
     ) {
     }
 
+    /** Column: id_p */
     public function getId(): int
     {
         return $this->id;
     }
 
-    public function getName(): string
+    /** Column: type_p */
+    public function getType(): string
     {
-        return $this->name;
+        return $this->type;
     }
 
-    public function getDescription(): string
+    /** Column: designation_p */
+    public function getDesignation(): string
     {
-        return $this->description;
+        return $this->designation;
     }
 
-    public function getPrice(): float
+    /** Column: prix_ht */
+    public function getPrixHt(): float
     {
-        return $this->price;
+        return $this->prixHt;
     }
 
+    /** Column: date_in (Y-m-d) */
+    public function getDateIn(): string
+    {
+        return $this->dateIn;
+    }
+
+    /** Column: times_in (Y-m-d H:i:s) */
+    public function getTimesIn(): string
+    {
+        return $this->timesIn;
+    }
+
+    /** Column: stock_p */
     public function getStock(): int
     {
         return $this->stock;

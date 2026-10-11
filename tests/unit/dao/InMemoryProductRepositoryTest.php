@@ -18,42 +18,49 @@ final class InMemoryProductRepositoryTest extends TestCase
         $products = $repository->findAll();
 
         self::assertCount(3, $products);
-        self::assertSame('Classic Tee', $products[0]->getName());
+        self::assertSame('Classic Tee', $products[0]->getDesignation());
+        self::assertSame('vetement', $products[0]->getType());
+        self::assertSame(19.99, $products[0]->getPrixHt());
     }
 
     public function testFindByIdReturnsProductOrNull(): void
     {
         $repository = new InMemoryProductRepository([
-            new Product(5, 'Mug', 'Ceramic mug', 9.99, 10),
+            new Product(5, 'vaisselle', 'Mug', 9.99, '2026-04-01', '2026-04-01 08:00:00', 10),
         ]);
 
         self::assertNotNull($repository->findById(5));
         self::assertNull($repository->findById(99));
     }
 
-    public function testCreateAssignsIncrementingIds(): void
+    public function testCreateAssignsIncrementingIdsAndTimesIn(): void
     {
         $repository = new InMemoryProductRepository([]);
 
-        $first = $repository->create('A', 'desc A', 1.0, 1);
-        $second = $repository->create('B', 'desc B', 2.0, 2);
+        $first = $repository->create('vetement', 'A', 1.0, '2026-05-01', 1);
+        $second = $repository->create('accessoire', 'B', 2.0, '2026-05-02', 2);
 
         self::assertSame(1, $first->getId());
         self::assertSame(2, $second->getId());
+        self::assertSame('vetement', $first->getType());
+        self::assertNotSame('', $first->getTimesIn());
         self::assertCount(2, $repository->findAll());
     }
 
     public function testUpdateReplacesExistingProduct(): void
     {
         $repository = new InMemoryProductRepository([
-            new Product(1, 'Old', 'old desc', 5.0, 3),
+            new Product(1, 'old', 'Old', 5.0, '2026-01-01', '2026-01-01 00:00:00', 3),
         ]);
 
-        $updated = $repository->update(new Product(1, 'New', 'new desc', 8.5, 7));
+        $updated = $repository->update(
+            new Product(1, 'new', 'New', 8.5, '2026-06-01', '2026-06-01 12:00:00', 7)
+        );
 
-        self::assertSame('New', $updated->getName());
-        self::assertSame('New', $repository->findById(1)?->getName());
-        self::assertSame(8.5, $repository->findById(1)?->getPrice());
+        self::assertSame('New', $updated->getDesignation());
+        self::assertSame('New', $repository->findById(1)?->getDesignation());
+        self::assertSame(8.5, $repository->findById(1)?->getPrixHt());
+        self::assertSame(7, $repository->findById(1)?->getStock());
     }
 
     public function testUpdateThrowsWhenMissing(): void
@@ -61,13 +68,15 @@ final class InMemoryProductRepositoryTest extends TestCase
         $repository = new InMemoryProductRepository([]);
 
         $this->expectException(InvalidArgumentException::class);
-        $repository->update(new Product(1, 'Missing', '', 1.0, 0));
+        $repository->update(
+            new Product(1, 'x', 'Missing', 1.0, '2026-01-01', '2026-01-01 00:00:00', 0)
+        );
     }
 
     public function testDeleteRemovesProduct(): void
     {
         $repository = new InMemoryProductRepository([
-            new Product(1, 'Gone', '', 1.0, 0),
+            new Product(1, 'x', 'Gone', 1.0, '2026-01-01', '2026-01-01 00:00:00', 0),
         ]);
 
         self::assertTrue($repository->delete(1));

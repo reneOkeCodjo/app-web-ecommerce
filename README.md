@@ -426,7 +426,7 @@ http://localhost:8080/admin/products.php
 
 - Contrat : `ProductRepositoryInterface`
 - Mock : `InMemoryProductRepository` (données en mémoire, seed démo)
-- Entité : `Product` (champs provisoires : id, name, description, price, stock)
+- Entité : `Product` alignée sur `produit` (`id_p`, `type_p`, `designation_p`, `prix_ht`, `date_in`, `times_in`, `stock_p`)
 - Page liste : `public/admin/products.php` (derrière `isAdmin()`)
 - Le vrai DAO produits sera branché plus tard (hors de ce dépôt pour l’instant)
 

@@ -7,7 +7,7 @@ namespace App\Infrastructure\Persistence\DAO;
 use App\Domain\Model\Product;
 
 /**
- * Product persistence contract.
+ * Product persistence contract (table `produit`).
  * Real SQL DAO will implement this later; admin uses a mock for now.
  */
 interface ProductRepositoryInterface
@@ -20,10 +20,11 @@ interface ProductRepositoryInterface
     public function findById(int $id): ?Product;
 
     public function create(
-        string $name,
-        string $description,
-        float $price,
-        int $stock
+        string $type,
+        string $designation,
+        float $prixHt,
+        string $dateIn,
+        int $stock = 0
     ): Product;
 
     public function update(Product $product): Product;

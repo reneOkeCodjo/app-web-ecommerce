@@ -9,7 +9,7 @@ use InvalidArgumentException;
 
 /**
  * In-memory mock product repository (no database).
- * Replace with a real ProductDAO when the products table is ready.
+ * Shape matches table `produit`. Replace with a real DAO later.
  */
 final class InMemoryProductRepository implements ProductRepositoryInterface
 {
@@ -25,9 +25,33 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
     {
         if ($seed === null) {
             $seed = [
-                new Product(1, 'Classic Tee', 'Soft cotton t-shirt', 19.99, 40),
-                new Product(2, 'Cap', 'Adjustable everyday cap', 14.50, 25),
-                new Product(3, 'Tote Bag', 'Canvas tote bag', 24.00, 15),
+                new Product(
+                    1,
+                    'vetement',
+                    'Classic Tee',
+                    19.99,
+                    '2026-01-10',
+                    '2026-01-10 09:15:00',
+                    40
+                ),
+                new Product(
+                    2,
+                    'accessoire',
+                    'Cap',
+                    14.50,
+                    '2026-02-01',
+                    '2026-02-01 14:30:00',
+                    25
+                ),
+                new Product(
+                    3,
+                    'accessoire',
+                    'Tote Bag',
+                    24.00,
+                    '2026-03-12',
+                    '2026-03-12 11:05:00',
+                    15
+                ),
             ];
         }
 
@@ -48,12 +72,21 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
     }
 
     public function create(
-        string $name,
-        string $description,
-        float $price,
-        int $stock
+        string $type,
+        string $designation,
+        float $prixHt,
+        string $dateIn,
+        int $stock = 0
     ): Product {
-        $product = new Product($this->nextId++, $name, $description, $price, $stock);
+        $product = new Product(
+            $this->nextId++,
+            $type,
+            $designation,
+            $prixHt,
+            $dateIn,
+            date('Y-m-d H:i:s'),
+            $stock
+        );
         $this->products[$product->getId()] = $product;
 
         return $product;

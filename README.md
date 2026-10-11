@@ -405,16 +405,14 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 - `AdminLoginHandler` : refuse les non-admin (logout + message)
 - Pages : `public/admin/login.php`, `public/admin/index.php` (garde admin + logout)
 
-**Créer un admin en base** (hors dépôt — ne pas committer de mot de passe) :
+**Admin seed (migration MySQL) :**
 
-```sql
--- Remplacer le hash par le résultat PHP de password_hash('VotreMotDePasse', PASSWORD_DEFAULT)
-INSERT INTO users (user_login, user_mail, user_password, user_compte_id)
-SELECT 'admin', 'admin@example.com', '$2y$…', compte_id
-FROM compte
-WHERE compte_type = 'admin'
-LIMIT 1;
-```
+- Fichier : `database/migrations/003_seed_admin_user.sql`
+- Exécuté au premier init Docker (`./database/migrations` → `/docker-entrypoint-initdb.d`)
+- Identifiants de dev : login `admin` / mot de passe `Admin123!`
+- Ne recrée pas l’utilisateur s’il existe déjà (`NOT EXISTS`)
+
+> Si le volume MySQL existait déjà, recréer la base ou appliquer la migration à la main.
 
 **Accès :**
 
@@ -558,7 +556,8 @@ config/
 database/
 └── migrations/
     ├── 001_create_users_table.sql           → Tables compte + user
-    └── 002_fix_users_unique_constraints.sql → Login/email uniques
+    ├── 002_fix_users_unique_constraints.sql → Login/email uniques
+    └── 003_seed_admin_user.sql              → Seed admin (admin / Admin123!)
 
 public/
 ├── index.php                                → Page de login client

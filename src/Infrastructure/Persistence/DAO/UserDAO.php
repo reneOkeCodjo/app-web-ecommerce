@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\DAO;
 
 use App\Domain\Model\User;
+use RuntimeException;
 
 interface UserRepositoryInterface
 {
@@ -13,6 +14,21 @@ interface UserRepositoryInterface
      * @return User|null The user if found, or null if not found.
      */
     public function findByUsername(string $username): ?User;
+
+    /**
+     * Find a user by their email.
+     */
+    public function findByEmail(string $email): ?User;
+
+    /**
+     * Create a user and return the persisted entity.
+     */
+    public function create(string $username, string $email, string $passwordHash, int $compteId): User;
+
+    /**
+     * Resolve a compte id by type (e.g. client).
+     */
+    public function findCompteIdByType(string $type): ?int;
 }
 
 /**
@@ -31,7 +47,6 @@ class UserRepository implements UserRepositoryInterface
 
     public function findByUsername(string $username): ?User
     {
-
         $stmt = $this->connection->prepare(
             'SELECT user_id AS id, user_login AS username, user_mail AS email, user_password AS password
              FROM users
@@ -41,6 +56,27 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute();
         $result = $stmt->get_result();
 
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        return new User((int) $row['id'], $row['username'], $row['email'], $row['password']);
+    }
+
+    public function findByEmail(string $email): ?User
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT user_id AS id, user_login AS username, user_mail AS email, user_password AS password
+             FROM users
+             WHERE user_mail = ?'
+        );
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
             $stmt->close();
@@ -50,6 +86,45 @@ class UserRepository implements UserRepositoryInterface
         $row = $result->fetch_assoc();
         $stmt->close();
 
-        return new User($row['id'], $row['username'], $row['email'], $row['password']);
+        return new User((int) $row['id'], $row['username'], $row['email'], $row['password']);
+    }
+
+    public function create(string $username, string $email, string $passwordHash, int $compteId): User
+    {
+        $stmt = $this->connection->prepare(
+            'INSERT INTO users (user_login, user_mail, user_password, user_compte_id)
+             VALUES (?, ?, ?, ?)'
+        );
+        $stmt->bind_param('sssi', $username, $email, $passwordHash, $compteId);
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new RuntimeException('Unable to create user.');
+        }
+
+        $id = (int) $stmt->insert_id;
+        $stmt->close();
+
+        return new User($id, $username, $email, $passwordHash);
+    }
+
+    public function findCompteIdByType(string $type): ?int
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT compte_id FROM compte WHERE compte_type = ? LIMIT 1'
+        );
+        $stmt->bind_param('s', $type);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        return (int) $row['compte_id'];
     }
 }

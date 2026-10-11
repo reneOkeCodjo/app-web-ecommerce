@@ -376,11 +376,17 @@ docker-compose up -d
 # Tous les tests
 ./vendor/bin/phpunit
 
-# Auth (sessions)
+# Auth (sessions + user_id edge cases)
 ./vendor/bin/phpunit tests/unit/service/AuthServiceTest.php
 
-# Validation (branche feature/validator)
+# Session store natif
+./vendor/bin/phpunit tests/unit/http/NativeSessionStoreTest.php
+
+# Validation
 ./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
+
+# Flux login (LoginHandler)
+./vendor/bin/phpunit tests/unit/service/LoginHandlerTest.php
 
 # DAO utilisateurs
 ./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
@@ -403,6 +409,7 @@ src/
 │   │   └── LoginRequestDTO.php              → DTO de login
 │   ├── Services/
 │   │   ├── Auth.php                         → Auth + AuthInterface (session)
+│   │   ├── LoginHandler.php                 → Flux login → feedback HTML
 │   │   ├── Validation.php                   → Orchestration validation login
 │   │   └── ValidationResult.php             → Erreurs + DTO normalisé
 │   └── Validation/
@@ -417,7 +424,8 @@ src/
     │   └── NativeSessionStore.php           → session_start() sécurisé
     └── Persistence/
         └── DAO/
-            └── UserDAO.php                  → UserRepository + Interface
+            ├── UserDAO.php                  → UserRepository + Interface
+            └── NullUserRepository.php       → Repo no-op (GET / validation)
 
 config/
 └── database.php                             → Connexion à la base de données
@@ -443,9 +451,12 @@ tests/
 │   └── db/
 │       └── DatabaseConnectionTest.php       → Test connexion DB
 └── unit/
+    ├── http/
+    │   └── NativeSessionStoreTest.php       → Session PHP sécurisée
     └── service/
-        ├── AuthServiceTest.php              → Test unitaire Auth / session
-        └── ValidationServiceTest.php        → Test validateurs + Validation
+        ├── AuthServiceTest.php              → Auth / session user_id
+        ├── LoginHandlerTest.php             → Flux login + feedback
+        └── ValidationServiceTest.php        → Validateurs + Validation
 
 docs/
 └── bugs.md                                  → Journal des bugs connus / corrigés
@@ -455,10 +466,11 @@ docs/
 
 ## Branches
 
-- `develop` — Intégration (sessions + auth)
-- `feature/session` — Sessions PHP (fusionnée dans `develop`)
-- `feature/ui` — UI login Figma
-- `feature/validator` — Validateurs + tests (branche courante)
+- `develop` — Intégration (sessions, UI, validation, tests)
+- `feature/session` — Sessions PHP (fusionnée)
+- `feature/ui` — UI login Figma (fusionnée)
+- `feature/validator` — Validateurs (fusionnée)
+- `feature/test` — Couverture de tests (fusionnée progressivement dans `develop`)
 
 ---
 

@@ -15,6 +15,13 @@ interface AuthInterface
     public function login(string $username, string $password): bool;
 
     /**
+     * Register a new user and persist auth state in the PHP session.
+     *
+     * @return bool True if registration succeeded, false otherwise.
+     */
+    public function register(string $username, string $email, string $password): bool;
+
+    /**
      * Clear auth data and destroy the session.
      */
     public function logout(): void;
@@ -56,6 +63,36 @@ class Auth implements AuthInterface
         if (!password_verify($password, $user->getPassword())) {
             return false;
         }
+
+        $this->session->regenerate();
+        $this->session->set(self::SESSION_USER_ID, $user->getId());
+
+        return true;
+    }
+
+    /**
+     * Register a new client user and persist auth state in the session.
+     *
+     * @return bool True when registration succeeded, false when username/email already exists
+     *              or the client compte type is missing.
+     */
+    public function register(string $username, string $email, string $password): bool
+    {
+        if ($this->userRepository->findByUsername($username) !== null) {
+            return false;
+        }
+
+        if ($this->userRepository->findByEmail($email) !== null) {
+            return false;
+        }
+
+        $compteId = $this->userRepository->findCompteIdByType('client');
+        if ($compteId === null) {
+            return false;
+        }
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $user = $this->userRepository->create($username, $email, $passwordHash, $compteId);
 
         $this->session->regenerate();
         $this->session->set(self::SESSION_USER_ID, $user->getId());

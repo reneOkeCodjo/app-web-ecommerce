@@ -67,6 +67,46 @@ final class AuthServiceTest extends TestCase
         self::assertTrue($session->wasDestroyed());
     }
 
+    public function testRegisterCreatesUserAndStoresSession(): void
+    {
+        $repository = $this->createMock(UserRepositoryInterface::class);
+        $repository->method('findByUsername')->willReturn(null);
+        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('findCompteIdByType')->with('client')->willReturn(1);
+        $repository->method('create')->willReturnCallback(
+            function (string $username, string $email, string $hash, int $compteId): User {
+                self::assertSame('new_user', $username);
+                self::assertSame('new@example.com', $email);
+                self::assertSame(1, $compteId);
+                self::assertTrue(password_verify('Password1!', $hash));
+
+                return new User(10, $username, $email, $hash);
+            }
+        );
+
+        $session = $this->memorySession();
+        $auth = new Auth($repository, $session);
+
+        self::assertTrue($auth->register('new_user', 'new@example.com', 'Password1!'));
+        self::assertTrue($auth->isAuthenticated());
+        self::assertSame(10, $auth->getAuthenticatedUserId());
+        self::assertTrue($session->wasRegenerated());
+    }
+
+    public function testRegisterRejectsExistingUsername(): void
+    {
+        $repository = $this->createMock(UserRepositoryInterface::class);
+        $repository->method('findByUsername')->willReturn(
+            new User(1, 'taken', 'taken@example.com', 'hash')
+        );
+        $repository->expects(self::never())->method('create');
+
+        $auth = new Auth($repository, $this->memorySession());
+
+        self::assertFalse($auth->register('taken', 'free@example.com', 'Password1!'));
+        self::assertFalse($auth->isAuthenticated());
+    }
+
     public function testGetAuthenticatedUserIdReturnsNullWhenMissing(): void
     {
         $auth = new Auth(

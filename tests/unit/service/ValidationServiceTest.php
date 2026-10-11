@@ -115,8 +115,8 @@ final class ValidationServiceTest extends TestCase
         $result = $this->validation->validateLogin('   ', '');
 
         self::assertFalse($result->isValid());
-        self::assertSame('Username is required.', $result->getError('username'));
-        self::assertSame('Password is required.', $result->getError('password'));
+        self::assertSame('Username is required.', $result->getError('user_login'));
+        self::assertSame('Password is required.', $result->getError('user_password'));
         self::assertNull($result->getLoginRequest());
     }
 
@@ -125,8 +125,8 @@ final class ValidationServiceTest extends TestCase
         $result = $this->validation->validateLogin(['alice'], ['secret']);
 
         self::assertFalse($result->isValid());
-        self::assertSame('Username is required.', $result->getError('username'));
-        self::assertSame('Password is required.', $result->getError('password'));
+        self::assertSame('Username is required.', $result->getError('user_login'));
+        self::assertSame('Password is required.', $result->getError('user_password'));
     }
 
     public function testRejectsShortPassword(): void
@@ -136,7 +136,7 @@ final class ValidationServiceTest extends TestCase
         self::assertFalse($result->isValid());
         self::assertSame(
             'Password must be at least 8 characters.',
-            $result->getError('password')
+            $result->getError('user_password')
         );
     }
 
@@ -148,7 +148,7 @@ final class ValidationServiceTest extends TestCase
         self::assertFalse($result->isValid());
         self::assertSame(
             'Username must be at most 255 characters.',
-            $result->getError('username')
+            $result->getError('user_login')
         );
     }
 
@@ -160,7 +160,7 @@ final class ValidationServiceTest extends TestCase
         self::assertFalse($result->isValid());
         self::assertSame(
             'Password must be at most 72 characters.',
-            $result->getError('password')
+            $result->getError('user_password')
         );
     }
 
@@ -169,5 +169,38 @@ final class ValidationServiceTest extends TestCase
         $result = $this->validation->validateLogin('', '');
 
         self::assertSame('Username is required.', $result->getFirstError());
+    }
+
+    public function testValidRegisterReturnsNormalizedDto(): void
+    {
+        $result = $this->validation->validateRegister(
+            '  alice  ',
+            '  alice@example.com  ',
+            'Password1!',
+            'Password1!'
+        );
+
+        self::assertTrue($result->isValid());
+        self::assertNotNull($result->getRegisterRequest());
+        self::assertSame('alice', $result->getRegisterRequest()->getUsername());
+        self::assertSame('alice@example.com', $result->getRegisterRequest()->getEmail());
+        self::assertSame('Password1!', $result->getRegisterRequest()->getPassword());
+    }
+
+    public function testRegisterRejectsInvalidEmailAndPasswordMismatch(): void
+    {
+        $result = $this->validation->validateRegister(
+            'alice',
+            'not-an-email',
+            'Password1!',
+            'Password2!'
+        );
+
+        self::assertFalse($result->isValid());
+        self::assertSame('Email format is invalid.', $result->getError('user_mail'));
+        self::assertSame(
+            'Password confirmation does not match.',
+            $result->getError('password_confirm')
+        );
     }
 }

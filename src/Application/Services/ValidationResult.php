@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Services;
 
 use App\Application\DTO\LoginRequestDTO;
+use App\Application\DTO\RegisterRequestDTO;
 
 /**
  * Outcome of a validation pass: field errors and optional normalized data.
@@ -16,7 +17,8 @@ final class ValidationResult
      */
     public function __construct(
         private array $errors = [],
-        private ?LoginRequestDTO $loginRequest = null
+        private ?LoginRequestDTO $loginRequest = null,
+        private ?RegisterRequestDTO $registerRequest = null
     ) {
     }
 
@@ -50,5 +52,10 @@ final class ValidationResult
     public function getLoginRequest(): ?LoginRequestDTO
     {
         return $this->loginRequest;
+    }
+
+    public function getRegisterRequest(): ?RegisterRequestDTO
+    {
+        return $this->registerRequest;
     }
 }

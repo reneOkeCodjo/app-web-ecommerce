@@ -17,8 +17,8 @@ $connection = null;
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $validationResult = $validation->validateLogin(
-            $_POST['username'] ?? null,
-            $_POST['password'] ?? null
+            $_POST['user_login'] ?? null,
+            $_POST['user_password'] ?? null
         );
 
         if (!$validationResult->isValid()) {
@@ -79,7 +79,7 @@ try {
                         placeholder="Enter your username"
                         type="text"
                         id="username"
-                        name="username"
+                        name="user_login"
                         autocomplete="username"
                         maxlength="255"
                         required
@@ -91,43 +91,18 @@ try {
                         placeholder="Enter your password"
                         type="password"
                         id="password"
-                        name="password"
+                        name="user_password"
                         autocomplete="current-password"
-                        aria-describedby="password-hint"
                         minlength="8"
                         maxlength="72"
                         required
                     />
                     <label for="password">Password</label>
-                    <span class="tooltip">
-                        <button
-                            type="button"
-                            class="tooltip__trigger"
-                            id="password-tooltip"
-                            aria-label="Password requirements"
-                            aria-describedby="password-hint"
-                        >
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
-                                <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M10 9v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                <circle cx="10" cy="6.25" r="0.9" fill="currentColor" aria-hidden="true"/>
-                            </svg>
-                        </button>
-                        <span class="tooltip__content" id="password-hint" role="tooltip">
-                            <ul>
-                                <li>At least 8 characters</li>
-                                <li>At most 72 characters</li>
-                                <li>At least one uppercase letter</li>
-                                <li>At least one lowercase letter</li>
-                                <li>At least one number</li>
-                                <li>At least one special character</li>
-                            </ul>
-                        </span>
-                    </span>
                     <button
                         type="button"
                         class="password-toggle"
                         id="password-toggle"
+                        data-password-target="password"
                         aria-label="Show password"
                         aria-controls="password"
                         aria-pressed="false"
@@ -147,6 +122,10 @@ try {
                 <div class="login-form__actions">
                     <button type="submit">Log in</button>
                 </div>
+                <p class="auth-switch">
+                    No account yet?
+                    <a href="register.php">Register</a>
+                </p>
             </form>
         </section>
     </main>

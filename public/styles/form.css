@@ -56,8 +56,12 @@
 }
 
 .field--password input {
-  padding-right: 4.25rem;
+  padding-right: 2.25rem;
   padding-left: 0;
+}
+
+.login-form .field--password:has(.tooltip) input {
+  padding-right: 4.25rem;
 }
 
 .login-form__actions {
@@ -65,4 +69,22 @@
   justify-content: center;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+
+.auth-switch {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.auth-switch a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.auth-switch a:hover,
+.auth-switch a:focus-visible {
+  text-decoration: underline;
+  outline: none;
 }

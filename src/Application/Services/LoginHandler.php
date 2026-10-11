@@ -49,8 +49,8 @@ final class LoginHandler
     private function handlePost(array $post): string
     {
         $validationResult = $this->validation->validateLogin(
-            $post['username'] ?? null,
-            $post['password'] ?? null
+            $post['user_login'] ?? null,
+            $post['user_password'] ?? null
         );
 
         if (!$validationResult->isValid()) {

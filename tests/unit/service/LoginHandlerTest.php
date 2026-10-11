@@ -33,8 +33,8 @@ final class LoginHandlerTest extends TestCase
         );
 
         $html = $handler->handle('POST', [
-            'username' => 'alice',
-            'password' => 'short',
+            'user_login' => 'alice',
+            'user_password' => 'short',
         ]);
 
         self::assertStringContainsString('feedback-error', $html);
@@ -50,8 +50,8 @@ final class LoginHandlerTest extends TestCase
         );
 
         $html = $handler->handle('POST', [
-            'username' => 'alice',
-            'password' => 'Password1!',
+            'user_login' => 'alice',
+            'user_password' => 'Password1!',
         ]);
 
         self::assertStringContainsString('feedback-success', $html);
@@ -67,8 +67,8 @@ final class LoginHandlerTest extends TestCase
         );
 
         $html = $handler->handle('POST', [
-            'username' => 'alice',
-            'password' => 'WrongPass1!',
+            'user_login' => 'alice',
+            'user_password' => 'WrongPass1!',
         ]);
 
         self::assertStringContainsString('feedback-error', $html);
@@ -89,8 +89,8 @@ final class LoginHandlerTest extends TestCase
         );
 
         $html = $handler->handle('POST', [
-            'username' => 'alice',
-            'password' => 'Password1!',
+            'user_login' => 'alice',
+            'user_password' => 'Password1!',
         ]);
 
         self::assertStringContainsString('feedback-error', $html);

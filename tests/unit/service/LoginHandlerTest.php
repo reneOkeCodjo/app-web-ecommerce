@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Service;
 
+use App\Application\DTO\LoginRequestDTO;
 use App\Application\Services\LoginHandler;
-use App\Application\Services\Validation;
 use App\Domain\Model\User;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
@@ -14,63 +14,34 @@ use RuntimeException;
 
 final class LoginHandlerTest extends TestCase
 {
-    private Validation $validation;
-
-    protected function setUp(): void
-    {
-        $this->validation = new Validation();
-    }
-
-    public function testPostRejectsInvalidPasswordWithoutCallingRepository(): void
-    {
-        $repository = $this->createMock(UserRepositoryInterface::class);
-        $repository->expects(self::never())->method('findByUsername');
-
-        $handler = new LoginHandler(
-            $this->validation,
-            $repository,
-            $this->memorySession()
-        );
-
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_password' => 'short',
-        ]);
-
-        self::assertStringContainsString('feedback-error', $html);
-        self::assertStringContainsString('Password must be at least 8 characters.', $html);
-    }
-
-    public function testPostLoginSuccess(): void
+    public function testPostLoginSuccessSignalsProductsRedirect(): void
     {
         $handler = new LoginHandler(
-            $this->validation,
             $this->repositoryReturningUser('Password1!'),
             $this->memorySession()
         );
 
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_password' => 'Password1!',
-        ]);
+        $result = $handler->handle(
+            'POST',
+            new LoginRequestDTO('alice', 'Password1!')
+        );
 
-        self::assertStringContainsString('feedback-success', $html);
-        self::assertStringContainsString('Login successful!', $html);
+        self::assertNull($result);
     }
 
     public function testPostLoginRejectsInvalidCredentials(): void
     {
         $handler = new LoginHandler(
-            $this->validation,
             $this->repositoryReturningUser('Password1!'),
             $this->memorySession()
         );
 
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_password' => 'WrongPass1!',
-        ]);
+        $html = $handler->handle(
+            'POST',
+            new LoginRequestDTO('alice', 'WrongPass1!')
+        );
 
+        self::assertIsString($html);
         self::assertStringContainsString('feedback-error', $html);
         self::assertStringContainsString('Invalid username or password.', $html);
     }
@@ -82,17 +53,14 @@ final class LoginHandlerTest extends TestCase
             new RuntimeException('db down')
         );
 
-        $handler = new LoginHandler(
-            $this->validation,
-            $repository,
-            $this->memorySession()
+        $handler = new LoginHandler($repository, $this->memorySession());
+
+        $html = $handler->handle(
+            'POST',
+            new LoginRequestDTO('alice', 'Password1!')
         );
 
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_password' => 'Password1!',
-        ]);
-
+        self::assertIsString($html);
         self::assertStringContainsString('feedback-error', $html);
         self::assertStringContainsString(
             'An error occurred during login. Please try again later.',
@@ -100,32 +68,27 @@ final class LoginHandlerTest extends TestCase
         );
     }
 
-    public function testGetShowsAlreadySignedInWhenAuthenticated(): void
+    public function testGetRedirectsWhenAuthenticated(): void
     {
         $session = $this->memorySession();
         $session->set('user_id', 9);
 
         $handler = new LoginHandler(
-            $this->validation,
             $this->createMock(UserRepositoryInterface::class),
             $session
         );
 
-        $html = $handler->handle('GET', []);
-
-        self::assertStringContainsString('feedback-success', $html);
-        self::assertStringContainsString('You are already signed in.', $html);
+        self::assertNull($handler->handle('GET'));
     }
 
     public function testGetReturnsEmptyFeedbackWhenAnonymous(): void
     {
         $handler = new LoginHandler(
-            $this->validation,
             $this->createMock(UserRepositoryInterface::class),
             $this->memorySession()
         );
 
-        self::assertSame('', $handler->handle('GET', []));
+        self::assertSame('', $handler->handle('GET'));
     }
 
     private function repositoryReturningUser(string $password): UserRepositoryInterface

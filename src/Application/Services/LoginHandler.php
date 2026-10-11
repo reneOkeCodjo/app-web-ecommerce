@@ -4,83 +4,68 @@ declare(strict_types=1);
 
 namespace App\Application\Services;
 
+use App\Application\DTO\LoginRequestDTO;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
+use InvalidArgumentException;
 use Throwable;
 
 /**
- * Handles login page request flow and returns feedback HTML.
+ * Handles login auth flow after presentation-layer validation.
+ * Returns null when the caller should redirect to the products page.
  */
 final class LoginHandler
 {
     public function __construct(
-        private ValidationInterface $validation,
         private UserRepositoryInterface $userRepository,
         private SessionStoreInterface $session
     ) {
     }
 
     /**
-     * @param array<string, mixed> $post
+     * @return string|null Feedback HTML, or null to redirect to products.
      */
-    public function handle(string $method, array $post): string
+    public function handle(string $method, ?LoginRequestDTO $request = null): ?string
     {
-        if (strtoupper($method) !== 'POST') {
-            return $this->handleGet();
-        }
-
-        return $this->handlePost($post);
+        return match (strtoupper($method)) {
+            'POST' => $this->handlePost($request),
+            'GET' => $this->handleGet(),
+            default => throw new InvalidArgumentException('Invalid HTTP method.'),
+        };
     }
 
-    private function handleGet(): string
+    private function handleGet(): ?string
     {
         $auth = new Auth($this->userRepository, $this->session);
 
         if ($auth->isAuthenticated()) {
-            return $this->success('You are already signed in.');
+            return null;
         }
 
         return '';
     }
 
-    /**
-     * @param array<string, mixed> $post
-     */
-    private function handlePost(array $post): string
+    private function handlePost(?LoginRequestDTO $request): ?string
     {
-        $validationResult = $this->validation->validateLogin(
-            $post['user_login'] ?? null,
-            $post['user_password'] ?? null
-        );
-
-        if (!$validationResult->isValid()) {
-            return $this->error((string) $validationResult->getFirstError());
+        if ($request === null) {
+            throw new InvalidArgumentException('Login request is required for POST.');
         }
-
-        $loginDto = $validationResult->getLoginRequest();
 
         try {
             $auth = new Auth($this->userRepository, $this->session);
             $authenticated = $auth->login(
-                $loginDto->getUsername(),
-                $loginDto->getPassword()
+                $request->getUsername(),
+                $request->getPassword()
             );
 
             if ($authenticated) {
-                return $this->success('Login successful!');
+                return null;
             }
 
             return $this->error('Invalid username or password.');
         } catch (Throwable $e) {
             return $this->error('An error occurred during login. Please try again later.');
         }
-    }
-
-    private function success(string $message): string
-    {
-        return '<p class="feedback feedback-success" role="status">'
-            . htmlspecialchars($message, ENT_QUOTES, 'UTF-8')
-            . '</p>';
     }
 
     private function error(string $message): string

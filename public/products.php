@@ -1,0 +1,59 @@
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Application\Services\Auth;
+use App\Infrastructure\Http\NativeSessionStore;
+use App\Infrastructure\Persistence\DAO\NullUserRepository;
+
+$session = new NativeSessionStore();
+$auth = new Auth(new NullUserRepository(), $session);
+
+if (!$auth->isAuthenticated()) {
+    header('Location: index.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logout') {
+    $auth->logout();
+    header('Location: index.php');
+    exit;
+}
+
+$userId = $auth->getAuthenticatedUserId();
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <section class="auth-card" aria-labelledby="products-title">
+            <div class="auth-header">
+                <h1 id="products-title" class="auth-title">
+                    <span class="auth-title__text">Products</span>
+                </h1>
+            </div>
+            <p class="auth-switch">
+                Signed in as user #<?= htmlspecialchars((string) $userId, ENT_QUOTES, 'UTF-8') ?>.
+            </p>
+            <p class="auth-switch">
+                The product catalog is coming soon.
+            </p>
+            <form method="post" class="login-form">
+                <input type="hidden" name="action" value="logout">
+                <div class="login-form__actions">
+                    <button type="submit">Log out</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+
+</html>

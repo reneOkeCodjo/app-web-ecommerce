@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Service;
 
+use App\Application\DTO\RegisterRequestDTO;
 use App\Application\Services\RegisterHandler;
-use App\Application\Services\Validation;
 use App\Domain\Model\User;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
@@ -13,36 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class RegisterHandlerTest extends TestCase
 {
-    private Validation $validation;
-
-    protected function setUp(): void
-    {
-        $this->validation = new Validation();
-    }
-
-    public function testPostRejectsInvalidPayloadWithoutRepositoryCreate(): void
-    {
-        $repository = $this->createMock(UserRepositoryInterface::class);
-        $repository->expects(self::never())->method('create');
-
-        $handler = new RegisterHandler(
-            $this->validation,
-            $repository,
-            $this->memorySession()
-        );
-
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_mail' => 'bad',
-            'user_password' => 'Password1!',
-            'password_confirm' => 'Password1!',
-        ]);
-
-        self::assertStringContainsString('feedback-error', $html);
-        self::assertStringContainsString('Email format is invalid.', $html);
-    }
-
-    public function testPostRegisterSuccess(): void
+    public function testPostRegisterSuccessSignalsProductsRedirect(): void
     {
         $repository = $this->createMock(UserRepositoryInterface::class);
         $repository->method('findByUsername')->willReturn(null);
@@ -52,21 +23,14 @@ final class RegisterHandlerTest extends TestCase
             new User(3, 'alice', 'alice@example.com', 'hash')
         );
 
-        $handler = new RegisterHandler(
-            $this->validation,
-            $repository,
-            $this->memorySession()
+        $handler = new RegisterHandler($repository, $this->memorySession());
+
+        $result = $handler->handle(
+            'POST',
+            new RegisterRequestDTO('alice', 'alice@example.com', 'Password1!')
         );
 
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_mail' => 'alice@example.com',
-            'user_password' => 'Password1!',
-            'password_confirm' => 'Password1!',
-        ]);
-
-        self::assertStringContainsString('feedback-success', $html);
-        self::assertStringContainsString('Account created successfully!', $html);
+        self::assertNull($result);
     }
 
     public function testPostRegisterRejectsTakenAccount(): void
@@ -76,37 +40,29 @@ final class RegisterHandlerTest extends TestCase
             new User(1, 'alice', 'alice@example.com', 'hash')
         );
 
-        $handler = new RegisterHandler(
-            $this->validation,
-            $repository,
-            $this->memorySession()
+        $handler = new RegisterHandler($repository, $this->memorySession());
+
+        $html = $handler->handle(
+            'POST',
+            new RegisterRequestDTO('alice', 'alice@example.com', 'Password1!')
         );
 
-        $html = $handler->handle('POST', [
-            'user_login' => 'alice',
-            'user_mail' => 'alice@example.com',
-            'user_password' => 'Password1!',
-            'password_confirm' => 'Password1!',
-        ]);
-
+        self::assertIsString($html);
         self::assertStringContainsString('feedback-error', $html);
         self::assertStringContainsString('Username or email is already taken.', $html);
     }
 
-    public function testGetShowsAlreadySignedInWhenAuthenticated(): void
+    public function testGetRedirectsWhenAuthenticated(): void
     {
         $session = $this->memorySession();
         $session->set('user_id', 4);
 
         $handler = new RegisterHandler(
-            $this->validation,
             $this->createMock(UserRepositoryInterface::class),
             $session
         );
 
-        $html = $handler->handle('GET', []);
-
-        self::assertStringContainsString('You are already signed in.', $html);
+        self::assertNull($handler->handle('GET'));
     }
 
     private function memorySession(): SessionStoreInterface

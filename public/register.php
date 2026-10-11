@@ -12,24 +12,55 @@ use Db_config\Database;
 $session = new NativeSessionStore();
 $validation = new Validation();
 $feedbackHtml = '';
+$fieldErrors = [];
+$values = [
+    'user_login' => '',
+    'user_mail' => '',
+];
 $connection = null;
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $connection = Database::connect();
-        $handler = new RegisterHandler(
-            $validation,
-            new UserRepository($connection),
-            $session
+        $values['user_login'] = is_string($_POST['user_login'] ?? null)
+            ? $_POST['user_login']
+            : '';
+        $values['user_mail'] = is_string($_POST['user_mail'] ?? null)
+            ? $_POST['user_mail']
+            : '';
+
+        $validationResult = $validation->validateRegister(
+            $_POST['user_login'] ?? null,
+            $_POST['user_mail'] ?? null,
+            $_POST['user_password'] ?? null,
+            $_POST['password_confirm'] ?? null
         );
-        $feedbackHtml = $handler->handle('POST', $_POST);
+
+        if (!$validationResult->isValid()) {
+            $fieldErrors = $validationResult->getErrors();
+        } else {
+            $connection = Database::connect();
+            $handler = new RegisterHandler(
+                new UserRepository($connection),
+                $session
+            );
+            $feedbackHtml = $handler->handle('POST', $validationResult->getRegisterRequest());
+
+            if ($feedbackHtml === null) {
+                header('Location: products.php');
+                exit;
+            }
+        }
     } else {
         $handler = new RegisterHandler(
-            $validation,
             new NullUserRepository(),
             $session
         );
-        $feedbackHtml = $handler->handle('GET', []);
+        $feedbackHtml = $handler->handle('GET');
+
+        if ($feedbackHtml === null) {
+            header('Location: products.php');
+            exit;
+        }
     }
 } catch (Exception $e) {
     $feedbackHtml = '<p class="feedback feedback-error" role="alert">Database connection failed. Please try again later.</p>';
@@ -38,6 +69,11 @@ try {
         $connection->close();
     }
 }
+
+$userLoginError = $fieldErrors['user_login'] ?? null;
+$userMailError = $fieldErrors['user_mail'] ?? null;
+$userPasswordError = $fieldErrors['user_password'] ?? null;
+$passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,9 +94,9 @@ try {
                 </h1>
             </div>
 
-            <form method="post" class="login-form">
+            <form method="post" class="login-form" novalidate>
                 <?= $feedbackHtml ?>
-                <div class="field">
+                <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                     <input
                         placeholder="Enter your username"
                         type="text"
@@ -68,11 +104,21 @@ try {
                         name="user_login"
                         autocomplete="username"
                         maxlength="255"
+                        value="<?= htmlspecialchars($values['user_login'], ENT_QUOTES, 'UTF-8') ?>"
+                        <?php if ($userLoginError): ?>
+                            aria-invalid="true"
+                            aria-describedby="user_login-error"
+                        <?php endif; ?>
                         required
                     />
                     <label for="username">Username</label>
+                    <?php if ($userLoginError): ?>
+                        <p class="field__error" id="user_login-error" role="alert">
+                            <?= htmlspecialchars($userLoginError, ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
-                <div class="field">
+                <div class="field<?= $userMailError ? ' field--error' : '' ?>">
                     <input
                         placeholder="Enter your email"
                         type="email"
@@ -80,20 +126,33 @@ try {
                         name="user_mail"
                         autocomplete="email"
                         maxlength="255"
+                        value="<?= htmlspecialchars($values['user_mail'], ENT_QUOTES, 'UTF-8') ?>"
+                        <?php if ($userMailError): ?>
+                            aria-invalid="true"
+                            aria-describedby="user_mail-error"
+                        <?php endif; ?>
                         required
                     />
                     <label for="email">Email</label>
+                    <?php if ($userMailError): ?>
+                        <p class="field__error" id="user_mail-error" role="alert">
+                            <?= htmlspecialchars($userMailError, ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
-                <div class="field field--password">
+                <div class="field field--password<?= $userPasswordError ? ' field--error' : '' ?>">
                     <input
                         placeholder="Enter your password"
                         type="password"
                         id="password"
                         name="user_password"
                         autocomplete="new-password"
-                        aria-describedby="password-hint"
+                        aria-describedby="password-hint<?= $userPasswordError ? ' user_password-error' : '' ?>"
                         minlength="8"
                         maxlength="72"
+                        <?php if ($userPasswordError): ?>
+                            aria-invalid="true"
+                        <?php endif; ?>
                         required
                     />
                     <label for="password">Password</label>
@@ -140,16 +199,23 @@ try {
                             <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"/>
                         </svg>
                     </button>
+                    <?php if ($userPasswordError): ?>
+                        <p class="field__error" id="user_password-error" role="alert">
+                            <?= htmlspecialchars($userPasswordError, ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
-                <div class="field field--password">
+                <div class="field field--password<?= $passwordConfirmError ? ' field--error' : '' ?>">
                     <input
                         placeholder="Confirm your password"
                         type="password"
                         id="password_confirm"
                         name="password_confirm"
                         autocomplete="new-password"
-                        minlength="8"
-                        maxlength="72"
+                        <?php if ($passwordConfirmError): ?>
+                            aria-invalid="true"
+                            aria-describedby="password_confirm-error"
+                        <?php endif; ?>
                         required
                     />
                     <label for="password_confirm">Confirm password</label>
@@ -172,6 +238,11 @@ try {
                             <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"/>
                         </svg>
                     </button>
+                    <?php if ($passwordConfirmError): ?>
+                        <p class="field__error" id="password_confirm-error" role="alert">
+                            <?= htmlspecialchars($passwordConfirmError, ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
                 <div class="login-form__actions">
                     <button type="submit">Create account</button>

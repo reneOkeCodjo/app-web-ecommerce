@@ -422,19 +422,19 @@ http://localhost:8080/admin/index.php
 http://localhost:8080/admin/products.php
 ```
 
-**Produits (mock, sans DAO SQL) :**
+**Produits (mock UI, sans DAO SQL) :**
 
 - Contrat : `ProductRepositoryInterface`
-- Mock : `InMemoryProductRepository` (données en mémoire, seed démo)
+- Mocks : `InMemoryProductRepository` + `SessionProductRepository` (CRUD de démo en session)
 - Entité : `Product` alignée sur `produit` (`id_p`, `type_p`, `designation_p`, `prix_ht`, `date_in`, `times_in`, `stock_p`)
-- Page liste : `public/admin/products.php` (derrière `isAdmin()`)
-- Le vrai DAO produits sera branché plus tard (hors de ce dépôt pour l’instant)
+- Page : `public/admin/products.php` — liste, bouton Add, clic ligne → popup détails (Update / Remove), popup formulaire
+- Scripts/styles : `public/scripts/admin-products.js`, `public/styles/admin.css`
+- Le vrai DAO produits remplacera le mock plus tard
 
 ```bash
 ./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
+./vendor/bin/phpunit tests/unit/dao/SessionProductRepositoryTest.php
 ```
-
-**Prochaine étape :** brancher le DAO réel quand il sera disponible, ou CRUD admin sur le mock.
 
 ---
 
@@ -548,7 +548,8 @@ src/
             ├── UserDAO.php                  → UserRepository + Interface
             ├── NullUserRepository.php       → Repo no-op (GET anonyme)
             ├── ProductRepositoryInterface.php → Contrat produits
-            └── InMemoryProductRepository.php → Mock produits (pas de SQL)
+            ├── InMemoryProductRepository.php → Mock produits (pas de SQL)
+            └── SessionProductRepository.php → Mock CRUD en session
 
 config/
 └── database.php                             → Connexion à la base de données
@@ -616,7 +617,8 @@ Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
 |---------|---------------|
 | `main` | `origin/main` |
 | `develop` | `origin/develop` |
-| `feature/admin` | aucune (locale uniquement) — back-office admin / produits |
+| `feature/admin` | aucune (locale uniquement) — back-office admin (fusionnée dans `develop`) |
+| `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (mock) |
 | `feature/register` | aucune (locale uniquement) |
 | `feature/login` | aucune (locale uniquement) |
 | `feature/session` | aucune (locale uniquement) |

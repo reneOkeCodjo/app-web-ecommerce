@@ -2,6 +2,12 @@
   max-width: 52rem;
 }
 
+.admin-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.75rem 0 0.25rem;
+}
+
 .admin-table-wrap {
   width: 100%;
   margin: 1.25rem 0;
@@ -29,4 +35,167 @@
 
 .admin-table td {
   color: var(--color-text);
+}
+
+.admin-table__empty {
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.admin-table__row {
+  cursor: pointer;
+}
+
+.admin-table__row:hover,
+.admin-table__row:focus-visible {
+  background-color: rgb(255 255 255 / 6%);
+  outline: none;
+}
+
+.admin-btn {
+  appearance: none;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.25rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin-btn:hover,
+.admin-btn:focus-visible {
+  background-color: var(--color-accent);
+  outline: none;
+}
+
+.admin-btn--ghost {
+  border-color: rgb(255 255 255 / 28%);
+}
+
+.admin-btn--ghost:hover,
+.admin-btn--ghost:focus-visible {
+  background-color: rgb(255 255 255 / 10%);
+}
+
+.admin-btn--danger {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.admin-btn--danger:hover,
+.admin-btn--danger:focus-visible {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.admin-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+  max-width: calc(100vw - 2rem);
+}
+
+.admin-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.admin-dialog__panel {
+  width: min(28rem, 100%);
+  margin: auto;
+  padding: 1.25rem 1.35rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.45rem;
+  background: #1c1c21;
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 45%);
+}
+
+.admin-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-dialog__header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.admin-dialog__close {
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-dialog__close:hover,
+.admin-dialog__close:focus-visible {
+  color: var(--color-text);
+  outline: none;
+}
+
+.admin-dialog__details {
+  margin: 0 0 1.25rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.admin-dialog__details > div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.admin-dialog__details dt {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.admin-dialog__details dd {
+  margin: 0;
+}
+
+.admin-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.admin-inline-form {
+  display: inline;
+  margin: 0;
+}
+
+.admin-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-form__field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.admin-form__field input {
+  border: 0;
+  border-bottom: 1px solid var(--color-muted);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.4rem 0;
+  font: inherit;
+}
+
+.admin-form__field input:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }

@@ -8,6 +8,7 @@ use App\Application\DTO\LoginRequestDTO;
 use App\Application\DTO\RegisterRequestDTO;
 use App\Application\Validation\ConfirmPasswordValidator;
 use App\Application\Validation\EmailValidator;
+use App\Application\Validation\LoginPasswordValidator;
 use App\Application\Validation\PasswordValidator;
 use App\Application\Validation\UsernameValidator;
 
@@ -45,6 +46,7 @@ class Validation implements ValidationInterface
     public function __construct(
         private UsernameValidator $usernameValidator = new UsernameValidator(),
         private PasswordValidator $passwordValidator = new PasswordValidator(),
+        private LoginPasswordValidator $loginPasswordValidator = new LoginPasswordValidator(),
         private EmailValidator $emailValidator = new EmailValidator(),
         private ConfirmPasswordValidator $confirmPasswordValidator = new ConfirmPasswordValidator()
     ) {
@@ -65,7 +67,7 @@ class Validation implements ValidationInterface
             $errors['user_login'] = (string) $usernameResult->getError();
         }
 
-        $passwordResult = $this->passwordValidator->validate($password);
+        $passwordResult = $this->loginPasswordValidator->validate($password);
         if (!$passwordResult->isValid()) {
             $errors['user_password'] = (string) $passwordResult->getError();
         }

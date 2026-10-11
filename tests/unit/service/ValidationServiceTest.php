@@ -101,13 +101,13 @@ final class ValidationServiceTest extends TestCase
 
     public function testValidLoginReturnsNormalizedDto(): void
     {
-        $result = $this->validation->validateLogin('  alice  ', 'Password1!');
+        $result = $this->validation->validateLogin('  alice  ', 'simple');
 
         self::assertTrue($result->isValid());
         self::assertSame([], $result->getErrors());
         self::assertNotNull($result->getLoginRequest());
         self::assertSame('alice', $result->getLoginRequest()->getUsername());
-        self::assertSame('Password1!', $result->getLoginRequest()->getPassword());
+        self::assertSame('simple', $result->getLoginRequest()->getPassword());
     }
 
     public function testRejectsEmptyUsernameAndPassword(): void
@@ -129,15 +129,13 @@ final class ValidationServiceTest extends TestCase
         self::assertSame('Password is required.', $result->getError('user_password'));
     }
 
-    public function testRejectsShortPassword(): void
+    public function testLoginDoesNotEnforcePasswordComplexity(): void
     {
         $result = $this->validation->validateLogin('alice', 'short');
 
-        self::assertFalse($result->isValid());
-        self::assertSame(
-            'Password must be at least 8 characters.',
-            $result->getError('user_password')
-        );
+        self::assertTrue($result->isValid());
+        self::assertNotNull($result->getLoginRequest());
+        self::assertSame('short', $result->getLoginRequest()->getPassword());
     }
 
     public function testRejectsOversizedUsername(): void

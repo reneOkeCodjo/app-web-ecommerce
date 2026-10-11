@@ -67,6 +67,60 @@ final class AuthServiceTest extends TestCase
         self::assertTrue($session->wasDestroyed());
     }
 
+    public function testGetAuthenticatedUserIdReturnsNullWhenMissing(): void
+    {
+        $auth = new Auth(
+            $this->createMock(UserRepositoryInterface::class),
+            $this->memorySession()
+        );
+
+        self::assertNull($auth->getAuthenticatedUserId());
+        self::assertFalse($auth->isAuthenticated());
+    }
+
+    public function testGetAuthenticatedUserIdReturnsNullForNonNumericValue(): void
+    {
+        $session = $this->memorySession();
+        $session->set('user_id', 'abc');
+        $auth = new Auth(
+            $this->createMock(UserRepositoryInterface::class),
+            $session
+        );
+
+        self::assertNull($auth->getAuthenticatedUserId());
+        self::assertFalse($auth->isAuthenticated());
+    }
+
+    public function testGetAuthenticatedUserIdReturnsNullForZeroOrNegative(): void
+    {
+        $session = $this->memorySession();
+        $auth = new Auth(
+            $this->createMock(UserRepositoryInterface::class),
+            $session
+        );
+
+        $session->set('user_id', 0);
+        self::assertNull($auth->getAuthenticatedUserId());
+        self::assertFalse($auth->isAuthenticated());
+
+        $session->set('user_id', -3);
+        self::assertNull($auth->getAuthenticatedUserId());
+        self::assertFalse($auth->isAuthenticated());
+    }
+
+    public function testGetAuthenticatedUserIdAcceptsNumericString(): void
+    {
+        $session = $this->memorySession();
+        $session->set('user_id', '42');
+        $auth = new Auth(
+            $this->createMock(UserRepositoryInterface::class),
+            $session
+        );
+
+        self::assertSame(42, $auth->getAuthenticatedUserId());
+        self::assertTrue($auth->isAuthenticated());
+    }
+
     private function repositoryReturningUser(string $password): UserRepositoryInterface
     {
         $repository = $this->createMock(UserRepositoryInterface::class);

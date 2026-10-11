@@ -217,11 +217,13 @@ Le service `Auth` gère l'authentification des utilisateurs et persiste l'état 
 
 **Interface :** `AuthInterface`
 
-- `login(string $username, string $password): bool` — Authentifie et enregistre `user_id` en session
+- `login(string $username, string $password): bool` — Authentifie et enregistre `user_id` + `compte_type` en session
 - `register(string $username, string $email, string $password): bool` — Crée un user `client` et ouvre la session
-- `logout(): void` — Supprime `user_id` et détruit la session
+- `logout(): void` — Supprime l’auth et détruit la session
 - `isAuthenticated(): bool` — Indique si un `user_id` valide est présent en session
+- `isAdmin(): bool` — `true` si authentifié avec `compte_type === 'admin'`
 - `getAuthenticatedUserId(): ?int` — Retourne l'id utilisateur en session, ou `null`
+- `getCompteType(): ?string` — Type de compte en session (`client`, `admin`, …)
 
 **Implémentation :** `Auth`
 
@@ -229,7 +231,7 @@ Le service `Auth` gère l'authentification des utilisateurs et persiste l'état 
 - Méthodes d’instance (plus de `static`)
 - Login : `findByUsername()` + `password_verify()`
 - Register : unicité login/email, `findCompteIdByType('client')`, `password_hash()`, `create()`
-- En cas de succès : `session_regenerate_id(true)` puis `$_SESSION['user_id'] = …`
+- En cas de succès : `session_regenerate_id(true)` puis `user_id` + `compte_type` en session
 - En cas d'échec : ne touche pas à la session
 
 **DTO :**
@@ -385,21 +387,43 @@ Pas de règles de complexité au login (un mot de passe faible doit plutôt prod
 
 Zone d’administration **séparée** du front client (pas le même login que `index.php`).
 
-**Décisions (étape actuelle) :**
+**Décisions :**
 
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (pour l’instant) |
-| Entrée | Zone dédiée sous `public/admin/` (login admin distinct) |
+| Périmètre métier | Gestion des **produits** (étape suivante) |
+| Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
 
-**Prochaines étapes prévues (branche `feature/admin`) :**
+**Fait (étape auth admin) :**
 
-1. Auth admin : rôle en session + garde `requireAdmin`
-2. Pages `public/admin/` (login + dashboard)
-3. Modèle / DAO / CRUD produits côté admin
+- `User` expose `compte_type` ; le DAO joint `compte` au login
+- Session : `user_id` + `compte_type`
+- `Auth::isAdmin()` / `getCompteType()`
+- `AdminLoginHandler` : refuse les non-admin (logout + message)
+- Pages : `public/admin/login.php`, `public/admin/index.php` (garde admin + logout)
+
+**Créer un admin en base** (hors dépôt — ne pas committer de mot de passe) :
+
+```sql
+-- Remplacer le hash par le résultat PHP de password_hash('VotreMotDePasse', PASSWORD_DEFAULT)
+INSERT INTO users (user_login, user_mail, user_password, user_compte_id)
+SELECT 'admin', 'admin@example.com', '$2y$…', compte_id
+FROM compte
+WHERE compte_type = 'admin'
+LIMIT 1;
+```
+
+**Accès :**
+
+```
+http://localhost:8080/admin/login.php
+http://localhost:8080/admin/index.php
+```
+
+**Prochaine étape :** modèle / DAO / CRUD produits côté admin.
 
 ---
 
@@ -415,6 +439,7 @@ L'entité `User` représente un utilisateur dans le système.
 - `username` (string) — Nom d'utilisateur
 - `email` (string) — Adresse email
 - `password` (string) — Mot de passe (hashé)
+- `compteType` (string) — Type de compte (`client`, `admin`, `vendeur`, …)
 
 **Utilisation :**
 
@@ -481,14 +506,15 @@ docker-compose up -d
 src/
 ├── Domain/
 │   └── Model/
-│       └── User.php                         → Entité User
+│       └── User.php                         → Entité User (+ compte_type)
 ├── Application/
 │   ├── DTO/
 │   │   ├── LoginRequestDTO.php              → DTO de login
 │   │   └── RegisterRequestDTO.php           → DTO d’inscription
 │   ├── Services/
-│   │   ├── Auth.php                         → Auth + AuthInterface (session)
-│   │   ├── LoginHandler.php                 → Auth login → erreur HTML ou redirect
+│   │   ├── Auth.php                         → Auth + AuthInterface (session + rôle)
+│   │   ├── LoginHandler.php                 → Auth login front → redirect produits
+│   │   ├── AdminLoginHandler.php            → Auth login admin → redirect dashboard
 │   │   ├── RegisterHandler.php              → Auth register → erreur HTML ou redirect
 │   │   ├── Validation.php                   → Orchestration validation login/register
 │   │   └── ValidationResult.php             → Erreurs champs + DTO normalisé
@@ -519,9 +545,12 @@ database/
     └── 002_fix_users_unique_constraints.sql → Login/email uniques
 
 public/
-├── index.php                                → Page de login
+├── index.php                                → Page de login client
 ├── register.php                             → Page d’inscription
 ├── products.php                             → Landing post-auth + logout
+├── admin/
+│   ├── login.php                            → Login admin (séparé)
+│   └── index.php                            → Dashboard admin (garde isAdmin)
 ├── styles.css                               → Imports CSS
 ├── styles/                                  → base, header, form, button, tooltip, feedback, validation
 └── scripts/
@@ -540,8 +569,9 @@ tests/
     ├── http/
     │   └── NativeSessionStoreTest.php       → Session PHP sécurisée
     └── service/
-        ├── AuthServiceTest.php              → Auth login/register/session
+        ├── AuthServiceTest.php              → Auth login/register/session/rôle
         ├── LoginHandlerTest.php             → Flux login + redirect
+        ├── AdminLoginHandlerTest.php        → Flux login admin + garde
         ├── RegisterHandlerTest.php          → Flux register + redirect
         └── ValidationServiceTest.php        → Validateurs + Validation
 

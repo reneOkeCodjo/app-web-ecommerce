@@ -22,9 +22,24 @@ final class AuthServiceTest extends TestCase
 
         self::assertTrue($auth->login('auth_test_user', $password));
         self::assertTrue($auth->isAuthenticated());
+        self::assertFalse($auth->isAdmin());
         self::assertSame(1, $auth->getAuthenticatedUserId());
+        self::assertSame('client', $auth->getCompteType());
         self::assertSame(1, $session->get('user_id'));
+        self::assertSame('client', $session->get('compte_type'));
         self::assertTrue($session->wasRegenerated());
+    }
+
+    public function testLoginStoresAdminCompteType(): void
+    {
+        $password = 'correct-password';
+        $repository = $this->repositoryReturningUser($password, 'admin');
+        $session = $this->memorySession();
+        $auth = new Auth($repository, $session);
+
+        self::assertTrue($auth->login('auth_test_user', $password));
+        self::assertTrue($auth->isAdmin());
+        self::assertSame('admin', $auth->getCompteType());
     }
 
     public function testLoginRejectsInvalidPasswordAndDoesNotStoreSession(): void
@@ -80,7 +95,7 @@ final class AuthServiceTest extends TestCase
                 self::assertSame(1, $compteId);
                 self::assertTrue(password_verify('Password1!', $hash));
 
-                return new User(10, $username, $email, $hash);
+                return new User(10, $username, $email, $hash, 'client');
             }
         );
 
@@ -89,7 +104,9 @@ final class AuthServiceTest extends TestCase
 
         self::assertTrue($auth->register('new_user', 'new@example.com', 'Password1!'));
         self::assertTrue($auth->isAuthenticated());
+        self::assertFalse($auth->isAdmin());
         self::assertSame(10, $auth->getAuthenticatedUserId());
+        self::assertSame('client', $session->get('compte_type'));
         self::assertTrue($session->wasRegenerated());
     }
 
@@ -161,15 +178,18 @@ final class AuthServiceTest extends TestCase
         self::assertTrue($auth->isAuthenticated());
     }
 
-    private function repositoryReturningUser(string $password): UserRepositoryInterface
-    {
+    private function repositoryReturningUser(
+        string $password,
+        string $compteType = 'client'
+    ): UserRepositoryInterface {
         $repository = $this->createMock(UserRepositoryInterface::class);
         $repository->method('findByUsername')->willReturn(
             new User(
                 1,
                 'auth_test_user',
                 'auth-test@example.com',
-                password_hash($password, PASSWORD_DEFAULT)
+                password_hash($password, PASSWORD_DEFAULT),
+                $compteType
             )
         );
 

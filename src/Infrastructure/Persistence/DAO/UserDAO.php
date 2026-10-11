@@ -48,9 +48,14 @@ class UserRepository implements UserRepositoryInterface
     public function findByUsername(string $username): ?User
     {
         $stmt = $this->connection->prepare(
-            'SELECT user_id AS id, user_login AS username, user_mail AS email, user_password AS password
-             FROM users
-             WHERE user_login = ?'
+            'SELECT u.user_id AS id,
+                    u.user_login AS username,
+                    u.user_mail AS email,
+                    u.user_password AS password,
+                    c.compte_type AS compte_type
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             WHERE u.user_login = ?'
         );
         $stmt->bind_param('s', $username);
         $stmt->execute();
@@ -64,15 +69,20 @@ class UserRepository implements UserRepositoryInterface
         $row = $result->fetch_assoc();
         $stmt->close();
 
-        return new User((int) $row['id'], $row['username'], $row['email'], $row['password']);
+        return $this->mapRow($row);
     }
 
     public function findByEmail(string $email): ?User
     {
         $stmt = $this->connection->prepare(
-            'SELECT user_id AS id, user_login AS username, user_mail AS email, user_password AS password
-             FROM users
-             WHERE user_mail = ?'
+            'SELECT u.user_id AS id,
+                    u.user_login AS username,
+                    u.user_mail AS email,
+                    u.user_password AS password,
+                    c.compte_type AS compte_type
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             WHERE u.user_mail = ?'
         );
         $stmt->bind_param('s', $email);
         $stmt->execute();
@@ -86,7 +96,7 @@ class UserRepository implements UserRepositoryInterface
         $row = $result->fetch_assoc();
         $stmt->close();
 
-        return new User((int) $row['id'], $row['username'], $row['email'], $row['password']);
+        return $this->mapRow($row);
     }
 
     public function create(string $username, string $email, string $passwordHash, int $compteId): User
@@ -105,7 +115,9 @@ class UserRepository implements UserRepositoryInterface
         $id = (int) $stmt->insert_id;
         $stmt->close();
 
-        return new User($id, $username, $email, $passwordHash);
+        $compteType = $this->findCompteTypeById($compteId) ?? 'client';
+
+        return new User($id, $username, $email, $passwordHash, $compteType);
     }
 
     public function findCompteIdByType(string $type): ?int
@@ -126,5 +138,39 @@ class UserRepository implements UserRepositoryInterface
         $stmt->close();
 
         return (int) $row['compte_id'];
+    }
+
+    private function findCompteTypeById(int $compteId): ?string
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT compte_type FROM compte WHERE compte_id = ? LIMIT 1'
+        );
+        $stmt->bind_param('i', $compteId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        return (string) $row['compte_type'];
+    }
+
+    /**
+     * @param array{id: int|string, username: string, email: string, password: string, compte_type: string} $row
+     */
+    private function mapRow(array $row): User
+    {
+        return new User(
+            (int) $row['id'],
+            $row['username'],
+            $row['email'],
+            $row['password'],
+            $row['compte_type']
+        );
     }
 }

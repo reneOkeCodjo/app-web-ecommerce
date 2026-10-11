@@ -45,6 +45,7 @@ final class UserDaoTest extends TestCase
         self::assertSame('dao_test_user', $user->getUsername());
         self::assertSame('dao-test@example.com', $user->getEmail());
         self::assertSame('hashed-password', $user->getPassword());
+        self::assertSame('dao-test', $user->getCompteType());
     }
 
     public function testFindByUsernameReturnsNullForUnknownUser(): void

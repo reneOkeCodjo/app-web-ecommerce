@@ -32,14 +32,26 @@ interface AuthInterface
     public function isAuthenticated(): bool;
 
     /**
+     * Whether the authenticated user has the admin compte type.
+     */
+    public function isAdmin(): bool;
+
+    /**
      * User id from the session, or null if missing/invalid.
      */
     public function getAuthenticatedUserId(): ?int;
+
+    /**
+     * Compte type from the session, or null if missing.
+     */
+    public function getCompteType(): ?string;
 }
 
 class Auth implements AuthInterface
 {
     private const SESSION_USER_ID = 'user_id';
+    private const SESSION_COMPTE_TYPE = 'compte_type';
+    private const COMPTE_TYPE_ADMIN = 'admin';
 
     private UserRepositoryInterface $userRepository;
     private SessionStoreInterface $session;
@@ -64,8 +76,7 @@ class Auth implements AuthInterface
             return false;
         }
 
-        $this->session->regenerate();
-        $this->session->set(self::SESSION_USER_ID, $user->getId());
+        $this->persistAuth($user->getId(), $user->getCompteType());
 
         return true;
     }
@@ -94,8 +105,7 @@ class Auth implements AuthInterface
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $user = $this->userRepository->create($username, $email, $passwordHash, $compteId);
 
-        $this->session->regenerate();
-        $this->session->set(self::SESSION_USER_ID, $user->getId());
+        $this->persistAuth($user->getId(), $user->getCompteType());
 
         return true;
     }
@@ -103,12 +113,19 @@ class Auth implements AuthInterface
     public function logout(): void
     {
         $this->session->remove(self::SESSION_USER_ID);
+        $this->session->remove(self::SESSION_COMPTE_TYPE);
         $this->session->destroy();
     }
 
     public function isAuthenticated(): bool
     {
         return $this->getAuthenticatedUserId() !== null;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->isAuthenticated()
+            && $this->getCompteType() === self::COMPTE_TYPE_ADMIN;
     }
 
     public function getAuthenticatedUserId(): ?int
@@ -122,5 +139,23 @@ class Auth implements AuthInterface
         $userId = (int) $raw;
 
         return $userId > 0 ? $userId : null;
+    }
+
+    public function getCompteType(): ?string
+    {
+        $raw = $this->session->get(self::SESSION_COMPTE_TYPE);
+
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        return $raw;
+    }
+
+    private function persistAuth(int $userId, string $compteType): void
+    {
+        $this->session->regenerate();
+        $this->session->set(self::SESSION_USER_ID, $userId);
+        $this->session->set(self::SESSION_COMPTE_TYPE, $compteType);
     }
 }

@@ -44,7 +44,9 @@ $userId = $auth->getAuthenticatedUserId();
                 Signed in as admin #<?= htmlspecialchars((string) $userId, ENT_QUOTES, 'UTF-8') ?>.
             </p>
             <p class="auth-switch">
-                Product management comes next.
+                <a href="products.php">Manage products</a>
+                <span aria-hidden="true"> · </span>
+                mock data for now
             </p>
             <form method="post" class="login-form">
                 <input type="hidden" name="action" value="logout">

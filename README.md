@@ -392,7 +392,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (étape suivante) |
+| Périmètre métier | Gestion des **produits** (mock en mémoire pour l’instant) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -421,9 +421,22 @@ LIMIT 1;
 ```
 http://localhost:8080/admin/login.php
 http://localhost:8080/admin/index.php
+http://localhost:8080/admin/products.php
 ```
 
-**Prochaine étape :** modèle / DAO / CRUD produits côté admin.
+**Produits (mock, sans DAO SQL) :**
+
+- Contrat : `ProductRepositoryInterface`
+- Mock : `InMemoryProductRepository` (données en mémoire, seed démo)
+- Entité : `Product` (champs provisoires : id, name, description, price, stock)
+- Page liste : `public/admin/products.php` (derrière `isAdmin()`)
+- Le vrai DAO produits sera branché plus tard (hors de ce dépôt pour l’instant)
+
+```bash
+./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
+```
+
+**Prochaine étape :** brancher le DAO réel quand il sera disponible, ou CRUD admin sur le mock.
 
 ---
 
@@ -506,7 +519,8 @@ docker-compose up -d
 src/
 ├── Domain/
 │   └── Model/
-│       └── User.php                         → Entité User (+ compte_type)
+│       ├── User.php                         → Entité User (+ compte_type)
+│       └── Product.php                      → Entité Product (provisoire)
 ├── Application/
 │   ├── DTO/
 │   │   ├── LoginRequestDTO.php              → DTO de login
@@ -534,7 +548,9 @@ src/
     └── Persistence/
         └── DAO/
             ├── UserDAO.php                  → UserRepository + Interface
-            └── NullUserRepository.php       → Repo no-op (GET anonyme)
+            ├── NullUserRepository.php       → Repo no-op (GET anonyme)
+            ├── ProductRepositoryInterface.php → Contrat produits
+            └── InMemoryProductRepository.php → Mock produits (pas de SQL)
 
 config/
 └── database.php                             → Connexion à la base de données
@@ -550,9 +566,10 @@ public/
 ├── products.php                             → Landing post-auth + logout
 ├── admin/
 │   ├── login.php                            → Login admin (séparé)
-│   └── index.php                            → Dashboard admin (garde isAdmin)
+│   ├── index.php                            → Dashboard admin (garde isAdmin)
+│   └── products.php                         → Liste produits (mock)
 ├── styles.css                               → Imports CSS
-├── styles/                                  → base, header, form, button, tooltip, feedback, validation
+├── styles/                                  → base, header, form, button, tooltip, feedback, validation, admin
 └── scripts/
     └── password-toggle.js                   → Toggle visibilité password
 
@@ -566,6 +583,8 @@ tests/
 │   └── db/
 │       └── DatabaseConnectionTest.php       → Test connexion DB
 └── unit/
+    ├── dao/
+    │   └── InMemoryProductRepositoryTest.php → Mock produits
     ├── http/
     │   └── NativeSessionStoreTest.php       → Session PHP sécurisée
     └── service/

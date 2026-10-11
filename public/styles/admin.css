@@ -1,0 +1,32 @@
+.auth-card--wide {
+  max-width: 36rem;
+}
+
+.admin-table-wrap {
+  width: 100%;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid rgb(255 255 255 / 14%);
+  text-align: left;
+}
+
+.admin-table th {
+  color: var(--color-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.admin-table td {
+  color: var(--color-text);
+}

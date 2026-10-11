@@ -275,6 +275,7 @@ La page de login permet aux utilisateurs de s'authentifier (maquette Figma).
 **Fichiers :**
 
 - `public/index.php` — Page de login (session + feedback)
+- `public/register.php` — Page d’inscription (username, email, password)
 - `public/styles.css` — Point d’entrée CSS (`@import`)
 - `public/styles/base.css` — Tokens + layout
 - `public/styles/header.css` — Titre Login
@@ -318,7 +319,11 @@ Validation serveur avant l’appel à `Auth::login()`.
 
 **Règles password :** 8–72 caractères, majuscule, minuscule, chiffre, caractère spécial.
 
-**Test unitaire :** `tests/unit/service/ValidationServiceTest.php`
+**Inscription :** `validateRegister()` + `EmailValidator` + confirmation password ; `Auth::register()` crée un compte `client` et ouvre la session.
+
+**Migration requise :** `database/migrations/002_fix_users_unique_constraints.sql` (login/email uniques, plusieurs users par type de compte).
+
+**Test unitaire :** `tests/unit/service/ValidationServiceTest.php`, `RegisterHandlerTest.php`, tests `Auth::register`
 
 ```bash
 ./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
@@ -410,7 +415,8 @@ src/
 │   ├── Services/
 │   │   ├── Auth.php                         → Auth + AuthInterface (session)
 │   │   ├── LoginHandler.php                 → Flux login → feedback HTML
-│   │   ├── Validation.php                   → Orchestration validation login
+│   │   ├── RegisterHandler.php              → Flux inscription → feedback HTML
+│   │   ├── Validation.php                   → Orchestration validation login/register
 │   │   └── ValidationResult.php             → Erreurs + DTO normalisé
 │   └── Validation/
 │       ├── ValidatorInterface.php           → Contrat règle atomique
@@ -436,6 +442,7 @@ database/
 
 public/
 ├── index.php                                → Page de login (+ session)
+├── register.php                             → Page d’inscription
 ├── styles.css                               → Imports CSS
 ├── styles/                                  → base, header, form, button, tooltip, feedback
 └── scripts/
@@ -470,7 +477,8 @@ docs/
 - `feature/session` — Sessions PHP (fusionnée)
 - `feature/ui` — UI login Figma (fusionnée)
 - `feature/validator` — Validateurs (fusionnée)
-- `feature/test` — Couverture de tests (fusionnée progressivement dans `develop`)
+- `feature/test` — Couverture de tests (fusionnée dans `develop`)
+- `feature/register` — Page d’inscription (branche courante)
 
 ---
 

@@ -1,0 +1,28 @@
+.field--error {
+  margin-bottom: 2.75rem;
+}
+
+.field--error input {
+  border-color: var(--color-error);
+}
+
+.field--error input:focus {
+  border-color: var(--color-error);
+}
+
+.field--error label,
+.field--error input:focus + label,
+.field--error input:not(:placeholder-shown) + label {
+  color: var(--color-error);
+}
+
+.field__error {
+  color: var(--color-error);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+}

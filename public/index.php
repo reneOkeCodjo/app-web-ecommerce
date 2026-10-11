@@ -2,60 +2,54 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Application\Services\Auth;
+use App\Application\Services\LoginHandler;
 use App\Application\Services\Validation;
 use App\Infrastructure\Http\NativeSessionStore;
+use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\UserRepository;
 use Db_config\Database;
 
 $session = new NativeSessionStore();
 $validation = new Validation();
 $feedbackHtml = '';
+$connection = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $validationResult = $validation->validateLogin(
-        $_POST['username'] ?? null,
-        $_POST['password'] ?? null
-    );
-
-    if (!$validationResult->isValid()) {
-        $message = htmlspecialchars(
-            (string) $validationResult->getFirstError(),
-            ENT_QUOTES,
-            'UTF-8'
+try {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $validationResult = $validation->validateLogin(
+            $_POST['username'] ?? null,
+            $_POST['password'] ?? null
         );
-        $feedbackHtml = '<p class="feedback feedback-error" role="alert">' . $message . '</p>';
-    } else {
-        $loginDto = $validationResult->getLoginRequest();
 
-        try {
+        if (!$validationResult->isValid()) {
+            $handler = new LoginHandler(
+                $validation,
+                new NullUserRepository(),
+                $session
+            );
+            $feedbackHtml = $handler->handle('POST', $_POST);
+        } else {
             $connection = Database::connect();
-
-            try {
-                $userRepository = new UserRepository($connection);
-                $auth = new Auth($userRepository, $session);
-                $auth_response = $auth->login($loginDto->getUsername(), $loginDto->getPassword());
-
-                if ($auth_response) {
-                    $feedbackHtml = '<p class="feedback feedback-success" role="status">Login successful!</p>';
-                } else {
-                    $feedbackHtml = '<p class="feedback feedback-error" role="alert">Invalid username or password.</p>';
-                }
-            } catch (Throwable $e) {
-                $feedbackHtml = '<p class="feedback feedback-error" role="alert">An error occurred during login. Please try again later.</p>';
-            }
-        } catch (Exception $e) {
-            $feedbackHtml = '<p class="feedback feedback-error" role="alert">Database connection failed. Please try again later.</p>';
-        } finally {
-            if (isset($connection)) {
-                $connection->close();
-            }
+            $handler = new LoginHandler(
+                $validation,
+                new UserRepository($connection),
+                $session
+            );
+            $feedbackHtml = $handler->handle('POST', $_POST);
         }
+    } else {
+        $handler = new LoginHandler(
+            $validation,
+            new NullUserRepository(),
+            $session
+        );
+        $feedbackHtml = $handler->handle('GET', []);
     }
-} else {
-    $userId = $session->get('user_id');
-    if (is_numeric($userId) && (int) $userId > 0) {
-        $feedbackHtml = '<p class="feedback feedback-success" role="status">You are already signed in.</p>';
+} catch (Exception $e) {
+    $feedbackHtml = '<p class="feedback feedback-error" role="alert">Database connection failed. Please try again later.</p>';
+} finally {
+    if (isset($connection)) {
+        $connection->close();
     }
 }
 ?>

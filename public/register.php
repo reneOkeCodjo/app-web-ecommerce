@@ -118,6 +118,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         </p>
                     <?php endif; ?>
                 </div>
+                <!-- email field -->
                 <div class="field<?= $userMailError ? ' field--error' : '' ?>">
                     <input
                         placeholder="Enter your email"
@@ -126,6 +127,9 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         name="user_mail"
                         autocomplete="email"
                         maxlength="255"
+                        pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                        oninvalid="this.setCustomValidity(this.validity.patternMismatch ? 'Please enter a valid email address' : '')"
+                        oninput="this.setCustomValidity('')"
                         value="<?= htmlspecialchars($values['user_mail'], ENT_QUOTES, 'UTF-8') ?>"
                         <?php if ($userMailError): ?>
                             aria-invalid="true"
@@ -147,6 +151,9 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         id="password"
                         name="user_password"
                         autocomplete="new-password"
+                        pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                        oninvalid="this.setCustomValidity(this.validity.patternMismatch ? 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character' : '')"
+                        oninput="this.setCustomValidity('')"
                         aria-describedby="password-hint<?= $userPasswordError ? ' user_password-error' : '' ?>"
                         minlength="8"
                         maxlength="72"
@@ -186,17 +193,16 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         data-password-target="password"
                         aria-label="Show password"
                         aria-controls="password"
-                        aria-pressed="false"
-                    >
+                        aria-pressed="false">
                         <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
-                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                            <circle cx="12" cy="12" r="3" />
                         </svg>
                         <svg class="password-toggle__icon password-toggle__icon--hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M3 3l18 18"/>
-                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/>
-                            <path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.2 3.2"/>
-                            <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"/>
+                            <path d="M3 3l18 18" />
+                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+                            <path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.2 3.2" />
+                            <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1" />
                         </svg>
                     </button>
                     <?php if ($userPasswordError): ?>
@@ -213,11 +219,10 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         name="password_confirm"
                         autocomplete="new-password"
                         <?php if ($passwordConfirmError): ?>
-                            aria-invalid="true"
-                            aria-describedby="password_confirm-error"
+                        aria-invalid="true"
+                        aria-describedby="password_confirm-error"
                         <?php endif; ?>
-                        required
-                    />
+                        required />
                     <label for="password_confirm">Confirm password</label>
                     <button
                         type="button"
@@ -225,17 +230,16 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                         data-password-target="password_confirm"
                         aria-label="Show password"
                         aria-controls="password_confirm"
-                        aria-pressed="false"
-                    >
+                        aria-pressed="false">
                         <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
-                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                            <circle cx="12" cy="12" r="3" />
                         </svg>
                         <svg class="password-toggle__icon password-toggle__icon--hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M3 3l18 18"/>
-                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/>
-                            <path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.2 3.2"/>
-                            <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"/>
+                            <path d="M3 3l18 18" />
+                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+                            <path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.2 3.2" />
+                            <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1" />
                         </svg>
                     </button>
                     <?php if ($passwordConfirmError): ?>

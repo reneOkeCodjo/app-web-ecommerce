@@ -86,7 +86,7 @@ $userPasswordError = $fieldErrors['user_password'] ?? null;
                 </h1>
             </div>
 
-            <form method="post" class="login-form" novalidate>
+            <form method="post" class="login-form">
                 <?= $feedbackHtml ?>
                 <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                     <input

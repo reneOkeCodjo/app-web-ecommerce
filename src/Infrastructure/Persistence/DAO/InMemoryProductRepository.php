@@ -27,29 +27,56 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
             $seed = [
                 new Product(
                     1,
-                    'vetement',
-                    'Classic Tee',
-                    19.99,
+                    'Smartphone',
+                    'Galaxy A55',
+                    449.99,
                     '2026-01-10',
                     '2026-01-10 09:15:00',
                     40
                 ),
                 new Product(
                     2,
-                    'accessoire',
-                    'Cap',
-                    14.50,
+                    'Ordinateur portable',
+                    'ThinkPad E14',
+                    899.00,
                     '2026-02-01',
                     '2026-02-01 14:30:00',
-                    25
+                    18
                 ),
                 new Product(
                     3,
-                    'accessoire',
-                    'Tote Bag',
-                    24.00,
+                    'Casque audio',
+                    'Sony WH-1000XM5',
+                    349.90,
                     '2026-03-12',
                     '2026-03-12 11:05:00',
+                    25
+                ),
+                new Product(
+                    4,
+                    'Montre connectée',
+                    'Apple Watch SE',
+                    279.00,
+                    '2026-04-05',
+                    '2026-04-05 16:20:00',
+                    30
+                ),
+                new Product(
+                    5,
+                    'Tablette',
+                    'iPad 10',
+                    529.00,
+                    '2026-05-18',
+                    '2026-05-18 10:00:00',
+                    12
+                ),
+                new Product(
+                    6,
+                    'Caméra',
+                    'GoPro Hero 12',
+                    399.00,
+                    '2026-06-02',
+                    '2026-06-02 13:45:00',
                     15
                 ),
             ];

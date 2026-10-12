@@ -13,7 +13,7 @@ use App\Infrastructure\Http\SessionStoreInterface;
  */
 final class SessionProductRepository implements ProductRepositoryInterface
 {
-    private const SESSION_KEY = 'mock_produits';
+    private const SESSION_KEY = 'mock_produits_v2';
 
     private InMemoryProductRepository $inner;
 

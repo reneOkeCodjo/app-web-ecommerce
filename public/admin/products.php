@@ -16,6 +16,11 @@ if (!$auth->isAdmin()) {
     exit;
 }
 
+$categoriesPath = __DIR__ . '/../data/product-categories.json';
+$categoriesRaw = is_file($categoriesPath) ? file_get_contents($categoriesPath) : false;
+$categoriesDecoded = is_string($categoriesRaw) ? json_decode($categoriesRaw, true) : null;
+$categories = is_array($categoriesDecoded) ? $categoriesDecoded : [];
+
 $repository = new SessionProductRepository($session);
 $feedback = '';
 
@@ -77,12 +82,12 @@ $productsJson = array_map(
 );
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin products</title>
+    <title>Produits admin</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
 
@@ -91,19 +96,36 @@ $productsJson = array_map(
         <section class="auth-card auth-card--wide" aria-labelledby="admin-products-title">
             <div class="auth-header">
                 <h1 id="admin-products-title" class="auth-title">
-                    <span class="auth-title__text">Products</span>
+                    <span class="auth-title__text">Produits</span>
                 </h1>
             </div>
 
             <p class="auth-switch">
-                Mock UI on session catalog (table <code>produit</code> shape).
+                Catalogue mock (session), filtré par catégories JSON.
             </p>
 
             <?= $feedback ?>
 
             <div class="admin-toolbar">
+                <label class="admin-filter">
+                    <span>Catégorie</span>
+                    <select id="product-category-filter" aria-label="Filtrer par catégorie">
+                        <option value="">Toutes</option>
+                        <?php foreach ($categories as $category): ?>
+                            <?php
+                            $label = is_array($category) ? (string) ($category['categorie'] ?? '') : '';
+                            if ($label === '') {
+                                continue;
+                            }
+                            ?>
+                            <option value="<?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
                 <button type="button" class="admin-btn" data-open-dialog="product-form-dialog" data-form-mode="create">
-                    Add product
+                    Ajouter
                 </button>
             </div>
 
@@ -111,17 +133,17 @@ $productsJson = array_map(
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th scope="col">id_p</th>
-                            <th scope="col">type_p</th>
-                            <th scope="col">designation_p</th>
-                            <th scope="col">prix_ht</th>
-                            <th scope="col">stock_p</th>
+                            <th scope="col">Id</th>
+                            <th scope="col">Catégorie</th>
+                            <th scope="col">Désignation</th>
+                            <th scope="col">Prix HT</th>
+                            <th scope="col">Stock</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if ($products === []): ?>
-                            <tr>
-                                <td colspan="5" class="admin-table__empty">No products yet.</td>
+                            <tr class="admin-table__empty-row">
+                                <td colspan="5" class="admin-table__empty">Aucun produit.</td>
                             </tr>
                         <?php endif; ?>
                         <?php foreach ($products as $product): ?>
@@ -131,6 +153,7 @@ $productsJson = array_map(
                                 role="button"
                                 data-open-dialog="product-view-dialog"
                                 data-product-id="<?= (int) $product->getId() ?>"
+                                data-product-type="<?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?>"
                             >
                                 <td><?= htmlspecialchars((string) $product->getId(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?></td>
@@ -144,7 +167,7 @@ $productsJson = array_map(
             </div>
 
             <p class="auth-switch">
-                <a href="index.php">Back to admin</a>
+                <a href="index.php">Retour admin</a>
             </p>
         </section>
     </main>
@@ -152,26 +175,26 @@ $productsJson = array_map(
     <dialog class="admin-dialog" id="product-view-dialog" aria-labelledby="product-view-title">
         <div class="admin-dialog__panel">
             <header class="admin-dialog__header">
-                <h2 id="product-view-title">Product details</h2>
-                <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Close">&times;</button>
+                <h2 id="product-view-title">Détail produit</h2>
+                <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Fermer">&times;</button>
             </header>
             <dl class="admin-dialog__details">
-                <div><dt>id_p</dt><dd data-view-field="id"></dd></div>
-                <div><dt>type_p</dt><dd data-view-field="type"></dd></div>
-                <div><dt>designation_p</dt><dd data-view-field="designation"></dd></div>
-                <div><dt>prix_ht</dt><dd data-view-field="prixHt"></dd></div>
-                <div><dt>date_in</dt><dd data-view-field="dateIn"></dd></div>
-                <div><dt>times_in</dt><dd data-view-field="timesIn"></dd></div>
-                <div><dt>stock_p</dt><dd data-view-field="stock"></dd></div>
+                <div><dt>Id</dt><dd data-view-field="id"></dd></div>
+                <div><dt>Catégorie</dt><dd data-view-field="type"></dd></div>
+                <div><dt>Désignation</dt><dd data-view-field="designation"></dd></div>
+                <div><dt>Prix HT</dt><dd data-view-field="prixHt"></dd></div>
+                <div><dt>Date d’entrée</dt><dd data-view-field="dateIn"></dd></div>
+                <div><dt>Ajouté le</dt><dd data-view-field="timesIn"></dd></div>
+                <div><dt>Stock</dt><dd data-view-field="stock"></dd></div>
             </dl>
             <div class="admin-dialog__actions">
-                <button type="button" class="admin-btn" data-open-edit-from-view>Update</button>
+                <button type="button" class="admin-btn" data-open-edit-from-view>Modifier</button>
                 <form method="post" class="admin-inline-form" data-delete-form>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id_p" value="">
-                    <button type="submit" class="admin-btn admin-btn--danger">Remove</button>
+                    <button type="submit" class="admin-btn admin-btn--danger">Supprimer</button>
                 </form>
-                <button type="button" class="admin-btn admin-btn--ghost" data-close-dialog>Close</button>
+                <button type="button" class="admin-btn admin-btn--ghost" data-close-dialog>Fermer</button>
             </div>
         </div>
     </dialog>
@@ -179,37 +202,50 @@ $productsJson = array_map(
     <dialog class="admin-dialog" id="product-form-dialog" aria-labelledby="product-form-title">
         <div class="admin-dialog__panel">
             <header class="admin-dialog__header">
-                <h2 id="product-form-title">Add product</h2>
-                <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Close">&times;</button>
+                <h2 id="product-form-title">Ajouter un produit</h2>
+                <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Fermer">&times;</button>
             </header>
             <form method="post" class="admin-form" id="product-form">
                 <input type="hidden" name="action" id="product-form-action" value="create">
                 <input type="hidden" name="id_p" id="product-form-id" value="">
 
                 <label class="admin-form__field">
-                    <span>type_p</span>
-                    <input type="text" name="type_p" id="product-form-type" maxlength="100" required>
+                    <span>Catégorie</span>
+                    <select name="type_p" id="product-form-type" required>
+                        <option value="">Choisir…</option>
+                        <?php foreach ($categories as $category): ?>
+                            <?php
+                            $label = is_array($category) ? (string) ($category['categorie'] ?? '') : '';
+                            if ($label === '') {
+                                continue;
+                            }
+                            ?>
+                            <option value="<?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </label>
                 <label class="admin-form__field">
-                    <span>designation_p</span>
+                    <span>Désignation</span>
                     <input type="text" name="designation_p" id="product-form-designation" maxlength="255" required>
                 </label>
                 <label class="admin-form__field">
-                    <span>prix_ht</span>
+                    <span>Prix HT</span>
                     <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" required>
                 </label>
                 <label class="admin-form__field">
-                    <span>date_in</span>
+                    <span>Date d’entrée</span>
                     <input type="date" name="date_in" id="product-form-date" required>
                 </label>
                 <label class="admin-form__field">
-                    <span>stock_p</span>
+                    <span>Stock</span>
                     <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="0" required>
                 </label>
 
                 <div class="admin-dialog__actions">
-                    <button type="submit" class="admin-btn" id="product-form-submit">Create</button>
-                    <button type="button" class="admin-btn admin-btn--ghost" data-close-dialog>Cancel</button>
+                    <button type="submit" class="admin-btn" id="product-form-submit">Créer</button>
+                    <button type="button" class="admin-btn admin-btn--ghost" data-close-dialog>Annuler</button>
                 </div>
             </form>
         </div>

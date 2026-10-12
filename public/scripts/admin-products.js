@@ -20,10 +20,20 @@
   const formStock = document.getElementById("product-form-stock");
   const formSubmit = document.getElementById("product-form-submit");
   const deleteForm = document.querySelector("[data-delete-form]");
+  const categoryFilter = document.getElementById("product-category-filter");
 
   if (!viewDialog || !formDialog || !form) {
     return;
   }
+
+  const applyCategoryFilter = () => {
+    const selected = categoryFilter ? categoryFilter.value : "";
+    document.querySelectorAll(".admin-table__row").forEach((row) => {
+      const type = row.getAttribute("data-product-type") || "";
+      const visible = selected === "" || type === selected;
+      row.hidden = !visible;
+    });
+  };
 
   const fillView = (product) => {
     viewDialog.querySelectorAll("[data-view-field]").forEach((node) => {
@@ -47,8 +57,8 @@
     form.reset();
     formAction.value = "create";
     formId.value = "";
-    formTitle.textContent = "Add product";
-    formSubmit.textContent = "Create";
+    formTitle.textContent = "Ajouter un produit";
+    formSubmit.textContent = "Créer";
     formDate.value = new Date().toISOString().slice(0, 10);
     formStock.value = "0";
     formDialog.showModal();
@@ -62,8 +72,8 @@
     formPrix.value = String(product.prixHt);
     formDate.value = product.dateIn;
     formStock.value = String(product.stock);
-    formTitle.textContent = "Update product";
-    formSubmit.textContent = "Save";
+    formTitle.textContent = "Modifier le produit";
+    formSubmit.textContent = "Enregistrer";
     formDialog.showModal();
   };
 
@@ -127,10 +137,14 @@
 
   if (deleteForm) {
     deleteForm.addEventListener("submit", (event) => {
-      if (!window.confirm("Remove this product from the mock catalog?")) {
+      if (!window.confirm("Supprimer ce produit du catalogue mock ?")) {
         event.preventDefault();
       }
     });
+  }
+
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", applyCategoryFilter);
   }
 
   [viewDialog, formDialog].forEach((dialog) => {

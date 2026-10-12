@@ -17,10 +17,10 @@ final class InMemoryProductRepositoryTest extends TestCase
 
         $products = $repository->findAll();
 
-        self::assertCount(3, $products);
-        self::assertSame('Classic Tee', $products[0]->getDesignation());
-        self::assertSame('vetement', $products[0]->getType());
-        self::assertSame(19.99, $products[0]->getPrixHt());
+        self::assertCount(6, $products);
+        self::assertSame('Galaxy A55', $products[0]->getDesignation());
+        self::assertSame('Smartphone', $products[0]->getType());
+        self::assertSame(449.99, $products[0]->getPrixHt());
     }
 
     public function testFindByIdReturnsProductOrNull(): void

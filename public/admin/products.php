@@ -254,7 +254,7 @@ $productsJson = array_map(
     <script>
         window.__ADMIN_PRODUCTS__ = <?= json_encode($productsJson, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
-    <script src="../scripts/admin-products.js" defer></script>
+    <script type="module" src="../scripts/admin-products.js"></script>
 </body>
 
 </html>

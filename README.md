@@ -429,7 +429,8 @@ http://localhost:8080/admin/products.php
 - Entité : `Product` alignée sur `produit` (`id_p`, `type_p`, `designation_p`, `prix_ht`, `date_in`, `times_in`, `stock_p`)
 - Page : `public/admin/products.php` — liste, bouton Add, clic ligne → popup détails (Update / Remove), popup formulaire
 - Catégories : `public/data/product-categories.json` (filtre + select formulaire)
-- Scripts/styles : `public/scripts/admin-products.js`, `public/styles/admin.css`
+- Scripts : `public/scripts/admin-products.js` (entrée) + `public/scripts/admin/*` (catalogue, filtre, dialogs)
+- Styles : `public/styles/admin.css`
 - Libellés UI FR : Id, Catégorie, Désignation, Prix HT, Stock, etc.
 - Le vrai DAO produits remplacera le mock plus tard
 

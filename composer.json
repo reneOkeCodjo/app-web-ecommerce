@@ -8,8 +8,7 @@
             "Db_config\\": "config/"
         },
         "classmap": [
-            "src/Infrastructure/Persistence/DAO/UserDAO.php",
-            "src/Infrastructure/Persistence/DAO/ProductDAO.php"
+            "src/Infrastructure/Persistence/DAO/UserDAO.php"
         ]
     },
     "authors": [

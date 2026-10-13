@@ -61,38 +61,38 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function create(Product $product): bool
     {
-        
         $stmt = $this->connection->prepare(
             'INSERT INTO product (
                 product_type,
                 product_designation,
                 product_price_ht,
                 product_stock,
-                product_date_in
-            ) VALUES (?, ?, ?, ?, ?)'
+                product_date_in,
+                ppromo,
+                product_image
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
-          
-        // Récupération des informations du produit à enregistrer.
+
         $type = $product->getType();
         $designation = $product->getDesignation();
         $priceHt = $product->getPriceHt();
         $stock = $product->getStock();
         $dateIn = $product->getDateIn();
+        $promotion = $product->getPromotion();
+        $image = $product->getImage();
 
-
-        // Association des valeurs aux emplacements de la requête.
         $stmt->bind_param(
-            'sssis',
+            'sssisss',
             $type,
             $designation,
             $priceHt,
             $stock,
-            $dateIn
+            $dateIn,
+            $promotion,
+            $image
         );
 
-        // Exécution de l'ajout et retour du résultat.
         return $stmt->execute();
-       
     }
 
     public function findAll(): array
@@ -165,7 +165,9 @@ class ProductRepository implements ProductRepositoryInterface
                 product_designation = ?,
                 product_price_ht = ?,
                 product_stock = ?,
-                product_date_in = ?
+                product_date_in = ?,
+                ppromo = ?,
+                product_image = ?
             WHERE product_id = ?'
         );
 
@@ -174,14 +176,18 @@ class ProductRepository implements ProductRepositoryInterface
         $priceHt = $product->getPriceHt();
         $stock = $product->getStock();
         $dateIn = $product->getDateIn();
+        $promotion = $product->getPromotion();
+        $image = $product->getImage();
 
         $stmt->bind_param(
-            'sssisi',
+            'sssisssi',
             $type,
             $designation,
             $priceHt,
             $stock,
             $dateIn,
+            $promotion,
+            $image,
             $id
         );
 

@@ -24,8 +24,7 @@ $categoriesDecoded = is_string($categoriesRaw) ? json_decode($categoriesRaw, tru
 $categories = is_array($categoriesDecoded) ? $categoriesDecoded : [];
 
 $connection = Database::connect();
-$repository = new ProductRepository($connection);
-$productService = new ProductService($repository);
+$productService = new ProductService(new ProductRepository($connection));
 $feedback = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -33,35 +32,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($action === 'create') {
-            // Étape 2 : basculer create sur ProductService (validation).
-            $repository->create(new Product(
-                null,
-                trim((string) ($_POST['type_p'] ?? '')),
-                trim((string) ($_POST['designation_p'] ?? '')),
-                number_format((float) ($_POST['prix_ht'] ?? 0), 2, '.', ''),
-                (int) ($_POST['stock_p'] ?? 0),
-                trim((string) ($_POST['date_in'] ?? date('Y-m-d'))),
-                null
-            ));
+            $productService->create(
+                $_POST['type_p'] ?? null,
+                $_POST['designation_p'] ?? null,
+                $_POST['prix_ht'] ?? null,
+                $_POST['stock_p'] ?? null,
+                $_POST['date_in'] ?? date('Y-m-d')
+            );
         } elseif ($action === 'update') {
-            // Étape 2 : basculer update sur ProductService (validation).
             $id = (int) ($_POST['id_p'] ?? 0);
             $existing = $productService->findById($id);
             if ($existing === null) {
                 throw new RuntimeException('Produit introuvable.');
             }
 
-            $repository->update(new Product(
+            // Promo / image conservés jusqu’à l’étape 3 (champs formulaire).
+            $productService->update(
                 $id,
-                trim((string) ($_POST['type_p'] ?? '')),
-                trim((string) ($_POST['designation_p'] ?? '')),
-                number_format((float) ($_POST['prix_ht'] ?? 0), 2, '.', ''),
-                (int) ($_POST['stock_p'] ?? 0),
-                trim((string) ($_POST['date_in'] ?? $existing->getDateIn())),
-                $existing->getDateNew(),
+                $_POST['type_p'] ?? null,
+                $_POST['designation_p'] ?? null,
+                $_POST['prix_ht'] ?? null,
+                $_POST['stock_p'] ?? null,
+                $_POST['date_in'] ?? $existing->getDateIn(),
                 $existing->getPromotion(),
                 $existing->getImage()
-            ));
+            );
         } elseif ($action === 'delete') {
             $productService->delete((int) ($_POST['id_p'] ?? 0));
         }

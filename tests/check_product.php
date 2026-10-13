@@ -2,19 +2,13 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Chargement de la configuration, dont le nom de fichier est database.php.
-require_once __DIR__ . '/../config/database.php';
-
 use App\Domain\Model\Product;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
 use Db_config\Database;
 
-// Préparation de la connexion et du produit de test.
 $connection = Database::connect();
 $repository = new ProductRepository($connection);
 
-
-// Vérification de la lecture des produits.
 $products = $repository->findAll();
 echo 'Nombre de produits : ' . count($products) . PHP_EOL;
 
@@ -33,73 +27,68 @@ $product = new Product(
     '30.00',
     5,
     date('Y-m-d'),
-    null
+    null,
+    '10.00',
+    '/uploads/products/casque.jpg'
 );
 
-// Vérification de l'ajout sans conserver les données de test.
 $connection->begin_transaction();
 
 try {
     $success = $repository->create($product);
     $id = $connection->insert_id;
 
-    $stmt = $connection->prepare(
-        'SELECT product_designation, product_stock
-         FROM product WHERE product_id = ?'
-    );
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-
-    $row = $stmt->get_result()->fetch_assoc();
+    $found = $repository->findById((int) $id);
 
     if (
-        $success
-        && $row !== null
-        && $row['product_designation'] === 'Casque test CRUD'
-        && (int) $row['product_stock'] === 5
+        !$success
+        || $found === null
+        || $found->getDesignation() !== 'Casque test CRUD'
+        || $found->getStock() !== 5
+        || $found->getPromotion() !== '10.00'
+        || $found->getImage() !== '/uploads/products/casque.jpg'
     ) {
-        echo "Ajout vérifié : le produit est bien enregistré.\n";
-    } else {
         throw new \RuntimeException("Le résultat de l'ajout est incorrect.");
     }
 
+    echo "Ajout vérifié : le produit est bien enregistré.\n";
 
-    // Vérification de la modification du produit de test.
-$modifiedProduct = new Product(
-    $id,
-    'Casque audio',
-    'Casque modifié',
-    '25.00',
-    10,
-    date('Y-m-d'),
-    null
-);
+    $modifiedProduct = new Product(
+        (int) $id,
+        'Casque audio',
+        'Casque modifié',
+        '25.00',
+        10,
+        date('Y-m-d'),
+        $found->getDateNew(),
+        '15.50',
+        '/uploads/products/casque-v2.jpg'
+    );
 
-$updated = $repository->update($modifiedProduct);
-$found = $repository->findById($id);
+    $updated = $repository->update($modifiedProduct);
+    $afterUpdate = $repository->findById((int) $id);
 
-if (
-    !$updated
-    || $found === null
-    || $found->getDesignation() !== 'Casque modifié'
-    || $found->getPriceHt() !== '25.00'
-    || $found->getStock() !== 10
-) {
-    throw new \RuntimeException('Modification incorrecte.');
-}
+    if (
+        !$updated
+        || $afterUpdate === null
+        || $afterUpdate->getDesignation() !== 'Casque modifié'
+        || $afterUpdate->getPriceHt() !== '25.00'
+        || $afterUpdate->getStock() !== 10
+        || $afterUpdate->getPromotion() !== '15.50'
+        || $afterUpdate->getImage() !== '/uploads/products/casque-v2.jpg'
+    ) {
+        throw new \RuntimeException('Modification incorrecte.');
+    }
 
-echo "Modification vérifiée.\n";
+    echo "Modification vérifiée.\n";
 
-// Vérification de la suppression du produit de test.
-$deleted = $repository->delete($id);
+    $deleted = $repository->delete((int) $id);
 
-if (!$deleted || $repository->findById($id) !== null) {
-    throw new \RuntimeException('Suppression incorrecte.');
-}
+    if (!$deleted || $repository->findById((int) $id) !== null) {
+        throw new \RuntimeException('Suppression incorrecte.');
+    }
 
-echo "Suppression vérifiée.\n";
-
-
+    echo "Suppression vérifiée.\n";
 } finally {
     $connection->rollback();
     $connection->close();

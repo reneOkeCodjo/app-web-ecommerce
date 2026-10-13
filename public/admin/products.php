@@ -35,6 +35,20 @@ $imageUploader = new ProductImageUploader(
     __DIR__ . '/../uploads/products'
 );
 $feedback = '';
+/** @var array<string, string> $fieldErrors */
+$fieldErrors = [];
+$formValues = [
+    'action' => 'create',
+    'id_p' => '',
+    'type_p' => '',
+    'designation_p' => '',
+    'prix_ht' => '',
+    'ppromo' => '',
+    'date_in' => '',
+    'stock_p' => '0',
+    'image' => null,
+];
+$reopenForm = false;
 
 /**
  * @param ProductRequestDTO $dto
@@ -59,78 +73,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ? $_FILES['product_image']
         : ['error' => UPLOAD_ERR_NO_FILE];
 
+    $formValues = [
+        'action' => $action === 'update' ? 'update' : 'create',
+        'id_p' => is_string($_POST['id_p'] ?? null) ? $_POST['id_p'] : (string) ($_POST['id_p'] ?? ''),
+        'type_p' => is_string($_POST['type_p'] ?? null) ? $_POST['type_p'] : '',
+        'designation_p' => is_string($_POST['designation_p'] ?? null) ? $_POST['designation_p'] : '',
+        'prix_ht' => is_string($_POST['prix_ht'] ?? null) ? $_POST['prix_ht'] : (string) ($_POST['prix_ht'] ?? ''),
+        'ppromo' => is_string($_POST['ppromo'] ?? null) ? $_POST['ppromo'] : (string) ($_POST['ppromo'] ?? ''),
+        'date_in' => is_string($_POST['date_in'] ?? null) ? $_POST['date_in'] : '',
+        'stock_p' => is_string($_POST['stock_p'] ?? null) ? $_POST['stock_p'] : (string) ($_POST['stock_p'] ?? '0'),
+        'image' => null,
+    ];
+
     $newImagePath = null;
 
     try {
-        if ($action === 'create') {
+        if ($action === 'create' || $action === 'update') {
+            $existing = null;
+            $existingImage = null;
+
+            if ($action === 'update') {
+                $id = (int) ($_POST['id_p'] ?? 0);
+                $existing = $productService->findById($id);
+                if ($existing === null) {
+                    throw new RuntimeException('Produit introuvable.');
+                }
+                $existingImage = $existing->getImage();
+                $formValues['image'] = $existingImage;
+            }
+
             // Validate fields before upload to avoid orphan files on invalid input.
             $validationResult = $productService->validateInput(
                 $_POST['type_p'] ?? null,
                 $_POST['designation_p'] ?? null,
                 $_POST['prix_ht'] ?? null,
                 $_POST['stock_p'] ?? null,
-                $_POST['date_in'] ?? date('Y-m-d'),
+                $_POST['date_in'] ?? ($existing?->getDateIn() ?? date('Y-m-d')),
                 $_POST['ppromo'] ?? null,
-                null
+                $existingImage
             );
 
             if (!$validationResult->isValid()) {
-                throw new InvalidArgumentException((string) $validationResult->getFirstError());
-            }
+                $fieldErrors = $validationResult->getErrors();
+                $reopenForm = true;
+            } else {
+                $baseDto = $validationResult->getProductRequest();
+                if ($baseDto === null) {
+                    throw new RuntimeException('Validation produit incohérente.');
+                }
 
-            $baseDto = $validationResult->getProductRequest();
-            if ($baseDto === null) {
-                throw new RuntimeException('Validation produit incohérente.');
-            }
+                $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
+                $imagePath = $newImagePath ?? $existingImage;
 
-            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
-            $persisted = $productService->createFromDto(
-                $dtoWithImage($baseDto, $newImagePath)
-            );
-
-            if (!$persisted) {
-                throw new RuntimeException('Impossible d’enregistrer le produit.');
-            }
-        } elseif ($action === 'update') {
-            $id = (int) ($_POST['id_p'] ?? 0);
-            $existing = $productService->findById($id);
-            if ($existing === null) {
-                throw new RuntimeException('Produit introuvable.');
-            }
-
-            $validationResult = $productService->validateInput(
-                $_POST['type_p'] ?? null,
-                $_POST['designation_p'] ?? null,
-                $_POST['prix_ht'] ?? null,
-                $_POST['stock_p'] ?? null,
-                $_POST['date_in'] ?? $existing->getDateIn(),
-                $_POST['ppromo'] ?? null,
-                $existing->getImage()
-            );
-
-            if (!$validationResult->isValid()) {
-                throw new InvalidArgumentException((string) $validationResult->getFirstError());
-            }
-
-            $baseDto = $validationResult->getProductRequest();
-            if ($baseDto === null) {
-                throw new RuntimeException('Validation produit incohérente.');
-            }
-
-            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
-            $imagePath = $newImagePath ?? $existing->getImage();
-
-            $updated = $productService->updateFromDto(
-                $id,
-                $dtoWithImage($baseDto, $imagePath)
-            );
-
-            if (!$updated) {
-                throw new RuntimeException('Impossible de modifier le produit.');
-            }
-
-            if ($newImagePath !== null && $existing->getImage() !== $newImagePath) {
-                $imageUploader->deleteByPublicPath($existing->getImage());
+                if ($action === 'create') {
+                    $persisted = $productService->createFromDto(
+                        $dtoWithImage($baseDto, $imagePath)
+                    );
+                    if (!$persisted) {
+                        throw new RuntimeException('Impossible d’enregistrer le produit.');
+                    }
+                } else {
+                    $id = (int) ($_POST['id_p'] ?? 0);
+                    $updated = $productService->updateFromDto(
+                        $id,
+                        $dtoWithImage($baseDto, $imagePath)
+                    );
+                    if (!$updated) {
+                        throw new RuntimeException('Impossible de modifier le produit.');
+                    }
+                    if (
+                        $newImagePath !== null
+                        && $existing !== null
+                        && $existing->getImage() !== $newImagePath
+                    ) {
+                        $imageUploader->deleteByPublicPath($existing->getImage());
+                    }
+                }
             }
         } elseif ($action === 'delete') {
             $id = (int) ($_POST['id_p'] ?? 0);
@@ -148,9 +166,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $feedback = '<p class="feedback feedback-error" role="alert">'
             . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
             . '</p>';
+        if ($action === 'create' || $action === 'update') {
+            $reopenForm = true;
+        }
     }
 
-    if ($feedback === '') {
+    if ($feedback === '' && $fieldErrors === []) {
         header('Location: products.php');
         exit;
     }
@@ -204,7 +225,9 @@ $productsJson = array_map(
                 Catalogue MySQL, filtré par catégories JSON.
             </p>
 
-            <?= $feedback ?>
+            <?php if ($feedback !== '' && !$reopenForm): ?>
+                <?= $feedback ?>
+            <?php endif; ?>
 
             <div class="admin-toolbar">
                 <label class="admin-filter">
@@ -344,13 +367,26 @@ $productsJson = array_map(
                 <h2 id="product-form-title">Ajouter un produit</h2>
                 <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Fermer">&times;</button>
             </header>
-            <form method="post" class="admin-form" id="product-form" enctype="multipart/form-data">
-                <input type="hidden" name="action" id="product-form-action" value="create">
-                <input type="hidden" name="id_p" id="product-form-id" value="">
+            <form method="post" class="admin-form" id="product-form" enctype="multipart/form-data" novalidate>
+                <?php if ($reopenForm && $feedback !== ''): ?>
+                    <?= $feedback ?>
+                <?php endif; ?>
+                <input type="hidden" name="action" id="product-form-action" value="<?= htmlspecialchars($formValues['action'], ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="id_p" id="product-form-id" value="<?= htmlspecialchars($formValues['id_p'], ENT_QUOTES, 'UTF-8') ?>">
 
-                <label class="admin-form__field">
+                <?php
+                $typeError = $fieldErrors['type_p'] ?? null;
+                $designationError = $fieldErrors['designation_p'] ?? null;
+                $prixError = $fieldErrors['prix_ht'] ?? null;
+                $promoError = $fieldErrors['ppromo'] ?? null;
+                $dateError = $fieldErrors['date_in'] ?? null;
+                $stockError = $fieldErrors['stock_p'] ?? null;
+                $imageError = $fieldErrors['product_image'] ?? null;
+                ?>
+
+                <label class="admin-form__field<?= $typeError ? ' admin-form__field--error' : '' ?>">
                     <span>Catégorie</span>
-                    <select name="type_p" id="product-form-type" required>
+                    <select name="type_p" id="product-form-type" required<?= $typeError ? ' aria-invalid="true" aria-describedby="type_p-error"' : '' ?>>
                         <option value="">Choisir…</option>
                         <?php foreach ($categories as $category): ?>
                             <?php
@@ -358,24 +394,37 @@ $productsJson = array_map(
                             if ($label === '') {
                                 continue;
                             }
+                            $selected = $formValues['type_p'] === $label ? ' selected' : '';
                             ?>
-                            <option value="<?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>">
+                            <option value="<?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>"<?= $selected ?>>
                                 <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <?php if ($typeError): ?>
+                        <span class="field-error" id="type_p-error" role="alert"><?= htmlspecialchars($typeError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $designationError ? ' admin-form__field--error' : '' ?>">
                     <span>Désignation</span>
-                    <input type="text" name="designation_p" placeholder="Type the name" id="product-form-designation" maxlength="255" required>
+                    <input type="text" name="designation_p" placeholder="Type the name" id="product-form-designation" maxlength="255" required value="<?= htmlspecialchars($formValues['designation_p'], ENT_QUOTES, 'UTF-8') ?>"<?= $designationError ? ' aria-invalid="true" aria-describedby="designation_p-error"' : '' ?>>
+                    <?php if ($designationError): ?>
+                        <span class="field-error" id="designation_p-error" role="alert"><?= htmlspecialchars($designationError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $prixError ? ' admin-form__field--error' : '' ?>">
                     <span>Prix HT</span>
-                    <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" placeholder="0.00" required>
+                    <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" placeholder="0.00" required value="<?= htmlspecialchars($formValues['prix_ht'], ENT_QUOTES, 'UTF-8') ?>"<?= $prixError ? ' aria-invalid="true" aria-describedby="prix_ht-error"' : '' ?>>
+                    <?php if ($prixError): ?>
+                        <span class="field-error" id="prix_ht-error" role="alert"><?= htmlspecialchars($prixError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $promoError ? ' admin-form__field--error' : '' ?>">
                     <span>Promotion (%)</span>
-                    <input type="number" name="ppromo" id="product-form-promo" min="0" max="100" step="0.01" placeholder="0">
+                    <input type="number" name="ppromo" id="product-form-promo" min="0" max="100" step="0.01" placeholder="0" value="<?= htmlspecialchars($formValues['ppromo'], ENT_QUOTES, 'UTF-8') ?>"<?= $promoError ? ' aria-invalid="true" aria-describedby="ppromo-error"' : '' ?>>
+                    <?php if ($promoError): ?>
+                        <span class="field-error" id="ppromo-error" role="alert"><?= htmlspecialchars($promoError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
                 <p class="admin-price-preview" id="product-form-price-preview" aria-live="polite">
                     <span class="admin-price-preview__label">Prix TTC</span>
@@ -383,30 +432,40 @@ $productsJson = array_map(
                     <span class="admin-price-preview__label">Prix disponible</span>
                     <span data-preview-dispo>—</span>
                 </p>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $dateError ? ' admin-form__field--error' : '' ?>">
                     <span>Date d’entrée</span>
-                    <input type="date" name="date_in" id="product-form-date" placeholder="JJ/MM/AAAA" required>
+                    <input type="date" name="date_in" id="product-form-date" placeholder="JJ/MM/AAAA" required value="<?= htmlspecialchars($formValues['date_in'], ENT_QUOTES, 'UTF-8') ?>"<?= $dateError ? ' aria-invalid="true" aria-describedby="date_in-error"' : '' ?>>
+                    <?php if ($dateError): ?>
+                        <span class="field-error" id="date_in-error" role="alert"><?= htmlspecialchars($dateError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $stockError ? ' admin-form__field--error' : '' ?>">
                     <span>Stock</span>
-                    <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="0">
+                    <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="<?= htmlspecialchars($formValues['stock_p'], ENT_QUOTES, 'UTF-8') ?>"<?= $stockError ? ' aria-invalid="true" aria-describedby="stock_p-error"' : '' ?>>
+                    <?php if ($stockError): ?>
+                        <span class="field-error" id="stock_p-error" role="alert"><?= htmlspecialchars($stockError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <label class="admin-form__field">
+                <label class="admin-form__field<?= $imageError ? ' admin-form__field--error' : '' ?>">
                     <span>Image produit</span>
                     <input
                         type="file"
                         name="product_image"
                         id="product-form-image"
                         accept="image/jpeg,image/png,image/webp"
+                        <?= $imageError ? ' aria-invalid="true" aria-describedby="product_image-error"' : '' ?>
                     >
                     <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle. Stockage temporaire sous /uploads (fichiers accessibles en URL, usage dev uniquement).</span>
+                    <?php if ($imageError): ?>
+                        <span class="field-error" id="product_image-error" role="alert"><?= htmlspecialchars($imageError, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                 </label>
-                <div class="admin-image-preview" id="product-form-image-preview" hidden>
-                    <img data-form-image-preview alt="Aperçu de l’image produit">
+                <div class="admin-image-preview" id="product-form-image-preview"<?= $formValues['image'] ? '' : ' hidden' ?>>
+                    <img data-form-image-preview alt="Aperçu de l’image produit"<?= $formValues['image'] ? ' src="' . htmlspecialchars((string) $formValues['image'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                 </div>
 
                 <div class="admin-dialog__actions">
-                    <button type="submit" class="admin-btn" id="product-form-submit">Créer</button>
+                    <button type="submit" class="admin-btn" id="product-form-submit"><?= $formValues['action'] === 'update' ? 'Enregistrer' : 'Créer' ?></button>
                     <button type="button" class="admin-btn admin-btn--ghost" data-close-dialog>Annuler</button>
                 </div>
             </form>
@@ -416,6 +475,23 @@ $productsJson = array_map(
     <script>
         window.__ADMIN_TVA_RATE__ = <?= json_encode(ProductPricing::TVA_RATE) ?>;
         window.__ADMIN_PRODUCTS__ = <?= json_encode($productsJson, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.__ADMIN_FORM_STATE__ = <?= json_encode(
+            $reopenForm
+                ? [
+                    'reopen' => true,
+                    'action' => $formValues['action'],
+                    'id' => $formValues['id_p'],
+                    'type' => $formValues['type_p'],
+                    'designation' => $formValues['designation_p'],
+                    'prixHt' => $formValues['prix_ht'],
+                    'promotion' => $formValues['ppromo'] === '' ? null : $formValues['ppromo'],
+                    'dateIn' => $formValues['date_in'],
+                    'stock' => $formValues['stock_p'],
+                    'image' => $formValues['image'],
+                ]
+                : ['reopen' => false],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        ) ?>;
     </script>
     <script type="module" src="../scripts/admin-products.js"></script>
 </body>

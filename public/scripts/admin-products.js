@@ -22,10 +22,11 @@ if (
   formDialog instanceof HTMLDialogElement &&
   form instanceof HTMLFormElement
 ) {
-  const { openCreateForm, openEditForm } = initProductFormDialog({
-    dialog: formDialog,
-    form,
-  });
+  const { openCreateForm, openEditForm, openRestoredForm } =
+    initProductFormDialog({
+      dialog: formDialog,
+      form,
+    });
 
   const { openView } = initProductViewDialog({
     dialog: viewDialog,
@@ -48,4 +49,14 @@ if (
       }
     },
   });
+
+  const formState = window.__ADMIN_FORM_STATE__;
+  if (
+    formState &&
+    typeof formState === "object" &&
+    formState.reopen === true &&
+    typeof openRestoredForm === "function"
+  ) {
+    openRestoredForm();
+  }
 }

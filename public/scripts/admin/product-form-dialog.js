@@ -159,5 +159,21 @@ export function initProductFormDialog({ dialog, form }) {
     dialog.showModal();
   };
 
-  return { openCreateForm, openEditForm };
+  /**
+   * Re-open after a failed POST with server-rendered values already in the DOM.
+   */
+  const openRestoredForm = () => {
+    formTitle.textContent =
+      formAction.value === "update" ? "Modifier le produit" : "Ajouter un produit";
+    formSubmit.textContent =
+      formAction.value === "update" ? "Enregistrer" : "Créer";
+    refreshPricePreview();
+    const currentSrc = imagePreview.getAttribute("src");
+    if (currentSrc) {
+      imagePreviewWrap.hidden = false;
+    }
+    dialog.showModal();
+  };
+
+  return { openCreateForm, openEditForm, openRestoredForm };
 }

@@ -73,6 +73,8 @@ class ProductService
         $price = $dto->getPriceHt();
         $stock = $dto->getStock();
         $dateIn = $dto->getDateIn();
+        $promotion = $dto->getPromotion();
+        $image = $dto->getImage();
 
         if ($type === '' || mb_strlen($type) > 100) {
             throw new \InvalidArgumentException(
@@ -80,10 +82,16 @@ class ProductService
             );
         }
 
-
         // Vérification que la catégorie appartient à la liste autorisée.
+        $categoriesPath = __DIR__ . '/../../../public/data/product-categories.json';
+        $categoriesJson = file_get_contents($categoriesPath);
+
+        if ($categoriesJson === false) {
+            throw new \RuntimeException('Impossible de charger les catégories produits.');
+        }
+
         $categories = json_decode(
-            file_get_contents(__DIR__ . '/../../../config/categories.json'),
+            $categoriesJson,
             true,
             512,
             JSON_THROW_ON_ERROR
@@ -132,6 +140,27 @@ class ProductService
             throw new \InvalidArgumentException('Date invalide.');
         }
 
+        if (
+            $promotion !== null
+            && !preg_match('/^\d{1,3}(?:\.\d{1,2})?$/D', $promotion)
+        ) {
+            throw new \InvalidArgumentException(
+                'Promotion invalide : pourcentage avec au maximum deux décimales.'
+            );
+        }
+
+        if ($promotion !== null && (float) $promotion > 100) {
+            throw new \InvalidArgumentException(
+                'La promotion ne peut pas dépasser 100 %.'
+            );
+        }
+
+        if ($image !== null && mb_strlen($image) > 255) {
+            throw new \InvalidArgumentException(
+                'Le chemin ou l’URL de l’image doit faire au plus 255 caractères.'
+            );
+        }
+
         return new Product(
             $id,
             $type,
@@ -139,7 +168,9 @@ class ProductService
             $price,
             $stockValue,
             $dateIn,
-            $dateNew
+            $dateNew,
+            $promotion,
+            $image
         );
     }
 }

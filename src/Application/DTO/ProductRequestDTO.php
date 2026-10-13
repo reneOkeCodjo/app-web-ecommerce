@@ -10,22 +10,33 @@ class ProductRequestDTO
     private string $priceHt;
     private string $stock;
     private string $dateIn;
-    private string $promotion;
-
+    private ?string $promotion;
+    private ?string $image;
 
     public function __construct(
         string $type,
         string $designation,
         string $priceHt,
         string $stock,
-        string $dateIn
-        
+        string $dateIn,
+        ?string $promotion = null,
+        ?string $image = null
     ) {
         $this->type = trim($type);
         $this->designation = trim($designation);
         $this->priceHt = trim($priceHt);
         $this->stock = trim($stock);
         $this->dateIn = trim($dateIn);
+        $this->promotion = $promotion !== null ? trim($promotion) : null;
+        $this->image = $image !== null ? trim($image) : null;
+
+        if ($this->promotion === '') {
+            $this->promotion = null;
+        }
+
+        if ($this->image === '') {
+            $this->image = null;
+        }
     }
 
     public function getType(): string
@@ -51,5 +62,15 @@ class ProductRequestDTO
     public function getDateIn(): string
     {
         return $this->dateIn;
+    }
+
+    public function getPromotion(): ?string
+    {
+        return $this->promotion;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
     }
 }

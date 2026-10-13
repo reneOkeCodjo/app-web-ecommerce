@@ -441,6 +441,7 @@ http://localhost:8080/admin/products.php
 
 - `004_create_products_table.sql` — table `product`
 - `005_add_product_promotion.sql` — colonne `ppromo`
+- `006_add_product_image.sql` — colonne `product_image`
 
 ```bash
 ./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
@@ -577,7 +578,8 @@ database/
     ├── 002_fix_users_unique_constraints.sql → Login/email uniques
     ├── 003_seed_admin_user.sql              → Seed admin (admin / Admin123!)
     ├── 004_create_products_table.sql        → Table product
-    └── 005_add_product_promotion.sql        → Colonne ppromo
+    ├── 005_add_product_promotion.sql        → Colonne ppromo
+    └── 006_add_product_image.sql            → Colonne product_image
 
 public/
 ├── index.php                                → Page de login client

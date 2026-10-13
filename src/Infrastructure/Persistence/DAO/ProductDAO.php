@@ -2,14 +2,48 @@
 namespace App\Infrastructure\Persistence\DAO;
 
 use App\Domain\Model\Product;
+use Db_config\Database;
 
 interface ProductRepositoryInterface
 {
 
+    /**
+     * Création d'un produit.
+     * 
+     * @param Product $product Le produit à créer.
+     * @return bool
+     */
     public function create(Product $product): bool;
+
+    /**
+     * Recherche de tous les produits.
+     * 
+     * @return array La liste des produits. Retourne un tableau vide si aucun produit n'est trouvé.
+     */
     public function findAll(): array;
+
+    /**
+     * Recherche d'un produit à partir de son identifiant.
+     * 
+     * @param int $id L'identifiant du produit.
+     * @return Product|null Le produit trouvé ou null si aucun produit n'est trouvé.
+     */
     public function findById(int $id): ?Product;
+    
+    /**
+     * Modification d'un produit.
+     * 
+     * @param Product $product Le produit à modifier.
+     * @return bool
+     */
     public function update(Product $product): bool;
+
+    /**
+     * Suppression d'un produit.
+     * 
+     * @param int $id L'identifiant du produit à supprimer.
+     * @return bool
+     */
     public function delete(int $id): bool;
 }
 
@@ -19,13 +53,13 @@ interface ProductRepositoryInterface
  */
 class ProductRepository implements ProductRepositoryInterface
 {
-    // Connexion utilisée pour accéder à la base de données.
+    private Database $database;
     private \mysqli $connection;
 
-    public function __construct(\mysqli $connection)
+    public function __construct(Database $database)
     {
-         // La connexion est déjà créée : on la reçoit et on la garde dans cet objet.
-        $this->connection = $connection;
+        $this->database = $database;
+        $this->connection = $database->connect();
     }
 
     public function create(Product $product): bool
@@ -64,10 +98,6 @@ class ProductRepository implements ProductRepositoryInterface
        
     }
 
-
-
-
-    // Lecture de tous les produits, du plus récent au plus ancien.
     public function findAll(): array
     {
         $result = $this->connection->query(
@@ -82,8 +112,6 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $products;
     }
-
-
 
     // Recherche d'un produit à partir de son identifiant.
     public function findById(int $id): ?Product
@@ -104,8 +132,6 @@ class ProductRepository implements ProductRepositoryInterface
         return $this->mapToProduct($row);
     }
 
-
-
     // Transformation d'une ligne de la base en objet Product.
     private function mapToProduct(array $row): Product
     {
@@ -119,8 +145,6 @@ class ProductRepository implements ProductRepositoryInterface
             $row['product_date_new']
         );
     }
-
-
 
     // Modification des informations du produit identifié par son ID.
     public function update(Product $product): bool

@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Product;
+
+use App\Application\Validation\Shared\FieldResult;
+use App\Application\Validation\Shared\MaxLengthValidator;
+use App\Application\Validation\Shared\RequiredValidator;
+use App\Application\Validation\Shared\ValidatorInterface;
 
 /**
- * Validates and normalizes an email field.
+ * Validates and normalizes a product designation.
  */
-final class EmailValidator
+final class DesignationValidator
 {
     public const MAX_LENGTH = 255;
 
@@ -17,14 +22,10 @@ final class EmailValidator
     public function __construct()
     {
         $this->validators = [
-            new RequiredValidator('Email is required.'),
+            new RequiredValidator('La désignation est obligatoire.'),
             new MaxLengthValidator(
                 self::MAX_LENGTH,
-                'Email must be at most ' . self::MAX_LENGTH . ' characters.'
-            ),
-            new RegexValidator(
-                '/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
-                'Email format is invalid.'
+                'La désignation doit contenir entre 1 et 255 caractères.'
             ),
         ];
     }

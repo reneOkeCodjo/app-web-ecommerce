@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Shared;
 
 /**
- * Ensures a string value does not exceed a maximum length.
+ * Ensures a string value has at least a minimum length.
  */
-final class MaxLengthValidator implements ValidatorInterface
+final class MinLengthValidator implements ValidatorInterface
 {
     public function __construct(
-        private int $max,
+        private int $min,
         private string $message
     ) {
     }
@@ -21,7 +21,7 @@ final class MaxLengthValidator implements ValidatorInterface
             return null;
         }
 
-        if (mb_strlen($value) > $this->max) {
+        if (mb_strlen($value) < $this->min) {
             return $this->message;
         }
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Shared;
 
 /**
  * Single validation rule applied to one value.

@@ -361,7 +361,7 @@ Validation serveur dans les pages, avant l’appel aux handlers / `Auth`.
 
 **Fichiers :**
 
-- `src/Application/Validation/*`
+- `src/Application/Validation/{Shared,Auth,Product}/`
 - `src/Application/Services/Validation.php`
 - `src/Application/Services/ValidationResult.php`
 
@@ -546,17 +546,12 @@ src/
 │   │   ├── AdminLoginHandler.php            → Auth login admin → redirect dashboard
 │   │   ├── RegisterHandler.php              → Auth register → erreur HTML ou redirect
 │   │   ├── ProductService.php               → CRUD produits (DAO SQL)
-│   │   ├── Validation.php                   → Orchestration validation login/register
+│   │   ├── Validation.php                   → Orchestration validation (auth + produit)
 │   │   └── ValidationResult.php             → Erreurs champs + DTO normalisé
 │   └── Validation/
-│       ├── ValidatorInterface.php           → Contrat règle atomique
-│       ├── Required / Min / Max / Regex     → Règles
-│       ├── UsernameValidator.php            → Champ username
-│       ├── PasswordValidator.php            → Password register (complexité)
-│       ├── LoginPasswordValidator.php       → Password login (requis + max)
-│       ├── EmailValidator.php               → Email register
-│       ├── ConfirmPasswordValidator.php     → Confirmation password
-│       └── FieldResult.php                  → Résultat par champ
+│       ├── Shared/                          → Règles atomiques + FieldResult
+│       ├── Auth/                            → Username, password, email, confirm
+│       └── Product/                         → Catégorie, prix, stock, promo, image
 └── Infrastructure/
     ├── Http/
     │   ├── SessionStoreInterface.php        → Contrat session

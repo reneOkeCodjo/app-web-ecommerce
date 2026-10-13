@@ -2,12 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Auth;
+
+use App\Application\Validation\Shared\FieldResult;
+use App\Application\Validation\Shared\MaxLengthValidator;
+use App\Application\Validation\Shared\RegexValidator;
+use App\Application\Validation\Shared\RequiredValidator;
+use App\Application\Validation\Shared\ValidatorInterface;
 
 /**
- * Validates and normalizes a username field.
+ * Validates and normalizes an email field.
  */
-final class UsernameValidator
+final class EmailValidator
 {
     public const MAX_LENGTH = 255;
 
@@ -17,10 +23,14 @@ final class UsernameValidator
     public function __construct()
     {
         $this->validators = [
-            new RequiredValidator('Username is required.'),
+            new RequiredValidator('Email is required.'),
             new MaxLengthValidator(
                 self::MAX_LENGTH,
-                'Username must be at most ' . self::MAX_LENGTH . ' characters.'
+                'Email must be at most ' . self::MAX_LENGTH . ' characters.'
+            ),
+            new RegexValidator(
+                '/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
+                'Email format is invalid.'
             ),
         ];
     }

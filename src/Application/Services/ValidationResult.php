@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Services;
 
 use App\Application\DTO\LoginRequestDTO;
+use App\Application\DTO\ProductRequestDTO;
 use App\Application\DTO\RegisterRequestDTO;
 
 /**
@@ -18,7 +19,8 @@ final class ValidationResult
     public function __construct(
         private array $errors = [],
         private ?LoginRequestDTO $loginRequest = null,
-        private ?RegisterRequestDTO $registerRequest = null
+        private ?RegisterRequestDTO $registerRequest = null,
+        private ?ProductRequestDTO $productRequest = null
     ) {
     }
 
@@ -79,5 +81,14 @@ final class ValidationResult
     public function getRegisterRequest(): ?RegisterRequestDTO
     {
         return $this->registerRequest;
+    }
+
+    /**
+     * Get the product request.
+     * @return ProductRequestDTO|null The product request, or null if there is no product request.
+     */
+    public function getProductRequest(): ?ProductRequestDTO
+    {
+        return $this->productRequest;
     }
 }

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Shared;
 
 /**
- * Ensures a string value has at least a minimum length.
+ * Ensures a string value matches a regular expression.
  */
-final class MinLengthValidator implements ValidatorInterface
+final class RegexValidator implements ValidatorInterface
 {
     public function __construct(
-        private int $min,
+        private string $pattern,
         private string $message
     ) {
     }
@@ -21,7 +21,7 @@ final class MinLengthValidator implements ValidatorInterface
             return null;
         }
 
-        if (mb_strlen($value) < $this->min) {
+        if (preg_match($this->pattern, $value) !== 1) {
             return $this->message;
         }
 

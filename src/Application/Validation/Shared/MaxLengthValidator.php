@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Shared;
 
 /**
- * Ensures a string value matches a regular expression.
+ * Ensures a string value does not exceed a maximum length.
  */
-final class RegexValidator implements ValidatorInterface
+final class MaxLengthValidator implements ValidatorInterface
 {
     public function __construct(
-        private string $pattern,
+        private int $max,
         private string $message
     ) {
     }
@@ -21,7 +21,7 @@ final class RegexValidator implements ValidatorInterface
             return null;
         }
 
-        if (preg_match($this->pattern, $value) !== 1) {
+        if (mb_strlen($value) > $this->max) {
             return $this->message;
         }
 

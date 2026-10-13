@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Validation;
+namespace App\Application\Validation\Auth;
+
+use App\Application\Validation\Shared\FieldResult;
+use App\Application\Validation\Shared\MaxLengthValidator;
+use App\Application\Validation\Shared\MinLengthValidator;
+use App\Application\Validation\Shared\RegexValidator;
+use App\Application\Validation\Shared\RequiredValidator;
+use App\Application\Validation\Shared\ValidatorInterface;
 
 /**
  * Validates a password field.

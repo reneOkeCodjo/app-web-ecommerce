@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Service;
 
 use App\Application\Services\Validation;
-use App\Application\Validation\MaxLengthValidator;
-use App\Application\Validation\MinLengthValidator;
-use App\Application\Validation\PasswordValidator;
-use App\Application\Validation\RegexValidator;
-use App\Application\Validation\RequiredValidator;
-use App\Application\Validation\UsernameValidator;
+use App\Application\Validation\Auth\PasswordValidator;
+use App\Application\Validation\Auth\UsernameValidator;
+use App\Application\Validation\Shared\MaxLengthValidator;
+use App\Application\Validation\Shared\MinLengthValidator;
+use App\Application\Validation\Shared\RegexValidator;
+use App\Application\Validation\Shared\RequiredValidator;
 use PHPUnit\Framework\TestCase;
 
 final class ValidationServiceTest extends TestCase

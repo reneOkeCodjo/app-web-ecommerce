@@ -444,32 +444,6 @@ http://localhost:8080/admin/products.php
 
 > **Temporaire (dev / fil rouge) :** les fichiers sont sous `public/`, donc **visibles via l’URL** (le développeur et quiconque connaît le chemin peut les ouvrir). Ce n’est **pas** un stockage privé. Avant la prod : stockage hors web root, CDN, ou URLs signées.
 
-**Feuille de route image produit :**
-
-| Étape | Contenu | Statut |
-|-------|---------|--------|
-| 1 | Upload fichier + chemin en base | Fait |
-| 2 | Affichage `<img>` liste / détail / aperçu | Fait |
-| 3 | Robustesse (suppression ancienne image à l’update/delete) | Fait |
-
-**Feuille de route robustesse admin produits :**
-
-| Étape | Contenu | Statut |
-|-------|---------|--------|
-| 1 | Valider avant upload + rollback fichier si persist échoue | Fait |
-| 2 | Erreurs par champ + repopulate formulaire | Fait |
-| 3 | Connexion DB try/catch + action POST invalide | Fait |
-
-**Feuille de route admin produits :**
-
-| Étape | Contenu | Statut |
-|-------|---------|--------|
-| 0 | README aligné (état courant) | Fait |
-| 1 | Liste + delete via `ProductService` / SQL | Fait |
-| 2 | Create + update via `ProductService` | Fait |
-| 3 | Promo dans les formulaires (TTC barré + prix disponible) | Fait |
-| 4 | Mocks réservés aux tests + polish libellés UI | Fait |
-
 **Migrations produits (ordre Docker init) :**
 
 - `004_create_products_table.sql` — table `product`
@@ -670,19 +644,11 @@ Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
 | Branche | Suivi distant |
 |---------|---------------|
 | `main` | `origin/main` |
-| `develop` | `origin/develop` (merge local + distant effectué) |
-| `chore/resolve-merge` | aucune — clarification post-merge (migrations + README) |
-| `feature/admin` | aucune (locale uniquement) — back-office admin (fusionnée dans `develop`) |
-| `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (fusionnée) |
-| `feature/admin-product-image` | aucune — upload / affichage images admin (fusionnée dans `develop`) |
-| `feature/register` | aucune (locale uniquement) |
-| `feature/login` | aucune (locale uniquement) |
-| `feature/session` | aucune (locale uniquement) |
-| `feature/ui` | aucune (locale uniquement) |
-| `feature/validator` | aucune (locale uniquement) |
-| `feature/test` | aucune (locale uniquement) |
+| `develop` | `origin/develop` |
+| `feature/admin-products-robustness` | aucune — robustesse admin produits |
+| `feature/admin-cleanup` | aucune — nettoyage post-robustesse |
 
-> Les branches `feature/*` n’ont pas de correspondance distante sur `origin`.
+> Les branches `feature/*` n’ont en général pas de correspondance distante sur `origin`.
 
 ---
 

@@ -666,6 +666,7 @@ Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
 | `chore/resolve-merge` | aucune — clarification post-merge (migrations + README) |
 | `feature/admin` | aucune (locale uniquement) — back-office admin (fusionnée dans `develop`) |
 | `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (fusionnée) |
+| `feature/admin-product-image` | aucune — upload / affichage images admin (fusionnée dans `develop`) |
 | `feature/register` | aucune (locale uniquement) |
 | `feature/login` | aucune (locale uniquement) |
 | `feature/session` | aucune (locale uniquement) |

@@ -228,19 +228,19 @@ $productsJson = array_map(
                 </label>
                 <label class="admin-form__field">
                     <span>Désignation</span>
-                    <input type="text" name="designation_p" id="product-form-designation" maxlength="255" required>
+                    <input type="text" name="designation_p" placeholder="Type the name" id="product-form-designation" maxlength="255" required>
                 </label>
                 <label class="admin-form__field">
                     <span>Prix HT</span>
-                    <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" required>
+                    <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" placeholder="0.00" required>
                 </label>
                 <label class="admin-form__field">
                     <span>Date d’entrée</span>
-                    <input type="date" name="date_in" id="product-form-date" required>
+                    <input type="date" name="date_in" id="product-form-date" placeholder="JJ/MM/AAAA" required>
                 </label>
                 <label class="admin-form__field">
                     <span>Stock</span>
-                    <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="0" required>
+                    <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="0">
                 </label>
 
                 <div class="admin-dialog__actions">

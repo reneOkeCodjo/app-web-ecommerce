@@ -7,6 +7,7 @@ namespace App\Application\Services\Product;
 use App\Application\DTO\ProductRequestDTO;
 use App\Application\Services\Shared\Validation;
 use App\Application\Services\Shared\ValidationInterface;
+use App\Application\Services\Shared\ValidationResult;
 use App\Domain\Model\Product;
 use App\Infrastructure\Persistence\DAO\ProductRepositoryInterface;
 use InvalidArgumentException;
@@ -34,6 +35,53 @@ class ProductService
     }
 
     /**
+     * Validate product fields without persisting (allows upload only after success).
+     */
+    public function validateInput(
+        mixed $type,
+        mixed $designation,
+        mixed $priceHt,
+        mixed $stock,
+        mixed $dateIn,
+        mixed $promotion = null,
+        mixed $image = null
+    ): ValidationResult {
+        return $this->validation->validateProduct(
+            $type,
+            $designation,
+            $priceHt,
+            $stock,
+            $dateIn,
+            $promotion,
+            $image
+        );
+    }
+
+    /**
+     * Persist a previously validated product DTO.
+     */
+    public function createFromDto(ProductRequestDTO $dto): bool
+    {
+        return $this->repository->create($this->toProduct($dto));
+    }
+
+    /**
+     * Persist an update from a previously validated product DTO.
+     */
+    public function updateFromDto(int $id, ProductRequestDTO $dto): bool
+    {
+        $existing = $this->repository->findById($id);
+
+        if ($existing === null) {
+            throw new RuntimeException('Produit introuvable.');
+        }
+
+        return $this->repository->update(
+            $this->toProduct($dto, $id, $existing->getDateNew())
+        );
+    }
+
+    /**
      * Validate raw input, then create the product.
      */
     public function create(
@@ -55,7 +103,7 @@ class ProductService
             $image
         );
 
-        return $this->repository->create($this->toProduct($dto));
+        return $this->createFromDto($dto);
     }
 
     /**
@@ -71,12 +119,6 @@ class ProductService
         mixed $promotion = null,
         mixed $image = null
     ): bool {
-        $existing = $this->repository->findById($id);
-
-        if ($existing === null) {
-            throw new RuntimeException('Produit introuvable.');
-        }
-
         $dto = $this->requireValidProductDto(
             $type,
             $designation,
@@ -87,9 +129,7 @@ class ProductService
             $image
         );
 
-        return $this->repository->update(
-            $this->toProduct($dto, $id, $existing->getDateNew())
-        );
+        return $this->updateFromDto($id, $dto);
     }
 
     public function delete(int $id): bool
@@ -110,7 +150,7 @@ class ProductService
         mixed $promotion,
         mixed $image
     ): ProductRequestDTO {
-        $result = $this->validation->validateProduct(
+        $result = $this->validateInput(
             $type,
             $designation,
             $priceHt,

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
+use App\Application\DTO\ProductRequestDTO;
 use App\Application\Services\Auth\Auth;
 use App\Application\Services\Product\ProductService;
 use App\Domain\Model\Product;
@@ -11,6 +12,9 @@ use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
 use App\Infrastructure\Storage\ProductImageUploader;
 use Db_config\Database;
+use InvalidArgumentException;
+use RuntimeException;
+use Throwable;
 
 $session = new NativeSessionStore();
 $auth = new Auth(new NullUserRepository(), $session);
@@ -32,6 +36,22 @@ $imageUploader = new ProductImageUploader(
 );
 $feedback = '';
 
+/**
+ * @param ProductRequestDTO $dto
+ * @param string|null $imagePath
+ */
+$dtoWithImage = static function (ProductRequestDTO $dto, ?string $imagePath): ProductRequestDTO {
+    return new ProductRequestDTO(
+        $dto->getType(),
+        $dto->getDesignation(),
+        $dto->getPriceHt(),
+        $dto->getStock(),
+        $dto->getDateIn(),
+        $dto->getPromotion(),
+        $imagePath
+    );
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
     /** @var array{name?: string, type?: string, tmp_name?: string, error?: int, size?: int} $uploadedImage */
@@ -39,18 +59,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ? $_FILES['product_image']
         : ['error' => UPLOAD_ERR_NO_FILE];
 
+    $newImagePath = null;
+
     try {
         if ($action === 'create') {
-            $imagePath = $imageUploader->storeFromUpload($uploadedImage);
-            $productService->create(
+            // Validate fields before upload to avoid orphan files on invalid input.
+            $validationResult = $productService->validateInput(
                 $_POST['type_p'] ?? null,
                 $_POST['designation_p'] ?? null,
                 $_POST['prix_ht'] ?? null,
                 $_POST['stock_p'] ?? null,
                 $_POST['date_in'] ?? date('Y-m-d'),
                 $_POST['ppromo'] ?? null,
-                $imagePath
+                null
             );
+
+            if (!$validationResult->isValid()) {
+                throw new InvalidArgumentException((string) $validationResult->getFirstError());
+            }
+
+            $baseDto = $validationResult->getProductRequest();
+            if ($baseDto === null) {
+                throw new RuntimeException('Validation produit incohérente.');
+            }
+
+            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
+            $persisted = $productService->createFromDto(
+                $dtoWithImage($baseDto, $newImagePath)
+            );
+
+            if (!$persisted) {
+                throw new RuntimeException('Impossible d’enregistrer le produit.');
+            }
         } elseif ($action === 'update') {
             $id = (int) ($_POST['id_p'] ?? 0);
             $existing = $productService->findById($id);
@@ -58,21 +98,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('Produit introuvable.');
             }
 
-            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
-            $imagePath = $newImagePath ?? $existing->getImage();
-
-            $updated = $productService->update(
-                $id,
+            $validationResult = $productService->validateInput(
                 $_POST['type_p'] ?? null,
                 $_POST['designation_p'] ?? null,
                 $_POST['prix_ht'] ?? null,
                 $_POST['stock_p'] ?? null,
                 $_POST['date_in'] ?? $existing->getDateIn(),
                 $_POST['ppromo'] ?? null,
-                $imagePath
+                $existing->getImage()
             );
 
-            if ($updated && $newImagePath !== null && $existing->getImage() !== $newImagePath) {
+            if (!$validationResult->isValid()) {
+                throw new InvalidArgumentException((string) $validationResult->getFirstError());
+            }
+
+            $baseDto = $validationResult->getProductRequest();
+            if ($baseDto === null) {
+                throw new RuntimeException('Validation produit incohérente.');
+            }
+
+            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
+            $imagePath = $newImagePath ?? $existing->getImage();
+
+            $updated = $productService->updateFromDto(
+                $id,
+                $dtoWithImage($baseDto, $imagePath)
+            );
+
+            if (!$updated) {
+                throw new RuntimeException('Impossible de modifier le produit.');
+            }
+
+            if ($newImagePath !== null && $existing->getImage() !== $newImagePath) {
                 $imageUploader->deleteByPublicPath($existing->getImage());
             }
         } elseif ($action === 'delete') {
@@ -84,6 +141,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } catch (Throwable $e) {
+        if ($newImagePath !== null) {
+            $imageUploader->deleteByPublicPath($newImagePath);
+        }
+
         $feedback = '<p class="feedback feedback-error" role="alert">'
             . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
             . '</p>';

@@ -46,6 +46,41 @@ final class ProductServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->service->create('Inconnu', 'X', '10.00', '1', '2026-01-10');
     }
+
+    public function testValidateInputReturnsFieldErrorsWithoutPersisting(): void
+    {
+        $result = $this->service->validateInput(
+            'Inconnu',
+            'X',
+            '10.00',
+            '1',
+            '2026-01-10'
+        );
+
+        self::assertFalse($result->isValid());
+        self::assertNotNull($result->getError('type_p'));
+        self::assertNull($this->repository->created);
+    }
+
+    public function testCreateFromDtoPersistsWithoutReValidatingCategoryTwice(): void
+    {
+        $result = $this->service->validateInput(
+            'Smartphone',
+            'Galaxy A55',
+            '449.99',
+            '10',
+            '2026-01-10',
+            null,
+            null
+        );
+
+        self::assertTrue($result->isValid());
+        $dto = $result->getProductRequest();
+        self::assertNotNull($dto);
+
+        self::assertTrue($this->service->createFromDto($dto));
+        self::assertSame('Galaxy A55', $this->repository->created?->getDesignation());
+    }
 }
 
 /**

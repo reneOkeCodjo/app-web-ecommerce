@@ -452,6 +452,14 @@ http://localhost:8080/admin/products.php
 | 2 | Affichage `<img>` liste / détail / aperçu | Fait |
 | 3 | Robustesse (suppression ancienne image à l’update/delete) | Fait |
 
+**Feuille de route robustesse admin produits :**
+
+| Étape | Contenu | Statut |
+|-------|---------|--------|
+| 1 | Valider avant upload + rollback fichier si persist échoue | Fait |
+| 2 | Erreurs par champ + repopulate formulaire | À faire |
+| 3 | Connexion DB try/catch + action POST invalide | À faire |
+
 **Feuille de route admin produits :**
 
 | Étape | Contenu | Statut |

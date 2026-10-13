@@ -3,10 +3,12 @@
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use App\Application\Services\Auth\Auth;
+use App\Application\Services\Product\ProductService;
 use App\Domain\Model\Product;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;
-use App\Infrastructure\Persistence\DAO\SessionProductRepository;
+use App\Infrastructure\Persistence\DAO\ProductRepository;
+use Db_config\Database;
 
 $session = new NativeSessionStore();
 $auth = new Auth(new NullUserRepository(), $session);
@@ -21,7 +23,9 @@ $categoriesRaw = is_file($categoriesPath) ? file_get_contents($categoriesPath) :
 $categoriesDecoded = is_string($categoriesRaw) ? json_decode($categoriesRaw, true) : null;
 $categories = is_array($categoriesDecoded) ? $categoriesDecoded : [];
 
-$repository = new SessionProductRepository($session);
+$connection = Database::connect();
+$repository = new ProductRepository($connection);
+$productService = new ProductService($repository);
 $feedback = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,18 +33,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($action === 'create') {
-            $repository->create(
+            // Étape 2 : basculer create sur ProductService (validation).
+            $repository->create(new Product(
+                null,
                 trim((string) ($_POST['type_p'] ?? '')),
                 trim((string) ($_POST['designation_p'] ?? '')),
-                (float) ($_POST['prix_ht'] ?? 0),
+                number_format((float) ($_POST['prix_ht'] ?? 0), 2, '.', ''),
+                (int) ($_POST['stock_p'] ?? 0),
                 trim((string) ($_POST['date_in'] ?? date('Y-m-d'))),
-                (int) ($_POST['stock_p'] ?? 0)
-            );
+                null
+            ));
         } elseif ($action === 'update') {
+            // Étape 2 : basculer update sur ProductService (validation).
             $id = (int) ($_POST['id_p'] ?? 0);
-            $existing = $repository->findById($id);
+            $existing = $productService->findById($id);
             if ($existing === null) {
-                throw new RuntimeException('Product not found.');
+                throw new RuntimeException('Produit introuvable.');
             }
 
             $repository->update(new Product(
@@ -51,10 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (int) ($_POST['stock_p'] ?? 0),
                 trim((string) ($_POST['date_in'] ?? $existing->getDateIn())),
                 $existing->getDateNew(),
-                $existing->getPromotion()
+                $existing->getPromotion(),
+                $existing->getImage()
             ));
         } elseif ($action === 'delete') {
-            $repository->delete((int) ($_POST['id_p'] ?? 0));
+            $productService->delete((int) ($_POST['id_p'] ?? 0));
         }
     } catch (Throwable $e) {
         $feedback = '<p class="feedback feedback-error" role="alert">'
@@ -68,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$products = $repository->findAll();
+$products = $productService->findAll();
 $productsJson = array_map(
     static fn (Product $product): array => [
         'id' => $product->getId(),

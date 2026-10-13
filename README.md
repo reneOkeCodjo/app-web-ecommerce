@@ -394,7 +394,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (transition mock → SQL en cours) |
+| Périmètre métier | Gestion des **produits** (liste/delete SQL ; create/update DAO brut → étape 2) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -432,23 +432,23 @@ http://localhost:8080/admin/products.php
 | DAO SQL | `ProductRepository` (+ interface) dans `ProductDAO.php` — CRUD + promo/image |
 | Service métier | `src/Application/Services/Product/ProductService.php` (+ validation) |
 | Validation | `Validation/{Shared,Auth,Product}/` + `Services/Shared/Validation` |
-| UI admin | Encore branchée sur le **mock session** (`SessionProductRepository`) |
+| UI admin | SQL : **liste + delete** via `ProductService` ; create/update encore via `ProductRepository` (sans validation service) |
 
-- Mocks (tests / transition) : `InMemoryProductRepository` + `SessionProductRepository`
-- Page : `public/admin/products.php` — liste, Add, popup détails (Update / Remove), formulaire
+- Page : `public/admin/products.php` — liste MySQL, Add / Update (DAO), Remove (`ProductService`)
 - Catégories : `public/data/product-categories.json` (filtre + select)
 - Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
+- Mocks conservés pour les tests unitaires : `InMemoryProductRepository` + `SessionProductRepository`
 
 **Feuille de route admin produits :**
 
-| Étape | Contenu |
-|-------|---------|
-| 0 | README aligné (état courant) |
-| 1 | Liste + delete via `ProductService` / SQL |
-| 2 | Create + update via `ProductService` |
-| 3 | Promo dans les formulaires (TTC barré + prix disponible) |
-| 4 | Retrait du mock session de l’UI admin |
+| Étape | Contenu | Statut |
+|-------|---------|--------|
+| 0 | README aligné (état courant) | Fait |
+| 1 | Liste + delete via `ProductService` / SQL | Fait |
+| 2 | Create + update via `ProductService` | À faire |
+| 3 | Promo dans les formulaires (TTC barré + prix disponible) | À faire |
+| 4 | Retrait du mock session (tests only) + polish | À faire |
 
 **Migrations produits (ordre Docker init) :**
 

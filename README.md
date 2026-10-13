@@ -450,7 +450,7 @@ http://localhost:8080/admin/products.php
 |-------|---------|--------|
 | 1 | Upload fichier + chemin en base | Fait |
 | 2 | Affichage `<img>` liste / détail / aperçu | Fait |
-| 3 | Robustesse (suppression ancienne image, etc.) | À faire |
+| 3 | Robustesse (suppression ancienne image à l’update/delete) | Fait |
 
 **Feuille de route admin produits :**
 

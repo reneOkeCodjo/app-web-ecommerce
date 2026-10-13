@@ -58,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('Produit introuvable.');
             }
 
-            $imagePath = $imageUploader->storeFromUpload($uploadedImage)
-                ?? $existing->getImage();
+            $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
+            $imagePath = $newImagePath ?? $existing->getImage();
 
-            $productService->update(
+            $updated = $productService->update(
                 $id,
                 $_POST['type_p'] ?? null,
                 $_POST['designation_p'] ?? null,
@@ -71,8 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['ppromo'] ?? null,
                 $imagePath
             );
+
+            if ($updated && $newImagePath !== null && $existing->getImage() !== $newImagePath) {
+                $imageUploader->deleteByPublicPath($existing->getImage());
+            }
         } elseif ($action === 'delete') {
-            $productService->delete((int) ($_POST['id_p'] ?? 0));
+            $id = (int) ($_POST['id_p'] ?? 0);
+            $existing = $productService->findById($id);
+            $deleted = $productService->delete($id);
+            if ($deleted && $existing !== null) {
+                $imageUploader->deleteByPublicPath($existing->getImage());
+            }
         }
     } catch (Throwable $e) {
         $feedback = '<p class="feedback feedback-error" role="alert">'

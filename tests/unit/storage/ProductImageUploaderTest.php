@@ -26,4 +26,34 @@ final class ProductImageUploaderTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $uploader->storeFromUpload(['error' => UPLOAD_ERR_INI_SIZE]);
     }
+
+    public function testDeleteByPublicPathRemovesOwnedFile(): void
+    {
+        $dir = sys_get_temp_dir() . '/product-upload-test-' . bin2hex(random_bytes(4));
+        mkdir($dir, 0775, true);
+        $file = $dir . '/sample.jpg';
+        file_put_contents($file, 'x');
+
+        $uploader = new ProductImageUploader($dir, '/uploads/products');
+        $uploader->deleteByPublicPath('/uploads/products/sample.jpg');
+
+        self::assertFileDoesNotExist($file);
+        rmdir($dir);
+    }
+
+    public function testDeleteByPublicPathIgnoresForeignPaths(): void
+    {
+        $dir = sys_get_temp_dir() . '/product-upload-test-' . bin2hex(random_bytes(4));
+        mkdir($dir, 0775, true);
+        $file = $dir . '/keep.jpg';
+        file_put_contents($file, 'x');
+
+        $uploader = new ProductImageUploader($dir, '/uploads/products');
+        $uploader->deleteByPublicPath('/etc/passwd');
+        $uploader->deleteByPublicPath('/uploads/other/keep.jpg');
+
+        self::assertFileExists($file);
+        unlink($file);
+        rmdir($dir);
+    }
 }

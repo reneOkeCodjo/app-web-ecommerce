@@ -88,4 +88,41 @@ final class ProductImageUploader
 
         return rtrim($this->publicPathPrefix, '/') . '/' . $filename;
     }
+
+    /**
+     * Remove a previously stored image when replaced or when the product is deleted.
+     * Only deletes files that belong to this uploader's public prefix (path traversal safe).
+     */
+    public function deleteByPublicPath(?string $publicPath): void
+    {
+        if ($publicPath === null || $publicPath === '') {
+            return;
+        }
+
+        $prefix = rtrim($this->publicPathPrefix, '/') . '/';
+        if (!str_starts_with($publicPath, $prefix)) {
+            return;
+        }
+
+        $filename = basename($publicPath);
+        if ($filename === '' || $filename === '.' || $filename === '..') {
+            return;
+        }
+
+        $absolute = $this->absoluteUploadDir . DIRECTORY_SEPARATOR . $filename;
+        $realDir = realpath($this->absoluteUploadDir);
+        $realFile = realpath($absolute);
+
+        if ($realDir === false || $realFile === false) {
+            return;
+        }
+
+        if (!str_starts_with($realFile, $realDir . DIRECTORY_SEPARATOR)) {
+            return;
+        }
+
+        if (is_file($realFile)) {
+            unlink($realFile);
+        }
+    }
 }

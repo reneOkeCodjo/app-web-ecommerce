@@ -391,7 +391,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (mock en mémoire pour l’instant) |
+| Périmètre métier | Gestion des **produits** (UI admin encore sur mock session ; DAO SQL prêt) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -421,21 +421,31 @@ http://localhost:8080/admin/index.php
 http://localhost:8080/admin/products.php
 ```
 
-**Produits (mock UI, sans DAO SQL) :**
+**Produits — état après merge `origin/develop` :**
 
-- Contrat : `ProductRepositoryInterface`
-- Mocks : `InMemoryProductRepository` + `SessionProductRepository` (CRUD de démo en session)
-- Entité : `Product` alignée sur `produit` (`id_p`, `type_p`, `designation_p`, `prix_ht`, `date_in`, `times_in`, `stock_p`)
-- Page : `public/admin/products.php` — liste, bouton Add, clic ligne → popup détails (Update / Remove), popup formulaire
-- Catégories : `public/data/product-categories.json` (filtre + select formulaire)
-- Scripts : `public/scripts/admin-products.js` (entrée) + `public/scripts/admin/*` (catalogue, filtre, dialogs)
+| Couche | Statut |
+|--------|--------|
+| Entité `Product` | Modèle distant : `getPriceHt()`, `getDateNew()`, `getPromotion()` |
+| DAO SQL | `ProductRepository` (+ `ProductRepositoryInterface`) dans `ProductDAO.php` |
+| Service | `ProductService` + `ProductRequestDTO` |
+| UI admin | Toujours branchée sur le **mock session** (`SessionProductRepository`) |
+
+- Mocks admin : `InMemoryProductRepository` + `SessionProductRepository` (adaptés à l’API Product distante)
+- Page : `public/admin/products.php` — liste, Add, popup détails (Update / Remove), formulaire
+- Catégories : `public/data/product-categories.json` (filtre + select)
+- Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
-- Libellés UI FR : Id, Catégorie, Désignation, Prix HT, Stock, etc.
-- Le vrai DAO produits remplacera le mock plus tard
+- Prochaine étape : brancher `products.php` sur `ProductService` / `ProductRepository`
+
+**Migrations produits (ordre Docker init) :**
+
+- `004_create_products_table.sql` — table `product`
+- `005_add_product_promotion.sql` — colonne `ppromo`
 
 ```bash
 ./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
 ./vendor/bin/phpunit tests/unit/dao/SessionProductRepositoryTest.php
+./vendor/bin/phpunit tests/integration/dao/ProductDaoTest.php
 ```
 
 ---
@@ -507,6 +517,9 @@ docker-compose up -d
 # DAO utilisateurs
 ./vendor/bin/phpunit tests/integration/dao/UserDaoTest.php
 
+# DAO produits
+./vendor/bin/phpunit tests/integration/dao/ProductDaoTest.php
+
 # Connexion DB
 ./vendor/bin/phpunit tests/integration/db/DatabaseConnectionTest.php
 ```
@@ -520,16 +533,18 @@ src/
 ├── Domain/
 │   └── Model/
 │       ├── User.php                         → Entité User (+ compte_type)
-│       └── Product.php                      → Entité Product (provisoire)
+│       └── Product.php                      → Entité Product (DAO SQL)
 ├── Application/
 │   ├── DTO/
 │   │   ├── LoginRequestDTO.php              → DTO de login
-│   │   └── RegisterRequestDTO.php           → DTO d’inscription
+│   │   ├── RegisterRequestDTO.php           → DTO d’inscription
+│   │   └── ProductRequestDTO.php            → DTO produit
 │   ├── Services/
 │   │   ├── Auth.php                         → Auth + AuthInterface (session + rôle)
 │   │   ├── LoginHandler.php                 → Auth login front → redirect produits
 │   │   ├── AdminLoginHandler.php            → Auth login admin → redirect dashboard
 │   │   ├── RegisterHandler.php              → Auth register → erreur HTML ou redirect
+│   │   ├── ProductService.php               → CRUD produits (DAO SQL)
 │   │   ├── Validation.php                   → Orchestration validation login/register
 │   │   └── ValidationResult.php             → Erreurs champs + DTO normalisé
 │   └── Validation/
@@ -549,8 +564,8 @@ src/
         └── DAO/
             ├── UserDAO.php                  → UserRepository + Interface
             ├── NullUserRepository.php       → Repo no-op (GET anonyme)
-            ├── ProductRepositoryInterface.php → Contrat produits
-            ├── InMemoryProductRepository.php → Mock produits (pas de SQL)
+            ├── ProductDAO.php               → ProductRepository + Interface (SQL)
+            ├── InMemoryProductRepository.php → Mock produits (admin UI)
             └── SessionProductRepository.php → Mock CRUD en session
 
 config/
@@ -560,7 +575,9 @@ database/
 └── migrations/
     ├── 001_create_users_table.sql           → Tables compte + user
     ├── 002_fix_users_unique_constraints.sql → Login/email uniques
-    └── 003_seed_admin_user.sql              → Seed admin (admin / Admin123!)
+    ├── 003_seed_admin_user.sql              → Seed admin (admin / Admin123!)
+    ├── 004_create_products_table.sql        → Table product
+    └── 005_add_product_promotion.sql        → Colonne ppromo
 
 public/
 ├── index.php                                → Page de login client
@@ -581,12 +598,14 @@ php/
 tests/
 ├── integration/
 │   ├── dao/
-│   │   └── UserDaoTest.php                  → Test intégration DAO
+│   │   ├── UserDaoTest.php                  → Test intégration User DAO
+│   │   └── ProductDaoTest.php               → Test intégration Product DAO
 │   └── db/
 │       └── DatabaseConnectionTest.php       → Test connexion DB
 └── unit/
     ├── dao/
-    │   └── InMemoryProductRepositoryTest.php → Mock produits
+    │   ├── InMemoryProductRepositoryTest.php → Mock produits
+    │   └── SessionProductRepositoryTest.php → Mock session
     ├── http/
     │   └── NativeSessionStoreTest.php       → Session PHP sécurisée
     └── service/
@@ -618,7 +637,8 @@ Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
 | Branche | Suivi distant |
 |---------|---------------|
 | `main` | `origin/main` |
-| `develop` | `origin/develop` |
+| `develop` | `origin/develop` (merge local + distant effectué) |
+| `chore/resolve-merge` | aucune — clarification post-merge (migrations + README) |
 | `feature/admin` | aucune (locale uniquement) — back-office admin (fusionnée dans `develop`) |
 | `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (mock) |
 | `feature/register` | aucune (locale uniquement) |

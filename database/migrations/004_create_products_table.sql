@@ -1,5 +1,6 @@
--- Migration:  Create products table
+-- Migration: Create products table
 -- Date: 2026-10-11
+-- Order: 004 (after users + admin seed)
 
 
 

@@ -12,9 +12,6 @@ use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
 use App\Infrastructure\Storage\ProductImageUploader;
 use Db_config\Database;
-use InvalidArgumentException;
-use RuntimeException;
-use Throwable;
 
 $session = new NativeSessionStore();
 $auth = new Auth(new NullUserRepository(), $session);
@@ -79,15 +76,20 @@ try {
             ? $_FILES['product_image']
             : ['error' => UPLOAD_ERR_NO_FILE];
 
+        $postString = static function (string $key, string $default = ''): string {
+            $value = $_POST[$key] ?? $default;
+            return is_scalar($value) ? (string) $value : $default;
+        };
+
         $formValues = [
             'action' => $action === 'update' ? 'update' : 'create',
-            'id_p' => is_string($_POST['id_p'] ?? null) ? $_POST['id_p'] : (string) ($_POST['id_p'] ?? ''),
-            'type_p' => is_string($_POST['type_p'] ?? null) ? $_POST['type_p'] : '',
-            'designation_p' => is_string($_POST['designation_p'] ?? null) ? $_POST['designation_p'] : '',
-            'prix_ht' => is_string($_POST['prix_ht'] ?? null) ? $_POST['prix_ht'] : (string) ($_POST['prix_ht'] ?? ''),
-            'ppromo' => is_string($_POST['ppromo'] ?? null) ? $_POST['ppromo'] : (string) ($_POST['ppromo'] ?? ''),
-            'date_in' => is_string($_POST['date_in'] ?? null) ? $_POST['date_in'] : '',
-            'stock_p' => is_string($_POST['stock_p'] ?? null) ? $_POST['stock_p'] : (string) ($_POST['stock_p'] ?? '0'),
+            'id_p' => $postString('id_p'),
+            'type_p' => $postString('type_p'),
+            'designation_p' => $postString('designation_p'),
+            'prix_ht' => $postString('prix_ht'),
+            'ppromo' => $postString('ppromo'),
+            'date_in' => $postString('date_in'),
+            'stock_p' => $postString('stock_p', '0'),
             'image' => null,
         ];
 
@@ -96,7 +98,7 @@ try {
 
         try {
             if (!in_array($action, $allowedActions, true)) {
-                throw new InvalidArgumentException('Action non autorisée.');
+                throw new \InvalidArgumentException('Action non autorisée.');
             }
 
             if ($action === 'create' || $action === 'update') {
@@ -107,7 +109,7 @@ try {
                     $id = (int) ($_POST['id_p'] ?? 0);
                     $existing = $productService->findById($id);
                     if ($existing === null) {
-                        throw new RuntimeException('Produit introuvable.');
+                        throw new \RuntimeException('Produit introuvable.');
                     }
                     $existingImage = $existing->getImage();
                     $formValues['image'] = $existingImage;
@@ -130,7 +132,7 @@ try {
                 } else {
                     $baseDto = $validationResult->getProductRequest();
                     if ($baseDto === null) {
-                        throw new RuntimeException('Validation produit incohérente.');
+                        throw new \RuntimeException('Validation produit incohérente.');
                     }
 
                     $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
@@ -141,7 +143,7 @@ try {
                             $dtoWithImage($baseDto, $imagePath)
                         );
                         if (!$persisted) {
-                            throw new RuntimeException('Impossible d’enregistrer le produit.');
+                            throw new \RuntimeException('Impossible d’enregistrer le produit.');
                         }
                     } else {
                         $id = (int) ($_POST['id_p'] ?? 0);
@@ -150,7 +152,7 @@ try {
                             $dtoWithImage($baseDto, $imagePath)
                         );
                         if (!$updated) {
-                            throw new RuntimeException('Impossible de modifier le produit.');
+                            throw new \RuntimeException('Impossible de modifier le produit.');
                         }
                         if (
                             $newImagePath !== null
@@ -165,15 +167,15 @@ try {
                 $id = (int) ($_POST['id_p'] ?? 0);
                 $existing = $productService->findById($id);
                 if ($existing === null) {
-                    throw new RuntimeException('Produit introuvable.');
+                    throw new \RuntimeException('Produit introuvable.');
                 }
                 $deleted = $productService->delete($id);
                 if (!$deleted) {
-                    throw new RuntimeException('Impossible de supprimer le produit.');
+                    throw new \RuntimeException('Impossible de supprimer le produit.');
                 }
                 $imageUploader->deleteByPublicPath($existing->getImage());
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             if ($newImagePath !== null) {
                 $imageUploader->deleteByPublicPath($newImagePath);
             }
@@ -216,7 +218,7 @@ try {
         },
         $products
     );
-} catch (Throwable $e) {
+} catch (\Throwable $e) {
     $feedback = '<p class="feedback feedback-error" role="alert">'
         . 'Connexion à la base impossible. Réessayez plus tard.'
         . '</p>';
@@ -431,7 +433,7 @@ try {
                 </label>
                 <label class="admin-form__field<?= $designationError ? ' admin-form__field--error' : '' ?>">
                     <span>Désignation</span>
-                    <input type="text" name="designation_p" placeholder="Type the name" id="product-form-designation" maxlength="255" required value="<?= htmlspecialchars($formValues['designation_p'], ENT_QUOTES, 'UTF-8') ?>"<?= $designationError ? ' aria-invalid="true" aria-describedby="designation_p-error"' : '' ?>>
+                    <input type="text" name="designation_p" placeholder="Nom du produit" id="product-form-designation" maxlength="255" required value="<?= htmlspecialchars($formValues['designation_p'], ENT_QUOTES, 'UTF-8') ?>"<?= $designationError ? ' aria-invalid="true" aria-describedby="designation_p-error"' : '' ?>>
                     <?php if ($designationError): ?>
                         <span class="field-error" id="designation_p-error" role="alert"><?= htmlspecialchars($designationError, ENT_QUOTES, 'UTF-8') ?></span>
                     <?php endif; ?>
@@ -479,7 +481,7 @@ try {
                         accept="image/jpeg,image/png,image/webp"
                         <?= $imageError ? ' aria-invalid="true" aria-describedby="product_image-error"' : '' ?>
                     >
-                    <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle. Stockage temporaire sous /uploads (fichiers accessibles en URL, usage dev uniquement).</span>
+                    <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle.</span>
                     <?php if ($imageError): ?>
                         <span class="field-error" id="product_image-error" role="alert"><?= htmlspecialchars($imageError, ENT_QUOTES, 'UTF-8') ?></span>
                     <?php endif; ?>
@@ -500,20 +502,7 @@ try {
         window.__ADMIN_TVA_RATE__ = <?= json_encode(ProductPricing::TVA_RATE) ?>;
         window.__ADMIN_PRODUCTS__ = <?= json_encode($productsJson, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.__ADMIN_FORM_STATE__ = <?= json_encode(
-            $reopenForm
-                ? [
-                    'reopen' => true,
-                    'action' => $formValues['action'],
-                    'id' => $formValues['id_p'],
-                    'type' => $formValues['type_p'],
-                    'designation' => $formValues['designation_p'],
-                    'prixHt' => $formValues['prix_ht'],
-                    'promotion' => $formValues['ppromo'] === '' ? null : $formValues['ppromo'],
-                    'dateIn' => $formValues['date_in'],
-                    'stock' => $formValues['stock_p'],
-                    'image' => $formValues['image'],
-                ]
-                : ['reopen' => false],
+            ['reopen' => $reopenForm],
             JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
         ) ?>;
     </script>

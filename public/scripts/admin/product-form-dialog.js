@@ -52,6 +52,7 @@ export function initProductFormDialog({ dialog, form }) {
     return {
       openCreateForm: () => {},
       openEditForm: () => {},
+      openRestoredForm: () => {},
     };
   }
 

@@ -247,6 +247,41 @@
   font-style: italic;
 }
 
+.admin-table__thumb {
+  width: 3.25rem;
+}
+
+.admin-thumb {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  background: rgb(255 255 255 / 8%);
+}
+
+.admin-thumb--empty {
+  border: 1px dashed rgb(255 255 255 / 22%);
+}
+
+.admin-dialog__media {
+  margin: 0 0 1rem;
+}
+
+.admin-dialog__image,
+.admin-image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 12rem;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  background: rgb(255 255 255 / 6%);
+}
+
+.admin-image-preview {
+  margin: 0;
+}
+
 .admin-form__field input::placeholder {
   color: var(--color-muted);
   font-style: italic;

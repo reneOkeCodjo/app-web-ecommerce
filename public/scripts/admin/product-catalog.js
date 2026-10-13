@@ -13,7 +13,8 @@
  *   prixDisponible: number,
  *   dateIn: string,
  *   timesIn: string,
- *   stock: number
+ *   stock: number,
+ *   image: string | null
  * }} AdminProduct
  */
 

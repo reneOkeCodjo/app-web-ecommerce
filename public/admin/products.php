@@ -163,6 +163,7 @@ $productsJson = array_map(
                 <table class="admin-table">
                     <thead>
                         <tr>
+                            <th scope="col">Image</th>
                             <th scope="col">Id</th>
                             <th scope="col">Catégorie</th>
                             <th scope="col">Désignation</th>
@@ -174,7 +175,7 @@ $productsJson = array_map(
                     <tbody>
                         <?php if ($products === []): ?>
                             <tr class="admin-table__empty-row">
-                                <td colspan="6" class="admin-table__empty">Aucun produit.</td>
+                                <td colspan="7" class="admin-table__empty">Aucun produit.</td>
                             </tr>
                         <?php endif; ?>
                         <?php foreach ($products as $product): ?>
@@ -186,6 +187,7 @@ $productsJson = array_map(
                             $prixTtc = ProductPricing::priceTtc($priceHt);
                             $prixDispo = ProductPricing::priceAvailable($priceHt, $promotion);
                             $hasPromo = ProductPricing::hasPromotion($promotion);
+                            $imagePath = $product->getImage();
                             ?>
                             <tr
                                 class="admin-table__row"
@@ -195,6 +197,19 @@ $productsJson = array_map(
                                 data-product-id="<?= (int) $product->getId() ?>"
                                 data-product-type="<?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?>"
                             >
+                                <td class="admin-table__thumb">
+                                    <?php if ($imagePath !== null && $imagePath !== ''): ?>
+                                        <img
+                                            class="admin-thumb"
+                                            src="<?= htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                            alt=""
+                                            width="48"
+                                            height="48"
+                                        >
+                                    <?php else: ?>
+                                        <span class="admin-thumb admin-thumb--empty" aria-hidden="true"></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= htmlspecialchars((string) $product->getId(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getDesignation(), ENT_QUOTES, 'UTF-8') ?></td>
@@ -226,6 +241,9 @@ $productsJson = array_map(
                 <h2 id="product-view-title">Détail produit</h2>
                 <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Fermer">&times;</button>
             </header>
+            <div class="admin-dialog__media" data-view-image-wrap hidden>
+                <img class="admin-dialog__image" data-view-image alt="">
+            </div>
             <dl class="admin-dialog__details">
                 <div><dt>Id</dt><dd data-view-field="id"></dd></div>
                 <div><dt>Catégorie</dt><dd data-view-field="type"></dd></div>
@@ -311,8 +329,11 @@ $productsJson = array_map(
                         id="product-form-image"
                         accept="image/jpeg,image/png,image/webp"
                     >
-                    <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle.</span>
+                    <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle. Stockage temporaire sous /uploads (fichiers accessibles en URL, usage dev uniquement).</span>
                 </label>
+                <div class="admin-image-preview" id="product-form-image-preview" hidden>
+                    <img data-form-image-preview alt="Aperçu de l’image produit">
+                </div>
 
                 <div class="admin-dialog__actions">
                     <button type="submit" class="admin-btn" id="product-form-submit">Créer</button>

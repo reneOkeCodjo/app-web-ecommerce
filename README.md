@@ -442,12 +442,14 @@ http://localhost:8080/admin/products.php
 - Image : upload admin → `public/uploads/products/` ; chemin relatif en `product_image` (`ProductImageUploader`)
 - Helpers de test uniquement : `InMemoryProductRepository` + `SessionProductRepository` (plus utilisés par l’UI)
 
+> **Temporaire (dev / fil rouge) :** les fichiers sont sous `public/`, donc **visibles via l’URL** (le développeur et quiconque connaît le chemin peut les ouvrir). Ce n’est **pas** un stockage privé. Avant la prod : stockage hors web root, CDN, ou URLs signées.
+
 **Feuille de route image produit :**
 
 | Étape | Contenu | Statut |
 |-------|---------|--------|
 | 1 | Upload fichier + chemin en base | Fait |
-| 2 | Affichage `<img>` liste / détail / aperçu | À faire |
+| 2 | Affichage `<img>` liste / détail / aperçu | Fait |
 | 3 | Robustesse (suppression ancienne image, etc.) | À faire |
 
 **Feuille de route admin produits :**

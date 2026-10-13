@@ -9,6 +9,10 @@ use RuntimeException;
 
 /**
  * Stores an uploaded product image under public/uploads/products/.
+ *
+ * TEMPORARY (fil rouge / local only): files live in the web root, so they are
+ * publicly reachable (including by the developer via the browser). Prefer a
+ * private storage + signed URLs or object storage before production.
  */
 final class ProductImageUploader
 {

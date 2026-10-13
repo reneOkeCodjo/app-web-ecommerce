@@ -25,9 +25,12 @@ export function initProductFormDialog({ dialog, form }) {
   const formPromo = document.getElementById("product-form-promo");
   const formDate = document.getElementById("product-form-date");
   const formStock = document.getElementById("product-form-stock");
+  const formImage = document.getElementById("product-form-image");
   const formSubmit = document.getElementById("product-form-submit");
   const previewTtc = document.querySelector("[data-preview-ttc]");
   const previewDispo = document.querySelector("[data-preview-dispo]");
+  const imagePreviewWrap = document.getElementById("product-form-image-preview");
+  const imagePreview = document.querySelector("[data-form-image-preview]");
 
   if (
     !formTitle ||
@@ -39,15 +42,45 @@ export function initProductFormDialog({ dialog, form }) {
     !formPromo ||
     !formDate ||
     !formStock ||
+    !formImage ||
     !formSubmit ||
     !previewTtc ||
-    !previewDispo
+    !previewDispo ||
+    !(imagePreviewWrap instanceof HTMLElement) ||
+    !(imagePreview instanceof HTMLImageElement)
   ) {
     return {
       openCreateForm: () => {},
       openEditForm: () => {},
     };
   }
+
+  /** @type {string | null} */
+  let objectUrl = null;
+
+  const clearObjectUrl = () => {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      objectUrl = null;
+    }
+  };
+
+  /**
+   * @param {string | null | undefined} src
+   * @param {string} [alt]
+   */
+  const showImagePreview = (src, alt = "Aperçu de l’image produit") => {
+    if (!src) {
+      clearObjectUrl();
+      imagePreview.removeAttribute("src");
+      imagePreviewWrap.hidden = true;
+      return;
+    }
+
+    imagePreview.src = src;
+    imagePreview.alt = alt;
+    imagePreviewWrap.hidden = false;
+  };
 
   const refreshPricePreview = () => {
     const priceHt = Number.parseFloat(formPrix.value);
@@ -80,6 +113,17 @@ export function initProductFormDialog({ dialog, form }) {
   formPrix.addEventListener("input", refreshPricePreview);
   formPromo.addEventListener("input", refreshPricePreview);
 
+  formImage.addEventListener("change", () => {
+    clearObjectUrl();
+    const file = formImage.files?.[0];
+    if (!file) {
+      showImagePreview(null);
+      return;
+    }
+    objectUrl = URL.createObjectURL(file);
+    showImagePreview(objectUrl, file.name);
+  });
+
   const openCreateForm = () => {
     form.reset();
     formAction.value = "create";
@@ -89,6 +133,7 @@ export function initProductFormDialog({ dialog, form }) {
     formDate.value = new Date().toISOString().slice(0, 10);
     formStock.value = "0";
     formPromo.value = "";
+    showImagePreview(null);
     refreshPricePreview();
     dialog.showModal();
   };
@@ -106,8 +151,10 @@ export function initProductFormDialog({ dialog, form }) {
       product.promotion == null ? "" : String(product.promotion);
     formDate.value = product.dateIn;
     formStock.value = String(product.stock);
+    formImage.value = "";
     formTitle.textContent = "Modifier le produit";
     formSubmit.textContent = "Enregistrer";
+    showImagePreview(product.image, product.designation || "Image produit");
     refreshPricePreview();
     dialog.showModal();
   };

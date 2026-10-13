@@ -45,6 +45,8 @@ export function initProductViewDialog({ dialog, deleteForm, byId, onEdit }) {
 
     const ttcNode = dialog.querySelector("[data-view-prix-ttc]");
     const dispoNode = dialog.querySelector("[data-view-prix-dispo]");
+    const imageWrap = dialog.querySelector("[data-view-image-wrap]");
+    const imageNode = dialog.querySelector("[data-view-image]");
 
     if (ttcNode) {
       if (hasPromotion(promotion)) {
@@ -56,6 +58,18 @@ export function initProductViewDialog({ dialog, deleteForm, byId, onEdit }) {
 
     if (dispoNode) {
       dispoNode.textContent = formatMoney(available);
+    }
+
+    if (imageWrap instanceof HTMLElement && imageNode instanceof HTMLImageElement) {
+      if (product.image) {
+        imageNode.src = product.image;
+        imageNode.alt = product.designation || "Image produit";
+        imageWrap.hidden = false;
+      } else {
+        imageNode.removeAttribute("src");
+        imageNode.alt = "";
+        imageWrap.hidden = true;
+      }
     }
 
     if (deleteForm) {

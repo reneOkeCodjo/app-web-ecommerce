@@ -35,7 +35,7 @@ final class StockValidator
         $stockValue = filter_var(
             $value,
             FILTER_VALIDATE_INT,
-            ['options' => ['min_range' => 0, 'max_range' => 2147483647]]
+            ['options' => ['min_range' => 0, 'max_range' => (2**31) - 1]]
         );
 
         if ($stockValue === false) {

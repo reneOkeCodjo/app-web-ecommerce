@@ -12,43 +12,19 @@ use PHPUnit\Framework\TestCase;
 
 final class ProductServiceTest extends TestCase
 {
+    private FakeProductRepository $repository;
+    private ProductService $service;
+
+    protected function setUp(): void
+    {
+        $this->repository = new FakeProductRepository();
+        $this->service = new ProductService($this->repository);
+    }
+
     public function testCreatePersistsValidatedProduct(): void
     {
-        $repo = new class implements ProductRepositoryInterface {
-            public ?Product $created = null;
-
-            public function create(Product $product): bool
-            {
-                $this->created = $product;
-
-                return true;
-            }
-
-            public function findAll(): array
-            {
-                return [];
-            }
-
-            public function findById(int $id): ?Product
-            {
-                return null;
-            }
-
-            public function update(Product $product): bool
-            {
-                return true;
-            }
-
-            public function delete(int $id): bool
-            {
-                return true;
-            }
-        };
-
-        $service = new ProductService($repo);
-
         self::assertTrue(
-            $service->create(
+            $this->service->create(
                 'Smartphone',
                 'Galaxy A55',
                 '449.99',
@@ -59,44 +35,50 @@ final class ProductServiceTest extends TestCase
             )
         );
 
-        self::assertNotNull($repo->created);
-        self::assertSame('Galaxy A55', $repo->created->getDesignation());
-        self::assertSame('10.00', $repo->created->getPromotion());
-        self::assertSame('/uploads/galaxy.jpg', $repo->created->getImage());
+        self::assertNotNull($this->repository->created);
+        self::assertSame('Galaxy A55', $this->repository->created->getDesignation());
+        self::assertSame('10.00', $this->repository->created->getPromotion());
+        self::assertSame('/uploads/galaxy.jpg', $this->repository->created->getImage());
     }
 
     public function testCreateThrowsOnInvalidPayload(): void
     {
-        $repo = new class implements ProductRepositoryInterface {
-            public function create(Product $product): bool
-            {
-                return true;
-            }
-
-            public function findAll(): array
-            {
-                return [];
-            }
-
-            public function findById(int $id): ?Product
-            {
-                return null;
-            }
-
-            public function update(Product $product): bool
-            {
-                return true;
-            }
-
-            public function delete(int $id): bool
-            {
-                return true;
-            }
-        };
-
-        $service = new ProductService($repo);
-
         $this->expectException(InvalidArgumentException::class);
-        $service->create('Inconnu', 'X', '10.00', '1', '2026-01-10');
+        $this->service->create('Inconnu', 'X', '10.00', '1', '2026-01-10');
+    }
+}
+
+/**
+ * In-memory stand-in so ProductService unit tests stay off MySQL.
+ */
+final class FakeProductRepository implements ProductRepositoryInterface
+{
+    public ?Product $created = null;
+
+    public function create(Product $product): bool
+    {
+        $this->created = $product;
+
+        return true;
+    }
+
+    public function findAll(): array
+    {
+        return [];
+    }
+
+    public function findById(int $id): ?Product
+    {
+        return null;
+    }
+
+    public function update(Product $product): bool
+    {
+        return true;
+    }
+
+    public function delete(int $id): bool
+    {
+        return true;
     }
 }

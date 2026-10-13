@@ -8,8 +8,8 @@ use App\Domain\Model\Product;
 use InvalidArgumentException;
 
 /**
- * In-memory mock product repository (no database).
- * Temporary admin UI store until pages switch to ProductRepository.
+ * In-memory product repository (no database).
+ * Kept for unit tests only — admin UI uses ProductRepository / ProductService.
  */
 final class InMemoryProductRepository
 {

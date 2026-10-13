@@ -118,7 +118,7 @@ $productsJson = array_map(
             </div>
 
             <p class="auth-switch">
-                Catalogue mock (session), filtré par catégories JSON.
+                Catalogue MySQL, filtré par catégories JSON.
             </p>
 
             <?= $feedback ?>

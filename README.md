@@ -385,7 +385,7 @@ Pas de règles de complexité au login (un mot de passe faible doit plutôt prod
 
 ---
 
-### Back-office (en cours)
+### Back-office admin
 
 Zone d’administration **séparée** du front client (pas le même login que `index.php`).
 
@@ -394,7 +394,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (CRUD SQL + promo / prix TTC) |
+| Périmètre métier | Gestion des **produits** (CRUD MySQL + promo / prix TTC) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -432,15 +432,15 @@ http://localhost:8080/admin/products.php
 | DAO SQL | `ProductRepository` (+ interface) dans `ProductDAO.php` — CRUD + promo/image |
 | Service métier | `src/Application/Services/Product/ProductService.php` (+ validation) |
 | Validation | `Validation/{Shared,Auth,Product}/` + `Services/Shared/Validation` |
-| UI admin | CRUD SQL via `ProductService` (+ promo % et aperçu prix) |
+| UI admin | CRUD MySQL via `ProductService` (+ promo % et aperçu prix) |
 
 - Page : `public/admin/products.php` — liste / create / update / delete MySQL
 - Catégories : `public/data/product-categories.json` (filtre + select + validation)
 - Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
-- Mocks conservés pour les tests unitaires : `InMemoryProductRepository` + `SessionProductRepository`
 - Promo : champ `ppromo` ; **TVA 20 %** (`ProductPricing::TVA_RATE`) ; TTC barré + **prix disponible** si promo &gt; 0
 - Image : colonne SQL prête ; champ formulaire encore à venir
+- Helpers de test uniquement : `InMemoryProductRepository` + `SessionProductRepository` (plus utilisés par l’UI)
 
 **Feuille de route admin produits :**
 
@@ -450,7 +450,7 @@ http://localhost:8080/admin/products.php
 | 1 | Liste + delete via `ProductService` / SQL | Fait |
 | 2 | Create + update via `ProductService` | Fait |
 | 3 | Promo dans les formulaires (TTC barré + prix disponible) | Fait |
-| 4 | Retrait du mock session (tests only) + polish | À faire |
+| 4 | Mocks réservés aux tests + polish libellés UI | Fait |
 
 **Migrations produits (ordre Docker init) :**
 
@@ -575,8 +575,8 @@ src/
             ├── UserDAO.php                  → UserRepository + Interface
             ├── NullUserRepository.php       → Repo no-op (GET anonyme)
             ├── ProductDAO.php               → ProductRepository + Interface (SQL)
-            ├── InMemoryProductRepository.php → Mock produits (admin UI)
-            └── SessionProductRepository.php → Mock CRUD en session
+            ├── InMemoryProductRepository.php → Helper tests (mémoire)
+            └── SessionProductRepository.php → Helper tests (session)
 
 config/
 └── database.php                             → Connexion à la base de données
@@ -597,7 +597,7 @@ public/
 ├── admin/
 │   ├── login.php                            → Login admin (séparé)
 │   ├── index.php                            → Dashboard admin (garde isAdmin)
-│   └── products.php                         → Liste produits (mock)
+│   └── products.php                         → CRUD produits (ProductService / MySQL)
 ├── styles.css                               → Imports CSS
 ├── styles/                                  → base, header, form, button, tooltip, feedback, validation, admin
 └── scripts/
@@ -653,7 +653,7 @@ Remote : `origin` → https://github.com/reneOkeCodjo/app-web-ecommerce.git
 | `develop` | `origin/develop` (merge local + distant effectué) |
 | `chore/resolve-merge` | aucune — clarification post-merge (migrations + README) |
 | `feature/admin` | aucune (locale uniquement) — back-office admin (fusionnée dans `develop`) |
-| `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (mock) |
+| `feature/admin-products-crud` | aucune (locale uniquement) — UI CRUD produits (fusionnée) |
 | `feature/register` | aucune (locale uniquement) |
 | `feature/login` | aucune (locale uniquement) |
 | `feature/session` | aucune (locale uniquement) |

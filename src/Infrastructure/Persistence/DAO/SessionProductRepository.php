@@ -8,7 +8,8 @@ use App\Domain\Model\Product;
 use App\Infrastructure\Http\SessionStoreInterface;
 
 /**
- * Session-backed mock product store for the admin UI.
+ * Session-backed product store for unit tests only.
+ * Admin UI uses ProductRepository / ProductService (MySQL).
  */
 final class SessionProductRepository
 {

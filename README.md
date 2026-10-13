@@ -242,7 +242,7 @@ Le service `Auth` gère l'authentification des utilisateurs et persiste l'état 
 **Utilisation :**
 
 ```php
-use App\Application\Services\Auth;
+use App\Application\Services\Auth\Auth;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\UserRepository;
 
@@ -370,12 +370,15 @@ Pas de règles de complexité au login (un mot de passe faible doit plutôt prod
 
 **Register (`validateRegister`) :** email + confirmation ; password 8–72 caractères avec majuscule, minuscule, chiffre et caractère spécial.
 
+**Produit (`validateProduct`) :** catégorie (catalogue JSON), désignation, prix HT, stock, date d’entrée ; promo et image optionnels.
+
 **Migration requise :** `database/migrations/002_fix_users_unique_constraints.sql` (login/email uniques, plusieurs users par type de compte).
 
-**Test unitaire :** `ValidationServiceTest.php`, `RegisterHandlerTest.php`, `AuthServiceTest` (`register`)
+**Test unitaire :** `ValidationServiceTest.php`, `ProductValidationTest.php`, `RegisterHandlerTest.php`, `AuthServiceTest` (`register`)
 
 ```bash
 ./vendor/bin/phpunit tests/unit/service/ValidationServiceTest.php
+./vendor/bin/phpunit tests/unit/service/ProductValidationTest.php
 ./vendor/bin/phpunit tests/unit/service/LoginHandlerTest.php
 ./vendor/bin/phpunit tests/unit/service/RegisterHandlerTest.php
 ```
@@ -391,7 +394,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (UI admin encore sur mock session ; DAO SQL prêt) |
+| Périmètre métier | Gestion des **produits** (transition mock → SQL en cours) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -421,21 +424,31 @@ http://localhost:8080/admin/index.php
 http://localhost:8080/admin/products.php
 ```
 
-**Produits — état après merge `origin/develop` :**
+**Produits — état actuel :**
 
 | Couche | Statut |
 |--------|--------|
-| Entité `Product` | Modèle distant : `getPriceHt()`, `getDateNew()`, `getPromotion()` |
-| DAO SQL | `ProductRepository` (+ `ProductRepositoryInterface`) dans `ProductDAO.php` |
-| Service | `ProductService` + `ProductRequestDTO` |
-| UI admin | Toujours branchée sur le **mock session** (`SessionProductRepository`) |
+| Entité `Product` | `getPriceHt()`, `getDateNew()`, `getPromotion()`, `getImage()` |
+| DAO SQL | `ProductRepository` (+ interface) dans `ProductDAO.php` — CRUD + promo/image |
+| Service métier | `src/Application/Services/Product/ProductService.php` (+ validation) |
+| Validation | `Validation/{Shared,Auth,Product}/` + `Services/Shared/Validation` |
+| UI admin | Encore branchée sur le **mock session** (`SessionProductRepository`) |
 
-- Mocks admin : `InMemoryProductRepository` + `SessionProductRepository` (adaptés à l’API Product distante)
+- Mocks (tests / transition) : `InMemoryProductRepository` + `SessionProductRepository`
 - Page : `public/admin/products.php` — liste, Add, popup détails (Update / Remove), formulaire
 - Catégories : `public/data/product-categories.json` (filtre + select)
 - Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
-- Prochaine étape : brancher `products.php` sur `ProductService` / `ProductRepository`
+
+**Feuille de route admin produits :**
+
+| Étape | Contenu |
+|-------|---------|
+| 0 | README aligné (état courant) |
+| 1 | Liste + delete via `ProductService` / SQL |
+| 2 | Create + update via `ProductService` |
+| 3 | Promo dans les formulaires (TTC barré + prix disponible) |
+| 4 | Retrait du mock session de l’UI admin |
 
 **Migrations produits (ordre Docker init) :**
 
@@ -444,6 +457,7 @@ http://localhost:8080/admin/products.php
 - `006_add_product_image.sql` — colonne `product_image`
 
 ```bash
+./vendor/bin/phpunit tests/unit/service/ProductServiceTest.php
 ./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
 ./vendor/bin/phpunit tests/unit/dao/SessionProductRepositoryTest.php
 ./vendor/bin/phpunit tests/integration/dao/ProductDaoTest.php
@@ -606,7 +620,9 @@ tests/
         ├── LoginHandlerTest.php             → Flux login + redirect
         ├── AdminLoginHandlerTest.php        → Flux login admin + garde
         ├── RegisterHandlerTest.php          → Flux register + redirect
-        └── ValidationServiceTest.php        → Validateurs + Validation
+        ├── ProductServiceTest.php           → Service produits + fake repo
+        ├── ProductValidationTest.php        → validateProduct + règles Product/
+        └── ValidationServiceTest.php        → Validateurs auth + Validation
 
 docs/
 └── bugs.md                                  → Journal des bugs connus / corrigés

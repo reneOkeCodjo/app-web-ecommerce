@@ -394,7 +394,7 @@ Zone d’administration **séparée** du front client (pas le même login que `i
 | Sujet | Choix |
 |-------|--------|
 | Accès | Compte `admin` uniquement |
-| Périmètre métier | Gestion des **produits** (CRUD SQL via `ProductService`) |
+| Périmètre métier | Gestion des **produits** (CRUD SQL + promo / prix TTC) |
 | Entrée | `public/admin/login.php` → `public/admin/index.php` |
 
 **Types de compte déjà en base (`compte`) :** `client`, `vendeur`, `admin`.
@@ -432,14 +432,15 @@ http://localhost:8080/admin/products.php
 | DAO SQL | `ProductRepository` (+ interface) dans `ProductDAO.php` — CRUD + promo/image |
 | Service métier | `src/Application/Services/Product/ProductService.php` (+ validation) |
 | Validation | `Validation/{Shared,Auth,Product}/` + `Services/Shared/Validation` |
-| UI admin | CRUD SQL via `ProductService` (+ `validateProduct`) |
+| UI admin | CRUD SQL via `ProductService` (+ promo % et aperçu prix) |
 
 - Page : `public/admin/products.php` — liste / create / update / delete MySQL
 - Catégories : `public/data/product-categories.json` (filtre + select + validation)
 - Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
 - Mocks conservés pour les tests unitaires : `InMemoryProductRepository` + `SessionProductRepository`
-- Promo / image : persistés en base, champs formulaire prévus à l’étape 3
+- Promo : champ `ppromo` ; **TVA 20 %** (`ProductPricing::TVA_RATE`) ; TTC barré + **prix disponible** si promo &gt; 0
+- Image : colonne SQL prête ; champ formulaire encore à venir
 
 **Feuille de route admin produits :**
 
@@ -448,7 +449,7 @@ http://localhost:8080/admin/products.php
 | 0 | README aligné (état courant) | Fait |
 | 1 | Liste + delete via `ProductService` / SQL | Fait |
 | 2 | Create + update via `ProductService` | Fait |
-| 3 | Promo dans les formulaires (TTC barré + prix disponible) | À faire |
+| 3 | Promo dans les formulaires (TTC barré + prix disponible) | Fait |
 | 4 | Retrait du mock session (tests only) + polish | À faire |
 
 **Migrations produits (ordre Docker init) :**
@@ -550,6 +551,8 @@ src/
 │   └── Model/
 │       ├── User.php                         → Entité User (+ compte_type)
 │       └── Product.php                      → Entité Product (DAO SQL)
+│   ├── Pricing/
+│   │   └── ProductPricing.php               → HT → TTC (TVA 20 %) + prix promo
 ├── Application/
 │   ├── DTO/
 │   │   ├── LoginRequestDTO.php              → DTO de login

@@ -239,6 +239,40 @@
   font-style: italic;
 }
 
-.admin-form__field input[type="text"] + span {
- color:red;
+.admin-price {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.admin-price__was {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.admin-price__now {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.admin-price-preview {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgb(255 255 255 / 14%);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.admin-price-preview__label {
+  color: var(--color-text);
+}
+
+.admin-price-preview .admin-price,
+.admin-price-preview [data-preview-dispo] {
+  text-align: right;
+  justify-self: end;
 }

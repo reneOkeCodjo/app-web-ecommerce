@@ -8,6 +8,9 @@
  *   type: string,
  *   designation: string,
  *   prixHt: number,
+ *   promotion: number | null,
+ *   prixTtc: number,
+ *   prixDisponible: number,
  *   dateIn: string,
  *   timesIn: string,
  *   stock: number

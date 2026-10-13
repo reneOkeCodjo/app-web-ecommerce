@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use App\Application\Services\Auth\Auth;
 use App\Application\Services\Product\ProductService;
 use App\Domain\Model\Product;
+use App\Domain\Pricing\ProductPricing;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
@@ -37,7 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['designation_p'] ?? null,
                 $_POST['prix_ht'] ?? null,
                 $_POST['stock_p'] ?? null,
-                $_POST['date_in'] ?? date('Y-m-d')
+                $_POST['date_in'] ?? date('Y-m-d'),
+                $_POST['ppromo'] ?? null,
+                null
             );
         } elseif ($action === 'update') {
             $id = (int) ($_POST['id_p'] ?? 0);
@@ -46,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('Produit introuvable.');
             }
 
-            // Promo / image conservés jusqu’à l’étape 3 (champs formulaire).
             $productService->update(
                 $id,
                 $_POST['type_p'] ?? null,
@@ -54,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['prix_ht'] ?? null,
                 $_POST['stock_p'] ?? null,
                 $_POST['date_in'] ?? $existing->getDateIn(),
-                $existing->getPromotion(),
+                $_POST['ppromo'] ?? null,
                 $existing->getImage()
             );
         } elseif ($action === 'delete') {
@@ -74,15 +76,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $products = $productService->findAll();
 $productsJson = array_map(
-    static fn (Product $product): array => [
-        'id' => $product->getId(),
-        'type' => $product->getType(),
-        'designation' => $product->getDesignation(),
-        'prixHt' => (float) $product->getPriceHt(),
-        'dateIn' => $product->getDateIn(),
-        'timesIn' => $product->getDateNew() ?? '',
-        'stock' => $product->getStock(),
-    ],
+    static function (Product $product): array {
+        $priceHt = (float) $product->getPriceHt();
+        $promotion = $product->getPromotion() !== null
+            ? (float) $product->getPromotion()
+            : null;
+
+        return [
+            'id' => $product->getId(),
+            'type' => $product->getType(),
+            'designation' => $product->getDesignation(),
+            'prixHt' => $priceHt,
+            'promotion' => $promotion,
+            'prixTtc' => ProductPricing::priceTtc($priceHt),
+            'prixDisponible' => ProductPricing::priceAvailable($priceHt, $promotion),
+            'dateIn' => $product->getDateIn(),
+            'timesIn' => $product->getDateNew() ?? '',
+            'stock' => $product->getStock(),
+        ];
+    },
     $products
 );
 ?>
@@ -142,16 +154,26 @@ $productsJson = array_map(
                             <th scope="col">Catégorie</th>
                             <th scope="col">Désignation</th>
                             <th scope="col">Prix HT</th>
+                            <th scope="col">Prix dispo.</th>
                             <th scope="col">Stock</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if ($products === []): ?>
                             <tr class="admin-table__empty-row">
-                                <td colspan="5" class="admin-table__empty">Aucun produit.</td>
+                                <td colspan="6" class="admin-table__empty">Aucun produit.</td>
                             </tr>
                         <?php endif; ?>
                         <?php foreach ($products as $product): ?>
+                            <?php
+                            $priceHt = (float) $product->getPriceHt();
+                            $promotion = $product->getPromotion() !== null
+                                ? (float) $product->getPromotion()
+                                : null;
+                            $prixTtc = ProductPricing::priceTtc($priceHt);
+                            $prixDispo = ProductPricing::priceAvailable($priceHt, $promotion);
+                            $hasPromo = ProductPricing::hasPromotion($promotion);
+                            ?>
                             <tr
                                 class="admin-table__row"
                                 tabindex="0"
@@ -163,7 +185,15 @@ $productsJson = array_map(
                                 <td><?= htmlspecialchars((string) $product->getId(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getDesignation(), ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars(number_format((float) $product->getPriceHt(), 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars(number_format($priceHt, 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td class="admin-price">
+                                    <?php if ($hasPromo): ?>
+                                        <s class="admin-price__was"><?= htmlspecialchars(number_format($prixTtc, 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></s>
+                                        <span class="admin-price__now"><?= htmlspecialchars(number_format($prixDispo, 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars(number_format($prixDispo, 2, '.', ''), ENT_QUOTES, 'UTF-8') ?>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= htmlspecialchars((string) $product->getStock(), ENT_QUOTES, 'UTF-8') ?></td>
                             </tr>
                         <?php endforeach; ?>
@@ -188,6 +218,9 @@ $productsJson = array_map(
                 <div><dt>Catégorie</dt><dd data-view-field="type"></dd></div>
                 <div><dt>Désignation</dt><dd data-view-field="designation"></dd></div>
                 <div><dt>Prix HT</dt><dd data-view-field="prixHt"></dd></div>
+                <div><dt>Promotion</dt><dd data-view-field="promotionLabel"></dd></div>
+                <div><dt>Prix TTC</dt><dd data-view-prix-ttc class="admin-price"></dd></div>
+                <div><dt>Prix disponible</dt><dd data-view-prix-dispo></dd></div>
                 <div><dt>Date d’entrée</dt><dd data-view-field="dateIn"></dd></div>
                 <div><dt>Ajouté le</dt><dd data-view-field="timesIn"></dd></div>
                 <div><dt>Stock</dt><dd data-view-field="stock"></dd></div>
@@ -240,6 +273,16 @@ $productsJson = array_map(
                     <input type="number" name="prix_ht" id="product-form-prix" min="0" step="0.01" placeholder="0.00" required>
                 </label>
                 <label class="admin-form__field">
+                    <span>Promotion (%)</span>
+                    <input type="number" name="ppromo" id="product-form-promo" min="0" max="100" step="0.01" placeholder="0">
+                </label>
+                <p class="admin-price-preview" id="product-form-price-preview" aria-live="polite">
+                    <span class="admin-price-preview__label">Prix TTC</span>
+                    <span class="admin-price" data-preview-ttc>—</span>
+                    <span class="admin-price-preview__label">Prix disponible</span>
+                    <span data-preview-dispo>—</span>
+                </p>
+                <label class="admin-form__field">
                     <span>Date d’entrée</span>
                     <input type="date" name="date_in" id="product-form-date" placeholder="JJ/MM/AAAA" required>
                 </label>
@@ -257,6 +300,7 @@ $productsJson = array_map(
     </dialog>
 
     <script>
+        window.__ADMIN_TVA_RATE__ = <?= json_encode(ProductPricing::TVA_RATE) ?>;
         window.__ADMIN_PRODUCTS__ = <?= json_encode($productsJson, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
     <script type="module" src="../scripts/admin-products.js"></script>

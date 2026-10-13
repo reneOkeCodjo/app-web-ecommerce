@@ -13,10 +13,20 @@ class Product
     private string $date_in;
     private ?string $date_new = null;
     private ?string $promotion;
+    private ?string $image;
 
 
-    public function __construct(?int $id, string $type, string $designation, string $price_ht, int $stock, string $date_in, ?string $date_new, ?string $promotion = null)
-    {
+    public function __construct(
+        ?int $id,
+        string $type,
+        string $designation,
+        string $price_ht,
+        int $stock,
+        string $date_in,
+        ?string $date_new,
+        ?string $promotion = null,
+        ?string $image = null
+    ) {
         $this->id = $id;
         $this->type = $type;
         $this->designation = $designation;
@@ -25,11 +35,12 @@ class Product
         $this->date_in = $date_in;
         $this->date_new = $date_new;
         $this->promotion = $promotion;
+        $this->image = $image;
     }
 
     public function getId(): ?int
     {
-        return $this-> id;
+        return $this->id;
     }
 
     public function getType(): string
@@ -62,11 +73,13 @@ class Product
         return $this->date_new;
     }
 
-
     public function getPromotion(): ?string
     {
         return $this->promotion;
     }
 
-
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
 }

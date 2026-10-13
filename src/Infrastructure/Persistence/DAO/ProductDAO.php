@@ -132,6 +132,9 @@ class ProductRepository implements ProductRepositoryInterface
     // Transformation d'une ligne de la base en objet Product.
     private function mapToProduct(array $row): Product
     {
+        $promotion = $row['ppromo'] ?? null;
+        $image = $row['product_image'] ?? null;
+
         return new Product(
             (int) $row['product_id'],
             $row['product_type'],
@@ -139,7 +142,9 @@ class ProductRepository implements ProductRepositoryInterface
             (string) $row['product_price_ht'],
             (int) $row['product_stock'],
             $row['product_date_in'],
-            $row['product_date_new']
+            $row['product_date_new'],
+            $promotion !== null ? (string) $promotion : null,
+            $image !== null ? (string) $image : null
         );
     }
 

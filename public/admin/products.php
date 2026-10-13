@@ -9,6 +9,7 @@ use App\Domain\Pricing\ProductPricing;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
+use App\Infrastructure\Storage\ProductImageUploader;
 use Db_config\Database;
 
 $session = new NativeSessionStore();
@@ -26,13 +27,21 @@ $categories = is_array($categoriesDecoded) ? $categoriesDecoded : [];
 
 $connection = Database::connect();
 $productService = new ProductService(new ProductRepository($connection));
+$imageUploader = new ProductImageUploader(
+    __DIR__ . '/../uploads/products'
+);
 $feedback = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
+    /** @var array{name?: string, type?: string, tmp_name?: string, error?: int, size?: int} $uploadedImage */
+    $uploadedImage = is_array($_FILES['product_image'] ?? null)
+        ? $_FILES['product_image']
+        : ['error' => UPLOAD_ERR_NO_FILE];
 
     try {
         if ($action === 'create') {
+            $imagePath = $imageUploader->storeFromUpload($uploadedImage);
             $productService->create(
                 $_POST['type_p'] ?? null,
                 $_POST['designation_p'] ?? null,
@@ -40,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['stock_p'] ?? null,
                 $_POST['date_in'] ?? date('Y-m-d'),
                 $_POST['ppromo'] ?? null,
-                null
+                $imagePath
             );
         } elseif ($action === 'update') {
             $id = (int) ($_POST['id_p'] ?? 0);
@@ -48,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($existing === null) {
                 throw new RuntimeException('Produit introuvable.');
             }
+
+            $imagePath = $imageUploader->storeFromUpload($uploadedImage)
+                ?? $existing->getImage();
 
             $productService->update(
                 $id,
@@ -57,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['stock_p'] ?? null,
                 $_POST['date_in'] ?? $existing->getDateIn(),
                 $_POST['ppromo'] ?? null,
-                $existing->getImage()
+                $imagePath
             );
         } elseif ($action === 'delete') {
             $productService->delete((int) ($_POST['id_p'] ?? 0));
@@ -93,6 +105,7 @@ $productsJson = array_map(
             'dateIn' => $product->getDateIn(),
             'timesIn' => $product->getDateNew() ?? '',
             'stock' => $product->getStock(),
+            'image' => $product->getImage(),
         ];
     },
     $products
@@ -243,7 +256,7 @@ $productsJson = array_map(
                 <h2 id="product-form-title">Ajouter un produit</h2>
                 <button type="button" class="admin-dialog__close" data-close-dialog aria-label="Fermer">&times;</button>
             </header>
-            <form method="post" class="admin-form" id="product-form">
+            <form method="post" class="admin-form" id="product-form" enctype="multipart/form-data">
                 <input type="hidden" name="action" id="product-form-action" value="create">
                 <input type="hidden" name="id_p" id="product-form-id" value="">
 
@@ -289,6 +302,16 @@ $productsJson = array_map(
                 <label class="admin-form__field">
                     <span>Stock</span>
                     <input type="number" name="stock_p" id="product-form-stock" min="0" step="1" value="0">
+                </label>
+                <label class="admin-form__field">
+                    <span>Image produit</span>
+                    <input
+                        type="file"
+                        name="product_image"
+                        id="product-form-image"
+                        accept="image/jpeg,image/png,image/webp"
+                    >
+                    <span class="admin-form__hint">JPEG, PNG ou WebP — 2 Mo max. Laisser vide pour conserver l’image actuelle.</span>
                 </label>
 
                 <div class="admin-dialog__actions">

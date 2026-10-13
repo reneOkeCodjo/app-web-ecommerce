@@ -234,6 +234,19 @@
   border-color: var(--color-accent);
 }
 
+.admin-form__field input[type="file"] {
+  border-bottom: 0;
+  padding: 0.35rem 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.admin-form__hint {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
 .admin-form__field input::placeholder {
   color: var(--color-muted);
   font-style: italic;

@@ -23,3 +23,7 @@ Thumbs.db
 *.tmp
 *.swp
 *~
+
+# Uploaded product images (keep directory via .gitkeep)
+/public/uploads/products/*
+!/public/uploads/products/.gitkeep

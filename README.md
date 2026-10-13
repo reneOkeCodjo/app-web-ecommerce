@@ -439,8 +439,16 @@ http://localhost:8080/admin/products.php
 - Scripts : `public/scripts/admin-products.js` + `public/scripts/admin/*`
 - Styles : `public/styles/admin.css`
 - Promo : champ `ppromo` ; **TVA 20 %** (`ProductPricing::TVA_RATE`) ; TTC barré + **prix disponible** si promo &gt; 0
-- Image : colonne SQL prête ; champ formulaire encore à venir
+- Image : upload admin → `public/uploads/products/` ; chemin relatif en `product_image` (`ProductImageUploader`)
 - Helpers de test uniquement : `InMemoryProductRepository` + `SessionProductRepository` (plus utilisés par l’UI)
+
+**Feuille de route image produit :**
+
+| Étape | Contenu | Statut |
+|-------|---------|--------|
+| 1 | Upload fichier + chemin en base | Fait |
+| 2 | Affichage `<img>` liste / détail / aperçu | À faire |
+| 3 | Robustesse (suppression ancienne image, etc.) | À faire |
 
 **Feuille de route admin produits :**
 
@@ -570,6 +578,8 @@ src/
     ├── Http/
     │   ├── SessionStoreInterface.php        → Contrat session
     │   └── NativeSessionStore.php           → session_start() sécurisé
+    ├── Storage/
+    │   └── ProductImageUploader.php         → Upload image → /uploads/products
     └── Persistence/
         └── DAO/
             ├── UserDAO.php                  → UserRepository + Interface

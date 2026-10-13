@@ -458,7 +458,7 @@ http://localhost:8080/admin/products.php
 |-------|---------|--------|
 | 1 | Valider avant upload + rollback fichier si persist échoue | Fait |
 | 2 | Erreurs par champ + repopulate formulaire | Fait |
-| 3 | Connexion DB try/catch + action POST invalide | À faire |
+| 3 | Connexion DB try/catch + action POST invalide | Fait |
 
 **Feuille de route admin produits :**
 

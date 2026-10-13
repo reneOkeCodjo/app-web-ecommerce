@@ -29,11 +29,6 @@ $categoriesRaw = is_file($categoriesPath) ? file_get_contents($categoriesPath) :
 $categoriesDecoded = is_string($categoriesRaw) ? json_decode($categoriesRaw, true) : null;
 $categories = is_array($categoriesDecoded) ? $categoriesDecoded : [];
 
-$connection = Database::connect();
-$productService = new ProductService(new ProductRepository($connection));
-$imageUploader = new ProductImageUploader(
-    __DIR__ . '/../uploads/products'
-);
 $feedback = '';
 /** @var array<string, string> $fieldErrors */
 $fieldErrors = [];
@@ -49,6 +44,10 @@ $formValues = [
     'image' => null,
 ];
 $reopenForm = false;
+/** @var list<Product> $products */
+$products = [];
+$productsJson = [];
+$connection = null;
 
 /**
  * @param ProductRequestDTO $dto
@@ -66,141 +65,166 @@ $dtoWithImage = static function (ProductRequestDTO $dto, ?string $imagePath): Pr
     );
 };
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
-    /** @var array{name?: string, type?: string, tmp_name?: string, error?: int, size?: int} $uploadedImage */
-    $uploadedImage = is_array($_FILES['product_image'] ?? null)
-        ? $_FILES['product_image']
-        : ['error' => UPLOAD_ERR_NO_FILE];
+try {
+    $connection = Database::connect();
+    $productService = new ProductService(new ProductRepository($connection));
+    $imageUploader = new ProductImageUploader(
+        __DIR__ . '/../uploads/products'
+    );
 
-    $formValues = [
-        'action' => $action === 'update' ? 'update' : 'create',
-        'id_p' => is_string($_POST['id_p'] ?? null) ? $_POST['id_p'] : (string) ($_POST['id_p'] ?? ''),
-        'type_p' => is_string($_POST['type_p'] ?? null) ? $_POST['type_p'] : '',
-        'designation_p' => is_string($_POST['designation_p'] ?? null) ? $_POST['designation_p'] : '',
-        'prix_ht' => is_string($_POST['prix_ht'] ?? null) ? $_POST['prix_ht'] : (string) ($_POST['prix_ht'] ?? ''),
-        'ppromo' => is_string($_POST['ppromo'] ?? null) ? $_POST['ppromo'] : (string) ($_POST['ppromo'] ?? ''),
-        'date_in' => is_string($_POST['date_in'] ?? null) ? $_POST['date_in'] : '',
-        'stock_p' => is_string($_POST['stock_p'] ?? null) ? $_POST['stock_p'] : (string) ($_POST['stock_p'] ?? '0'),
-        'image' => null,
-    ];
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
+        /** @var array{name?: string, type?: string, tmp_name?: string, error?: int, size?: int} $uploadedImage */
+        $uploadedImage = is_array($_FILES['product_image'] ?? null)
+            ? $_FILES['product_image']
+            : ['error' => UPLOAD_ERR_NO_FILE];
 
-    $newImagePath = null;
+        $formValues = [
+            'action' => $action === 'update' ? 'update' : 'create',
+            'id_p' => is_string($_POST['id_p'] ?? null) ? $_POST['id_p'] : (string) ($_POST['id_p'] ?? ''),
+            'type_p' => is_string($_POST['type_p'] ?? null) ? $_POST['type_p'] : '',
+            'designation_p' => is_string($_POST['designation_p'] ?? null) ? $_POST['designation_p'] : '',
+            'prix_ht' => is_string($_POST['prix_ht'] ?? null) ? $_POST['prix_ht'] : (string) ($_POST['prix_ht'] ?? ''),
+            'ppromo' => is_string($_POST['ppromo'] ?? null) ? $_POST['ppromo'] : (string) ($_POST['ppromo'] ?? ''),
+            'date_in' => is_string($_POST['date_in'] ?? null) ? $_POST['date_in'] : '',
+            'stock_p' => is_string($_POST['stock_p'] ?? null) ? $_POST['stock_p'] : (string) ($_POST['stock_p'] ?? '0'),
+            'image' => null,
+        ];
 
-    try {
-        if ($action === 'create' || $action === 'update') {
-            $existing = null;
-            $existingImage = null;
+        $newImagePath = null;
+        $allowedActions = ['create', 'update', 'delete'];
 
-            if ($action === 'update') {
+        try {
+            if (!in_array($action, $allowedActions, true)) {
+                throw new InvalidArgumentException('Action non autorisée.');
+            }
+
+            if ($action === 'create' || $action === 'update') {
+                $existing = null;
+                $existingImage = null;
+
+                if ($action === 'update') {
+                    $id = (int) ($_POST['id_p'] ?? 0);
+                    $existing = $productService->findById($id);
+                    if ($existing === null) {
+                        throw new RuntimeException('Produit introuvable.');
+                    }
+                    $existingImage = $existing->getImage();
+                    $formValues['image'] = $existingImage;
+                }
+
+                // Validate fields before upload to avoid orphan files on invalid input.
+                $validationResult = $productService->validateInput(
+                    $_POST['type_p'] ?? null,
+                    $_POST['designation_p'] ?? null,
+                    $_POST['prix_ht'] ?? null,
+                    $_POST['stock_p'] ?? null,
+                    $_POST['date_in'] ?? ($existing?->getDateIn() ?? date('Y-m-d')),
+                    $_POST['ppromo'] ?? null,
+                    $existingImage
+                );
+
+                if (!$validationResult->isValid()) {
+                    $fieldErrors = $validationResult->getErrors();
+                    $reopenForm = true;
+                } else {
+                    $baseDto = $validationResult->getProductRequest();
+                    if ($baseDto === null) {
+                        throw new RuntimeException('Validation produit incohérente.');
+                    }
+
+                    $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
+                    $imagePath = $newImagePath ?? $existingImage;
+
+                    if ($action === 'create') {
+                        $persisted = $productService->createFromDto(
+                            $dtoWithImage($baseDto, $imagePath)
+                        );
+                        if (!$persisted) {
+                            throw new RuntimeException('Impossible d’enregistrer le produit.');
+                        }
+                    } else {
+                        $id = (int) ($_POST['id_p'] ?? 0);
+                        $updated = $productService->updateFromDto(
+                            $id,
+                            $dtoWithImage($baseDto, $imagePath)
+                        );
+                        if (!$updated) {
+                            throw new RuntimeException('Impossible de modifier le produit.');
+                        }
+                        if (
+                            $newImagePath !== null
+                            && $existing !== null
+                            && $existing->getImage() !== $newImagePath
+                        ) {
+                            $imageUploader->deleteByPublicPath($existing->getImage());
+                        }
+                    }
+                }
+            } elseif ($action === 'delete') {
                 $id = (int) ($_POST['id_p'] ?? 0);
                 $existing = $productService->findById($id);
                 if ($existing === null) {
                     throw new RuntimeException('Produit introuvable.');
                 }
-                $existingImage = $existing->getImage();
-                $formValues['image'] = $existingImage;
-            }
-
-            // Validate fields before upload to avoid orphan files on invalid input.
-            $validationResult = $productService->validateInput(
-                $_POST['type_p'] ?? null,
-                $_POST['designation_p'] ?? null,
-                $_POST['prix_ht'] ?? null,
-                $_POST['stock_p'] ?? null,
-                $_POST['date_in'] ?? ($existing?->getDateIn() ?? date('Y-m-d')),
-                $_POST['ppromo'] ?? null,
-                $existingImage
-            );
-
-            if (!$validationResult->isValid()) {
-                $fieldErrors = $validationResult->getErrors();
-                $reopenForm = true;
-            } else {
-                $baseDto = $validationResult->getProductRequest();
-                if ($baseDto === null) {
-                    throw new RuntimeException('Validation produit incohérente.');
+                $deleted = $productService->delete($id);
+                if (!$deleted) {
+                    throw new RuntimeException('Impossible de supprimer le produit.');
                 }
-
-                $newImagePath = $imageUploader->storeFromUpload($uploadedImage);
-                $imagePath = $newImagePath ?? $existingImage;
-
-                if ($action === 'create') {
-                    $persisted = $productService->createFromDto(
-                        $dtoWithImage($baseDto, $imagePath)
-                    );
-                    if (!$persisted) {
-                        throw new RuntimeException('Impossible d’enregistrer le produit.');
-                    }
-                } else {
-                    $id = (int) ($_POST['id_p'] ?? 0);
-                    $updated = $productService->updateFromDto(
-                        $id,
-                        $dtoWithImage($baseDto, $imagePath)
-                    );
-                    if (!$updated) {
-                        throw new RuntimeException('Impossible de modifier le produit.');
-                    }
-                    if (
-                        $newImagePath !== null
-                        && $existing !== null
-                        && $existing->getImage() !== $newImagePath
-                    ) {
-                        $imageUploader->deleteByPublicPath($existing->getImage());
-                    }
-                }
-            }
-        } elseif ($action === 'delete') {
-            $id = (int) ($_POST['id_p'] ?? 0);
-            $existing = $productService->findById($id);
-            $deleted = $productService->delete($id);
-            if ($deleted && $existing !== null) {
                 $imageUploader->deleteByPublicPath($existing->getImage());
             }
-        }
-    } catch (Throwable $e) {
-        if ($newImagePath !== null) {
-            $imageUploader->deleteByPublicPath($newImagePath);
+        } catch (Throwable $e) {
+            if ($newImagePath !== null) {
+                $imageUploader->deleteByPublicPath($newImagePath);
+            }
+
+            $feedback = '<p class="feedback feedback-error" role="alert">'
+                . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+                . '</p>';
+            if ($action === 'create' || $action === 'update') {
+                $reopenForm = true;
+            }
         }
 
-        $feedback = '<p class="feedback feedback-error" role="alert">'
-            . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
-            . '</p>';
-        if ($action === 'create' || $action === 'update') {
-            $reopenForm = true;
+        if ($feedback === '' && $fieldErrors === []) {
+            header('Location: products.php');
+            exit;
         }
     }
 
-    if ($feedback === '' && $fieldErrors === []) {
-        header('Location: products.php');
-        exit;
+    $products = $productService->findAll();
+    $productsJson = array_map(
+        static function (Product $product): array {
+            $priceHt = (float) $product->getPriceHt();
+            $promotion = $product->getPromotion() !== null
+                ? (float) $product->getPromotion()
+                : null;
+
+            return [
+                'id' => $product->getId(),
+                'type' => $product->getType(),
+                'designation' => $product->getDesignation(),
+                'prixHt' => $priceHt,
+                'promotion' => $promotion,
+                'prixTtc' => ProductPricing::priceTtc($priceHt),
+                'prixDisponible' => ProductPricing::priceAvailable($priceHt, $promotion),
+                'dateIn' => $product->getDateIn(),
+                'timesIn' => $product->getDateNew() ?? '',
+                'stock' => $product->getStock(),
+                'image' => $product->getImage(),
+            ];
+        },
+        $products
+    );
+} catch (Throwable $e) {
+    $feedback = '<p class="feedback feedback-error" role="alert">'
+        . 'Connexion à la base impossible. Réessayez plus tard.'
+        . '</p>';
+} finally {
+    if ($connection !== null) {
+        $connection->close();
     }
 }
-
-$products = $productService->findAll();
-$productsJson = array_map(
-    static function (Product $product): array {
-        $priceHt = (float) $product->getPriceHt();
-        $promotion = $product->getPromotion() !== null
-            ? (float) $product->getPromotion()
-            : null;
-
-        return [
-            'id' => $product->getId(),
-            'type' => $product->getType(),
-            'designation' => $product->getDesignation(),
-            'prixHt' => $priceHt,
-            'promotion' => $promotion,
-            'prixTtc' => ProductPricing::priceTtc($priceHt),
-            'prixDisponible' => ProductPricing::priceAvailable($priceHt, $promotion),
-            'dateIn' => $product->getDateIn(),
-            'timesIn' => $product->getDateNew() ?? '',
-            'stock' => $product->getStock(),
-            'image' => $product->getImage(),
-        ];
-    },
-    $products
-);
 ?>
 <!DOCTYPE html>
 <html lang="fr">

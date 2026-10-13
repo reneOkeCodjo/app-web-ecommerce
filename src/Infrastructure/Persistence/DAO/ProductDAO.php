@@ -2,7 +2,6 @@
 namespace App\Infrastructure\Persistence\DAO;
 
 use App\Domain\Model\Product;
-use Db_config\Database;
 
 interface ProductRepositoryInterface
 {
@@ -53,13 +52,11 @@ interface ProductRepositoryInterface
  */
 class ProductRepository implements ProductRepositoryInterface
 {
-    private Database $database;
     private \mysqli $connection;
 
-    public function __construct(Database $database)
+    public function __construct(\mysqli $connection)
     {
-        $this->database = $database;
-        $this->connection = $database->connect();
+        $this->connection = $connection;
     }
 
     public function create(Product $product): bool

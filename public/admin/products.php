@@ -47,10 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id,
                 trim((string) ($_POST['type_p'] ?? '')),
                 trim((string) ($_POST['designation_p'] ?? '')),
-                (float) ($_POST['prix_ht'] ?? 0),
+                number_format((float) ($_POST['prix_ht'] ?? 0), 2, '.', ''),
+                (int) ($_POST['stock_p'] ?? 0),
                 trim((string) ($_POST['date_in'] ?? $existing->getDateIn())),
-                $existing->getTimesIn(),
-                (int) ($_POST['stock_p'] ?? 0)
+                $existing->getDateNew(),
+                $existing->getPromotion()
             ));
         } elseif ($action === 'delete') {
             $repository->delete((int) ($_POST['id_p'] ?? 0));
@@ -73,9 +74,9 @@ $productsJson = array_map(
         'id' => $product->getId(),
         'type' => $product->getType(),
         'designation' => $product->getDesignation(),
-        'prixHt' => $product->getPrixHt(),
+        'prixHt' => (float) $product->getPriceHt(),
         'dateIn' => $product->getDateIn(),
-        'timesIn' => $product->getTimesIn(),
+        'timesIn' => $product->getDateNew() ?? '',
         'stock' => $product->getStock(),
     ],
     $products
@@ -158,7 +159,7 @@ $productsJson = array_map(
                                 <td><?= htmlspecialchars((string) $product->getId(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getType(), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($product->getDesignation(), ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars(number_format($product->getPrixHt(), 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars(number_format((float) $product->getPriceHt(), 2, '.', ''), ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars((string) $product->getStock(), ENT_QUOTES, 'UTF-8') ?></td>
                             </tr>
                         <?php endforeach; ?>

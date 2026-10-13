@@ -9,9 +9,9 @@ use InvalidArgumentException;
 
 /**
  * In-memory mock product repository (no database).
- * Shape matches table `produit`. Replace with a real DAO later.
+ * Temporary admin UI store until pages switch to ProductRepository.
  */
-final class InMemoryProductRepository implements ProductRepositoryInterface
+final class InMemoryProductRepository
 {
     /** @var array<int, Product> */
     private array $products = [];
@@ -25,69 +25,28 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
     {
         if ($seed === null) {
             $seed = [
-                new Product(
-                    1,
-                    'Smartphone',
-                    'Galaxy A55',
-                    449.99,
-                    '2026-01-10',
-                    '2026-01-10 09:15:00',
-                    40
-                ),
-                new Product(
-                    2,
-                    'Ordinateur portable',
-                    'ThinkPad E14',
-                    899.00,
-                    '2026-02-01',
-                    '2026-02-01 14:30:00',
-                    18
-                ),
-                new Product(
-                    3,
-                    'Casque audio',
-                    'Sony WH-1000XM5',
-                    349.90,
-                    '2026-03-12',
-                    '2026-03-12 11:05:00',
-                    25
-                ),
-                new Product(
-                    4,
-                    'Montre connectée',
-                    'Apple Watch SE',
-                    279.00,
-                    '2026-04-05',
-                    '2026-04-05 16:20:00',
-                    30
-                ),
-                new Product(
-                    5,
-                    'Tablette',
-                    'iPad 10',
-                    529.00,
-                    '2026-05-18',
-                    '2026-05-18 10:00:00',
-                    12
-                ),
-                new Product(
-                    6,
-                    'Caméra',
-                    'GoPro Hero 12',
-                    399.00,
-                    '2026-06-02',
-                    '2026-06-02 13:45:00',
-                    15
-                ),
+                new Product(1, 'Smartphone', 'Galaxy A55', '449.99', 40, '2026-01-10', '2026-01-10 09:15:00'),
+                new Product(2, 'Ordinateur portable', 'ThinkPad E14', '899.00', 18, '2026-02-01', '2026-02-01 14:30:00'),
+                new Product(3, 'Casque audio', 'Sony WH-1000XM5', '349.90', 25, '2026-03-12', '2026-03-12 11:05:00'),
+                new Product(4, 'Montre connectée', 'Apple Watch SE', '279.00', 30, '2026-04-05', '2026-04-05 16:20:00'),
+                new Product(5, 'Tablette', 'iPad 10', '529.00', 12, '2026-05-18', '2026-05-18 10:00:00'),
+                new Product(6, 'Caméra', 'GoPro Hero 12', '399.00', 15, '2026-06-02', '2026-06-02 13:45:00'),
             ];
         }
 
         foreach ($seed as $product) {
-            $this->products[$product->getId()] = $product;
-            $this->nextId = max($this->nextId, $product->getId() + 1);
+            $id = $product->getId();
+            if ($id === null) {
+                continue;
+            }
+            $this->products[$id] = $product;
+            $this->nextId = max($this->nextId, $id + 1);
         }
     }
 
+    /**
+     * @return list<Product>
+     */
     public function findAll(): array
     {
         return array_values($this->products);
@@ -109,23 +68,27 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
             $this->nextId++,
             $type,
             $designation,
-            $prixHt,
+            number_format($prixHt, 2, '.', ''),
+            $stock,
             $dateIn,
-            date('Y-m-d H:i:s'),
-            $stock
+            date('Y-m-d H:i:s')
         );
-        $this->products[$product->getId()] = $product;
+        $id = $product->getId();
+        if ($id !== null) {
+            $this->products[$id] = $product;
+        }
 
         return $product;
     }
 
     public function update(Product $product): Product
     {
-        if (!isset($this->products[$product->getId()])) {
+        $id = $product->getId();
+        if ($id === null || !isset($this->products[$id])) {
             throw new InvalidArgumentException('Product not found.');
         }
 
-        $this->products[$product->getId()] = $product;
+        $this->products[$id] = $product;
 
         return $product;
     }

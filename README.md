@@ -334,7 +334,6 @@ Pages d’authentification alignées sur la maquette Figma, plus une landing pro
 - Logout depuis `products.php` → `index.php`
 
 **Accès :**
-
 ```
 http://localhost:8080/index.php
 http://localhost:8080/register.php

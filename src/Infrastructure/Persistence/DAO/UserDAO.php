@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Infrastructure\Persistence\DAO;
 
 use App\Domain\Model\User;

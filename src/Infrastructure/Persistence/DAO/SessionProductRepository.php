@@ -8,10 +8,9 @@ use App\Domain\Model\Product;
 use App\Infrastructure\Http\SessionStoreInterface;
 
 /**
- * Session-backed mock of ProductRepositoryInterface.
- * Keeps demo CRUD alive across requests until a real DAO exists.
+ * Session-backed mock product store for the admin UI.
  */
-final class SessionProductRepository implements ProductRepositoryInterface
+final class SessionProductRepository
 {
     private const SESSION_KEY = 'mock_produits_v2';
 
@@ -22,6 +21,9 @@ final class SessionProductRepository implements ProductRepositoryInterface
         $this->inner = new InMemoryProductRepository($this->loadSeed());
     }
 
+    /**
+     * @return list<Product>
+     */
     public function findAll(): array
     {
         return $this->inner->findAll();
@@ -83,10 +85,10 @@ final class SessionProductRepository implements ProductRepositoryInterface
                 (int) ($row['id'] ?? 0),
                 (string) ($row['type'] ?? ''),
                 (string) ($row['designation'] ?? ''),
-                (float) ($row['prix_ht'] ?? 0),
+                number_format((float) ($row['prix_ht'] ?? 0), 2, '.', ''),
+                (int) ($row['stock'] ?? 0),
                 (string) ($row['date_in'] ?? ''),
-                (string) ($row['times_in'] ?? ''),
-                (int) ($row['stock'] ?? 0)
+                (string) ($row['times_in'] ?? '')
             );
         }
 
@@ -101,9 +103,9 @@ final class SessionProductRepository implements ProductRepositoryInterface
                 'id' => $product->getId(),
                 'type' => $product->getType(),
                 'designation' => $product->getDesignation(),
-                'prix_ht' => $product->getPrixHt(),
+                'prix_ht' => (float) $product->getPriceHt(),
                 'date_in' => $product->getDateIn(),
-                'times_in' => $product->getTimesIn(),
+                'times_in' => $product->getDateNew() ?? '',
                 'stock' => $product->getStock(),
             ];
         }

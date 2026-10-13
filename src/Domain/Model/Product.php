@@ -1,65 +1,72 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Domain\Model;
 
-/**
- * Product entity aligned with table `produit`
- * (id_p, type_p, designation_p, prix_ht, date_in, times_in, stock_p).
- */
-final class Product
+
+class Product
 {
-    public function __construct(
-        private int $id,
-        private string $type,
-        private string $designation,
-        private float $prixHt,
-        private string $dateIn,
-        private string $timesIn,
-        private int $stock = 0
-    ) {
-    }
+    private ?int $id = null;
+    private string $type;
+    private string $designation;
+    private string $price_ht;
+    private int $stock;
+    private string $date_in;
+    private ?string $date_new = null;
+    private ?string $promotion;
 
-    /** Column: id_p */
-    public function getId(): int
+
+    public function __construct(?int $id, string $type, string $designation, string $price_ht, int $stock, string $date_in, ?string $date_new, ?string $promotion = null)
     {
-        return $this->id;
+        $this->id = $id;
+        $this->type = $type;
+        $this->designation = $designation;
+        $this->price_ht = $price_ht;
+        $this->stock = $stock;
+        $this->date_in = $date_in;
+        $this->date_new = $date_new;
+        $this->promotion = $promotion;
     }
 
-    /** Column: type_p */
+    public function getId(): ?int
+    {
+        return $this-> id;
+    }
+
     public function getType(): string
     {
         return $this->type;
     }
 
-    /** Column: designation_p */
     public function getDesignation(): string
     {
         return $this->designation;
     }
 
-    /** Column: prix_ht */
-    public function getPrixHt(): float
+    public function getPriceHt(): string
     {
-        return $this->prixHt;
+        return $this->price_ht;
     }
 
-    /** Column: date_in (Y-m-d) */
-    public function getDateIn(): string
-    {
-        return $this->dateIn;
-    }
-
-    /** Column: times_in (Y-m-d H:i:s) */
-    public function getTimesIn(): string
-    {
-        return $this->timesIn;
-    }
-
-    /** Column: stock_p */
     public function getStock(): int
     {
         return $this->stock;
     }
+
+    public function getDateIn(): string
+    {
+        return $this->date_in;
+    }
+
+    public function getDateNew(): ?string
+    {
+        return $this->date_new;
+    }
+
+
+    public function getPromotion(): ?string
+    {
+        return $this->promotion;
+    }
+
+
 }

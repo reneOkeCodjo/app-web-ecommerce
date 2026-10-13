@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Services;
+namespace App\Application\Services\Auth;
 
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;

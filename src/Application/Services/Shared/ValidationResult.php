@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Services;
+namespace App\Application\Services\Shared;
 
 use App\Application\DTO\LoginRequestDTO;
 use App\Application\DTO\ProductRequestDTO;

@@ -2,8 +2,8 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Application\Services\RegisterHandler;
-use App\Application\Services\Validation;
+use App\Application\Services\Auth\RegisterHandler;
+use App\Application\Services\Shared\Validation;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\UserRepository;

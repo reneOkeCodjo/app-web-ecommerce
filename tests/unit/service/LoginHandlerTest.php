@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Service;
 
 use App\Application\DTO\LoginRequestDTO;
-use App\Application\Services\LoginHandler;
+use App\Application\Services\Auth\LoginHandler;
 use App\Domain\Model\User;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;

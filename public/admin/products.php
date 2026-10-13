@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use App\Application\Services\Auth;
+use App\Application\Services\Auth\Auth;
 use App\Domain\Model\Product;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;

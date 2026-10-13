@@ -213,7 +213,7 @@ Aucun paramètre d'auth n'est passé dans l'URL : le cookie `PHPSESSID` suffit p
 
 Le service `Auth` gère l'authentification des utilisateurs et persiste l'état en session.
 
-**Fichier :** `src/Application/Services/Auth.php`
+**Fichier :** `src/Application/Services/Auth/Auth.php`
 
 **Interface :** `AuthInterface`
 
@@ -283,8 +283,8 @@ La validation se fait dans les pages (`index.php`, `register.php`). Les handlers
 
 **Fichiers :**
 
-- `src/Application/Services/LoginHandler.php`
-- `src/Application/Services/RegisterHandler.php`
+- `src/Application/Services/Auth/LoginHandler.php`
+- `src/Application/Services/Auth/RegisterHandler.php`
 
 **Contrat :**
 
@@ -362,8 +362,8 @@ Validation serveur dans les pages, avant l’appel aux handlers / `Auth`.
 **Fichiers :**
 
 - `src/Application/Validation/{Shared,Auth,Product}/`
-- `src/Application/Services/Validation.php`
-- `src/Application/Services/ValidationResult.php`
+- `src/Application/Services/Shared/Validation.php`
+- `src/Application/Services/Shared/ValidationResult.php`
 
 **Login (`validateLogin`) :** username requis + password requis / max 72.  
 Pas de règles de complexité au login (un mot de passe faible doit plutôt produire « Invalid username or password » via `Auth`).
@@ -541,13 +541,9 @@ src/
 │   │   ├── RegisterRequestDTO.php           → DTO d’inscription
 │   │   └── ProductRequestDTO.php            → DTO produit
 │   ├── Services/
-│   │   ├── Auth.php                         → Auth + AuthInterface (session + rôle)
-│   │   ├── LoginHandler.php                 → Auth login front → redirect produits
-│   │   ├── AdminLoginHandler.php            → Auth login admin → redirect dashboard
-│   │   ├── RegisterHandler.php              → Auth register → erreur HTML ou redirect
-│   │   ├── ProductService.php               → CRUD produits (DAO SQL)
-│   │   ├── Validation.php                   → Orchestration validation (auth + produit)
-│   │   └── ValidationResult.php             → Erreurs champs + DTO normalisé
+│   │   ├── Shared/                          → Validation + ValidationResult
+│   │   ├── Auth/                            → Auth, Login/Admin/Register handlers
+│   │   └── Product/                         → ProductService (CRUD métier)
 │   └── Validation/
 │       ├── Shared/                          → Règles atomiques + FieldResult
 │       ├── Auth/                            → Username, password, email, confirm

@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Services;
+namespace App\Application\Services\Auth;
 
-use App\Application\DTO\LoginRequestDTO;
+use App\Application\DTO\RegisterRequestDTO;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
 use InvalidArgumentException;
 use Throwable;
 
 /**
- * Handles login auth flow after presentation-layer validation.
+ * Handles register auth flow after presentation-layer validation.
  * Returns null when the caller should redirect to the products page.
  */
-final class LoginHandler
+final class RegisterHandler
 {
     public function __construct(
         private UserRepositoryInterface $userRepository,
@@ -25,7 +25,7 @@ final class LoginHandler
     /**
      * @return string|null Feedback HTML, or null to redirect to products.
      */
-    public function handle(string $method, ?LoginRequestDTO $request = null): ?string
+    public function handle(string $method, ?RegisterRequestDTO $request = null): ?string
     {
         return match (strtoupper($method)) {
             'POST' => $this->handlePost($request),
@@ -45,26 +45,27 @@ final class LoginHandler
         return '';
     }
 
-    private function handlePost(?LoginRequestDTO $request): ?string
+    private function handlePost(?RegisterRequestDTO $request): ?string
     {
         if ($request === null) {
-            throw new InvalidArgumentException('Login request is required for POST.');
+            throw new InvalidArgumentException('Register request is required for POST.');
         }
 
         try {
             $auth = new Auth($this->userRepository, $this->session);
-            $authenticated = $auth->login(
+            $registered = $auth->register(
                 $request->getUsername(),
+                $request->getEmail(),
                 $request->getPassword()
             );
 
-            if ($authenticated) {
+            if ($registered) {
                 return null;
             }
 
-            return $this->error('Invalid username or password.');
+            return $this->error('Username or email is already taken.');
         } catch (Throwable $e) {
-            return $this->error('An error occurred during login. Please try again later.');
+            return $this->error('An error occurred during registration. Please try again later.');
         }
     }
 

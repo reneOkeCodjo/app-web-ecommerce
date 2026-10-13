@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Services;
+namespace App\Application\Services\Product;
 
 use App\Application\DTO\ProductRequestDTO;
+use App\Application\Services\Shared\Validation;
+use App\Application\Services\Shared\ValidationInterface;
 use App\Domain\Model\Product;
 use App\Infrastructure\Persistence\DAO\ProductRepositoryInterface;
 use InvalidArgumentException;

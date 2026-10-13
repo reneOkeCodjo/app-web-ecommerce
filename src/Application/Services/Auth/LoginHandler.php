@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Services;
+namespace App\Application\Services\Auth;
 
 use App\Application\DTO\LoginRequestDTO;
 use App\Infrastructure\Http\SessionStoreInterface;
@@ -11,10 +11,10 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * Handles admin login after presentation-layer validation.
- * Returns null when the caller should redirect to the admin dashboard.
+ * Handles login auth flow after presentation-layer validation.
+ * Returns null when the caller should redirect to the products page.
  */
-final class AdminLoginHandler
+final class LoginHandler
 {
     public function __construct(
         private UserRepositoryInterface $userRepository,
@@ -23,7 +23,7 @@ final class AdminLoginHandler
     }
 
     /**
-     * @return string|null Feedback HTML, or null to redirect to the admin dashboard.
+     * @return string|null Feedback HTML, or null to redirect to products.
      */
     public function handle(string $method, ?LoginRequestDTO $request = null): ?string
     {
@@ -38,7 +38,7 @@ final class AdminLoginHandler
     {
         $auth = new Auth($this->userRepository, $this->session);
 
-        if ($auth->isAdmin()) {
+        if ($auth->isAuthenticated()) {
             return null;
         }
 
@@ -58,17 +58,11 @@ final class AdminLoginHandler
                 $request->getPassword()
             );
 
-            if (!$authenticated) {
-                return $this->error('Invalid username or password.');
+            if ($authenticated) {
+                return null;
             }
 
-            if (!$auth->isAdmin()) {
-                $auth->logout();
-
-                return $this->error('Admin access required.');
-            }
-
-            return null;
+            return $this->error('Invalid username or password.');
         } catch (Throwable $e) {
             return $this->error('An error occurred during login. Please try again later.');
         }

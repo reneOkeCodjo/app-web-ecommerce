@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Service;
 
-use App\Application\Services\ProductService;
+use App\Application\Services\Product\ProductService;
 use App\Domain\Model\Product;
 use App\Infrastructure\Persistence\DAO\ProductRepositoryInterface;
 use InvalidArgumentException;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Service;
 
-use App\Application\Services\Validation;
+use App\Application\Services\Shared\Validation;
 use App\Application\Validation\Product\CategoryValidator;
 use App\Application\Validation\Product\ImageValidator;
 use App\Application\Validation\Product\PriceValidator;

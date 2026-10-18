@@ -1,0 +1,80 @@
+.product-dialog {
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  background-color: #1a1716;
+  color: var(--color-primary);
+  max-width: 420px;
+  margin: auto;
+  width: calc(100% - 2rem);
+}
+
+.product-dialog form {
+  padding: 1.5rem;
+}
+
+.product-dialog::backdrop {
+  background-color: rgba(61, 49, 41, 0.431);
+}
+
+.product-form {
+  margin: 0;
+  max-width: none;
+}
+
+.product-form h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.product-form select {
+  width: 100%;
+  padding: 5px;
+  font-size: var(--input-font-size);
+  outline: none;
+  background-color: transparent;
+  color: var(--color-primary);
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.product-form select:disabled {
+  opacity: 0.85;
+  cursor: default;
+}
+
+.product-form.editing select:disabled {
+  opacity: 1;
+}
+
+.product-form input[readonly] {
+  opacity: 0.85;
+  cursor: default;
+}
+
+.product-form.editing input[readonly] {
+  opacity: 1;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.dialog-actions .btn {
+  width: auto;
+}
+
+.confirm-dialog-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.confirm-dialog-content h2 {
+  margin-bottom: 1rem;
+}
+
+.confirm-dialog-content p {
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}

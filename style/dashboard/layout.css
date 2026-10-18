@@ -1,0 +1,27 @@
+body {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+nav {
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  z-index: 30;
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 50px;
+}
+
+.dashboard-feedback {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.hidden {
+  display: none !important;
+}

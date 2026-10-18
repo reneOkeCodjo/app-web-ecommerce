@@ -25,6 +25,7 @@ if ($page === 'users') {
 
 $pdo = null;
 $result = null;
+$comptes = [];
 $feedback = '';
 
 $db_host = getenv('DB_HOST');
@@ -36,6 +37,87 @@ $db_port = getenv('DB_PORT');
 try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if ($page === 'users' && isset($_POST['form_submitted_value'])) {
+        $form_action = $_POST['form_submitted_value'];
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $compte_id = (int) ($_POST['compte_id'] ?? 0);
+        $user_id = (int) ($_POST['user_id'] ?? 0);
+
+        $needs_fields = $form_action === 'add_user' || $form_action === 'update_user';
+        $needs_id = $form_action === 'update_user' || $form_action === 'delete_user';
+        $needs_password = $form_action === 'add_user';
+        $fields_ok = !$needs_fields || ($username !== '' && $email !== '' && $compte_id > 0);
+        $password_ok = !$needs_password || $password !== '';
+        $id_ok = !$needs_id || $user_id > 0;
+
+        if (!$fields_ok) {
+            $feedback = 'Username, email and compte are required';
+        } elseif (!$password_ok) {
+            $feedback = 'Password is required';
+        } elseif (!$id_ok) {
+            $feedback = 'Invalid user id';
+        } else {
+            switch ($form_action) {
+                case 'add_user':
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO user (user_login, user_password, user_mail, user_compte_id)
+                         VALUES (:username, :password, :email, :compte_id)'
+                    );
+                    $stmt->execute([
+                        'username' => $username,
+                        'password' => password_hash($password, PASSWORD_DEFAULT),
+                        'email' => $email,
+                        'compte_id' => $compte_id,
+                    ]);
+                    break;
+                case 'update_user':
+                    if ($password !== '') {
+                        $stmt = $pdo->prepare(
+                            'UPDATE user
+                             SET user_login = :username,
+                                 user_mail = :email,
+                                 user_compte_id = :compte_id,
+                                 user_password = :password
+                             WHERE user_id = :user_id'
+                        );
+                        $stmt->execute([
+                            'username' => $username,
+                            'email' => $email,
+                            'compte_id' => $compte_id,
+                            'password' => password_hash($password, PASSWORD_DEFAULT),
+                            'user_id' => $user_id,
+                        ]);
+                    } else {
+                        $stmt = $pdo->prepare(
+                            'UPDATE user
+                             SET user_login = :username,
+                                 user_mail = :email,
+                                 user_compte_id = :compte_id
+                             WHERE user_id = :user_id'
+                        );
+                        $stmt->execute([
+                            'username' => $username,
+                            'email' => $email,
+                            'compte_id' => $compte_id,
+                            'user_id' => $user_id,
+                        ]);
+                    }
+                    break;
+                case 'delete_user':
+                    $stmt = $pdo->prepare('DELETE FROM user WHERE user_id = :user_id');
+                    $stmt->execute(['user_id' => $user_id]);
+                    break;
+            }
+
+            if (in_array($form_action, ['add_user', 'update_user', 'delete_user'], true)) {
+                header('Location: dashboard.php?page=users');
+                exit;
+            }
+        }
+    }
 
     if ($page === 'products' && isset($_POST['form_submitted_value'])) {
         $form_action = $_POST['form_submitted_value'];
@@ -95,10 +177,20 @@ try {
     }
 
 
+    if ($page === 'users') {
+        $comptes = $pdo->query('SELECT compte_id as id, compte_name as name FROM compte ORDER BY compte_id')->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     $stmt = null;
     switch ($page) {
         case 'users':
-            $stmt = $pdo->prepare('SELECT user_id as id, user_login as name, user_mail as email FROM user');
+            $stmt = $pdo->prepare(
+                'SELECT u.user_id as id, u.user_login as name, u.user_mail as email,
+                        u.user_compte_id as compte_id, c.compte_name as compte
+                 FROM user u
+                 INNER JOIN compte c ON c.compte_id = u.user_compte_id
+                 ORDER BY u.user_id DESC'
+            );
             break;
         case 'products':
             $stmt = $pdo->prepare(
@@ -125,7 +217,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title; ?></title>
     <link rel="stylesheet" href="./style/common.css">
-    <link rel="stylesheet" href="./style/dashboard.css">
+    <link rel="stylesheet" href="./style/dashboard/index.css">
 </head>
 
 <body>
@@ -194,20 +286,135 @@ try {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
+                        <th>Username</th>
                         <th>Email</th>
+                        <th>Compte</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($result as $row): ?>
-                        <tr class="user-row">
-                            <td><?php echo htmlspecialchars($row['id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['email']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
+                    <?php if ($result): ?>
+                        <?php foreach ($result as $row): ?>
+                            <tr
+                                class="user-row"
+                                data-id="<?php echo htmlspecialchars($row['id']); ?>"
+                                data-name="<?php echo htmlspecialchars($row['name']); ?>"
+                                data-email="<?php echo htmlspecialchars($row['email']); ?>"
+                                data-compte-id="<?php echo htmlspecialchars($row['compte_id']); ?>"
+                                data-compte="<?php echo htmlspecialchars($row['compte']); ?>">
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                <td><?php echo htmlspecialchars($row['compte']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
+
+            <button type="button" class="btn btn-primary" id="add-user-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                </svg>
+                <span class="btn-text closed">Add User</span>
+            </button>
+
+            <dialog id="add-user-dialog" class="product-dialog">
+                <form method="post" id="add-user-form" class="auth-form product-form">
+                    <h2>Add User</h2>
+
+                    <div class="form-field">
+                        <label for="user_username">Username</label>
+                        <input type="text" name="username" id="user_username" placeholder="Username" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="user_email">Email</label>
+                        <input type="email" name="email" id="user_email" placeholder="Email" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="user_password">Password</label>
+                        <input type="password" name="password" id="user_password" placeholder="Password" required>
+                    </div>
+
+                    <div class="form-field">
+                        <!-- <label for="user_compte_id">Compte</label> -->
+                        <select name="compte_id" id="user_compte_id" required>
+                            <option value="">Select compte</option>
+                            <?php foreach ($comptes as $compte): ?>
+                                <option value="<?php echo htmlspecialchars($compte['id']); ?>">
+                                    <?php echo htmlspecialchars($compte['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="form_submitted_value" value="add_user">
+
+                    <div class="dialog-actions">
+                        <button type="button" id="cancel-user-btn" class="btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <dialog id="user-detail-dialog" class="product-dialog">
+                <form method="post" id="user-detail-form" class="auth-form product-form">
+                    <h2 id="user-detail-title">User details</h2>
+
+                    <input type="hidden" name="user_id" id="detail_user_id" value="">
+                    <input type="hidden" name="form_submitted_value" id="detail_user_form_action" value="update_user">
+
+                    <div class="form-field">
+                        <label for="detail_user_username">Username</label>
+                        <input type="text" name="username" id="detail_user_username" placeholder="Username" required readonly>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="detail_user_email">Email</label>
+                        <input type="email" name="email" id="detail_user_email" placeholder="Email" required readonly>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="detail_user_password">Password</label>
+                        <input type="password" name="password" id="detail_user_password" placeholder="Leave blank to keep" readonly>
+                    </div>
+
+                    <div class="form-field">
+                        <!-- <label for="detail_user_compte_id">Compte</label> -->
+                        <select name="compte_id" id="detail_user_compte_id" required disabled>
+                            <?php foreach ($comptes as $compte): ?>
+                                <option value="<?php echo htmlspecialchars($compte['id']); ?>">
+                                    <?php echo htmlspecialchars($compte['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="dialog-actions" id="user-detail-actions-view">
+                        <button type="button" id="close-user-detail-btn" class="btn">Close</button>
+                        <button type="button" id="edit-user-btn" class="btn btn-primary">Update</button>
+                        <button type="button" id="delete-user-btn" class="btn btn-danger">Delete</button>
+                    </div>
+
+                    <div class="dialog-actions hidden" id="user-detail-actions-edit">
+                        <button type="button" id="cancel-edit-user-btn" class="btn">Cancel</button>
+                        <button type="submit" id="save-user-btn" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <dialog id="delete-user-confirm-dialog" class="product-dialog confirm-dialog">
+                <div class="confirm-dialog-content">
+                    <h2>Delete user</h2>
+                    <p id="delete-user-confirm-message">Are you sure you want to delete this user?</p>
+                    <div class="dialog-actions">
+                        <button type="button" id="cancel-delete-user-btn" class="btn">Cancel</button>
+                        <button type="button" id="confirm-delete-user-btn" class="btn btn-danger">Delete</button>
+                    </div>
+                </div>
+            </dialog>
         <?php endif; ?>
 
         <?php if ($page === 'products'): ?>
@@ -398,6 +605,26 @@ try {
             }
         });
     }
+
+    const addUserBtn = document.querySelector('#add-user-btn');
+    const addUserDialog = document.querySelector('#add-user-dialog');
+    const cancelUserBtn = document.querySelector('#cancel-user-btn');
+
+    if (addUserBtn && addUserDialog) {
+        addUserBtn.addEventListener('click', () => {
+            addUserDialog.showModal();
+        });
+
+        cancelUserBtn?.addEventListener('click', () => {
+            addUserDialog.close();
+        });
+
+        addUserDialog.addEventListener('click', (event) => {
+            if (event.target === addUserDialog) {
+                addUserDialog.close();
+            }
+        });
+    }
 </script>
 <script>
     const productDetailDialog = document.querySelector('#product-detail-dialog');
@@ -512,6 +739,123 @@ try {
 
     productDetailDialog?.addEventListener('close', () => {
         setDetailMode('view');
+    });
+</script>
+<script>
+    const userDetailDialog = document.querySelector('#user-detail-dialog');
+    const userDetailForm = document.querySelector('#user-detail-form');
+    const userDetailTitle = document.querySelector('#user-detail-title');
+    const detailUserActionInput = document.querySelector('#detail_user_form_action');
+    const detailUserFields = [
+        document.querySelector('#detail_user_username'),
+        document.querySelector('#detail_user_email'),
+        document.querySelector('#detail_user_password'),
+    ];
+    const detailUserCompte = document.querySelector('#detail_user_compte_id');
+    const userViewActions = document.querySelector('#user-detail-actions-view');
+    const userEditActions = document.querySelector('#user-detail-actions-edit');
+    const editUserBtn = document.querySelector('#edit-user-btn');
+    const deleteUserBtn = document.querySelector('#delete-user-btn');
+    const closeUserDetailBtn = document.querySelector('#close-user-detail-btn');
+    const cancelEditUserBtn = document.querySelector('#cancel-edit-user-btn');
+    const deleteUserConfirmDialog = document.querySelector('#delete-user-confirm-dialog');
+    const deleteUserConfirmMessage = document.querySelector('#delete-user-confirm-message');
+    const confirmDeleteUserBtn = document.querySelector('#confirm-delete-user-btn');
+    const cancelDeleteUserBtn = document.querySelector('#cancel-delete-user-btn');
+    const userRows = document.querySelectorAll('.user-row');
+
+    let currentUser = null;
+
+    const setUserDetailMode = (mode) => {
+        const isEdit = mode === 'edit';
+        detailUserFields.forEach((field) => {
+            if (!field) return;
+            field.readOnly = !isEdit;
+        });
+        if (detailUserCompte) {
+            detailUserCompte.disabled = !isEdit;
+        }
+        userViewActions?.classList.toggle('hidden', isEdit);
+        userEditActions?.classList.toggle('hidden', !isEdit);
+        userDetailTitle.textContent = isEdit ? 'Update user' : 'User details';
+        detailUserActionInput.value = 'update_user';
+        userDetailForm?.classList.toggle('editing', isEdit);
+    };
+
+    const fillUserDetail = (user) => {
+        document.querySelector('#detail_user_id').value = user.id;
+        document.querySelector('#detail_user_username').value = user.name;
+        document.querySelector('#detail_user_email').value = user.email;
+        document.querySelector('#detail_user_password').value = '';
+        if (detailUserCompte) {
+            detailUserCompte.value = user.compteId;
+        }
+    };
+
+    const openUserDetail = (row) => {
+        currentUser = {
+            id: row.dataset.id,
+            name: row.dataset.name,
+            email: row.dataset.email,
+            compteId: row.dataset.compteId,
+            compte: row.dataset.compte,
+        };
+        fillUserDetail(currentUser);
+        setUserDetailMode('view');
+        userDetailDialog.showModal();
+    };
+
+    userRows.forEach((row) => {
+        row.addEventListener('click', () => openUserDetail(row));
+    });
+
+    editUserBtn?.addEventListener('click', () => {
+        setUserDetailMode('edit');
+    });
+
+    cancelEditUserBtn?.addEventListener('click', () => {
+        if (currentUser) {
+            fillUserDetail(currentUser);
+        }
+        setUserDetailMode('view');
+    });
+
+    closeUserDetailBtn?.addEventListener('click', () => {
+        userDetailDialog.close();
+    });
+
+    deleteUserBtn?.addEventListener('click', () => {
+        if (!currentUser || !deleteUserConfirmDialog) return;
+        deleteUserConfirmMessage.textContent =
+            `Are you sure you want to delete "${currentUser.name}" (#${currentUser.id})? This cannot be undone.`;
+        deleteUserConfirmDialog.showModal();
+    });
+
+    cancelDeleteUserBtn?.addEventListener('click', () => {
+        deleteUserConfirmDialog?.close();
+    });
+
+    confirmDeleteUserBtn?.addEventListener('click', () => {
+        if (!currentUser) return;
+        detailUserActionInput.value = 'delete_user';
+        deleteUserConfirmDialog?.close();
+        userDetailForm.submit();
+    });
+
+    deleteUserConfirmDialog?.addEventListener('click', (event) => {
+        if (event.target === deleteUserConfirmDialog) {
+            deleteUserConfirmDialog.close();
+        }
+    });
+
+    userDetailDialog?.addEventListener('click', (event) => {
+        if (event.target === userDetailDialog) {
+            userDetailDialog.close();
+        }
+    });
+
+    userDetailDialog?.addEventListener('close', () => {
+        setUserDetailMode('view');
     });
 </script>
 

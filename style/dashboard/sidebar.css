@@ -1,0 +1,72 @@
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+aside {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  bottom: 50px;
+  z-index: 20;
+  background-color: var(--color-secondary);
+  padding: 10px;
+  width: fit-content;
+  box-shadow: none;
+  transition: box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+aside.expanded {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.sidebar-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.sidebar-link:has(.closed) {
+  gap: 0;
+}
+
+.sidebar-text {
+  width: fit-content;
+  max-width: 16rem;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    max-width 0.3s ease,
+    opacity 0.2s ease,
+    margin 0.3s ease;
+}
+
+.sidebar-text.closed {
+  max-width: 0;
+  margin: 0;
+  opacity: 0;
+}

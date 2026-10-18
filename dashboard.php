@@ -41,7 +41,7 @@ try {
             $stmt = $pdo->prepare('SELECT user_id as id, user_login as name, user_mail as email FROM user');
             break;
         case 'products':
-            $stmt = $pdo->prepare('SELECT id_p as id, designation_p as name, prix_ht as price FROM product');
+            $stmt = $pdo->prepare('SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock FROM product');
             break;
     }
     if ($stmt) {
@@ -68,7 +68,11 @@ try {
     <nav id="dashboard-nav" class="dashboard-nav">
         <a href="/dashboard.php?action=logout" id="logout-link" class="nav-link logout-link">Logout</a>
     </nav>
+    <!-- Sidebar overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+    <!-- Sidebar -->
     <aside id="dashboard-sidebar" class="dashboard-sidebar">
+        <!-- Sidebar menu -->
         <ul id="sidebar-menu" class="sidebar-menu">
             <li class="sidebar-item">
                 <a id="toggle-btn" class="sidebar-link toggle-btn" href="javascript:void(0);">
@@ -100,6 +104,21 @@ try {
                 </a>
             </li>
         </ul>
+
+        <!-- Account menu -->
+        <ul>
+            <li>
+                <a href="/dashboard.php?page=users" id="users-link" class="sidebar-link users-link">
+                    <!-- Account icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-account">
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                        <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                        <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" />
+                    </svg>
+                    <span class="sidebar-text closed">Account</span>
+                </a>
+            </li>
+        </ul>
     </aside>
     <main>
         <?php if ($page === 'users'): ?>
@@ -109,6 +128,9 @@ try {
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Stock</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,6 +139,9 @@ try {
                             <td><?php echo $row['id']; ?></td>
                             <td><?php echo $row['name']; ?></td>
                             <td><?php echo $row['email']; ?></td>
+                            <td><?php echo $row['date']; ?></td>
+                            <td><?php echo $row['type']; ?></td>
+                            <td><?php echo $row['stock']; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -129,6 +154,7 @@ try {
                         <th>ID</th>
                         <th>Name</th>
                         <th>Price</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,10 +163,36 @@ try {
                             <td><?php echo $row['id']; ?></td>
                             <td><?php echo $row['name']; ?></td>
                             <td><?php echo $row['price']; ?></td>
+                            <td>
+                                <button class="btn btn-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 5-9 14-5a2.121 2.121 0 0 1 3 3L16.5 3.5z" />
+                                    </svg>
+                                    Edit
+                                </button>
+                                <button class="btn btn-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        <path d="M10 11v6" />
+                                        <path d="M14 11v6" />
+                                    </svg>
+                                    Delete
+                                </button>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <button class="btn btn-primary" id="add-product-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                </svg>
+                Add Product
+            </button>
         <?php endif; ?>
     </main>
 </body>
@@ -151,12 +203,26 @@ try {
 
 <script>
     const toggleBtn = document.querySelector('#toggle-btn');
+    const sidebar = document.querySelector('#dashboard-sidebar');
+    const sidebarOverlay = document.querySelector('#sidebar-overlay');
     const sidebarTexts = document.querySelectorAll('.sidebar-text');
 
-    toggleBtn.addEventListener('click', () => {
+    const setSidebarOpen = (isOpen) => {
         sidebarTexts.forEach((text) => {
-            text.classList.toggle('closed');
+            text.classList.toggle('closed', !isOpen);
         });
+        sidebar.classList.toggle('expanded', isOpen);
+        sidebarOverlay.classList.toggle('open', isOpen);
+        sidebarOverlay.setAttribute('aria-hidden', String(!isOpen));
+    };
+
+    toggleBtn.addEventListener('click', () => {
+        const isOpen = !sidebar.classList.contains('expanded');
+        setSidebarOpen(isOpen);
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+        setSidebarOpen(false);
     });
 </script>
 

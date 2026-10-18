@@ -86,7 +86,7 @@ aside.expanded {
 main {
   flex: 1;
   min-width: 0;
-  margin-left: 4rem;
+  margin-left: 50px;
 }
 
 table {
@@ -107,7 +107,7 @@ tbody tr {
   border-bottom: 1px solid var(--color-primary);
 
   &:hover {
-    background-color: var(--color-primary);
+    background-color: var(--accent-color);
     color: var(--color-secondary);
     cursor: pointer;
   }
@@ -201,4 +201,36 @@ tbody tr {
   background-color: var(--color-secondary);
   color: red;
   border: 1px solid red;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.btn-danger {
+  color: red;
+  border-color: red;
+}
+
+.product-form input[readonly] {
+  opacity: 0.85;
+  cursor: default;
+}
+
+.product-form.editing input[readonly] {
+  opacity: 1;
+}
+
+.confirm-dialog-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.confirm-dialog-content h2 {
+  margin-bottom: 1rem;
+}
+
+.confirm-dialog-content p {
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
 }

@@ -42,12 +42,3 @@
   > .password-rules-list {
   display: block;
 }
-
-.field-error {
-  display: block;
-  width: 100%;
-  font-size: 0.8em;
-  font-style: italic;
-  color: red;
-  text-align: right;
-}

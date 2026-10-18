@@ -250,3 +250,12 @@ circle {
   color: var(--accent-color);
   border-bottom: 1px solid var(--accent-color);
 }
+
+.field-error {
+  display: block;
+  width: 100%;
+  font-size: 0.8em;
+  font-style: italic;
+  color: red;
+  text-align: right;
+}

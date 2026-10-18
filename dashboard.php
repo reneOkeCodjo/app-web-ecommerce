@@ -1,22 +1,27 @@
 <?php
 /**
- * Dashboard: auth gate, users/products CRUD, category filter, promotions.
- * Pages via ?page=users|products (default dashboard title when other).
+ * Dashboard administrateur / gestion.
+ *
+ * - Contrôle d'accès (session obligatoire) et déconnexion
+ * - CRUD utilisateurs (?page=users) et produits (?page=products)
+ * - Filtre catégories produits + promotions (promotion_p 0–100 %)
  */
 session_start();
 
-// --- Auth: require login; handle logout ---
+// --- Accès : session obligatoire, sinon redirection login ---
 if (empty($_SESSION['user_id'])) {
     header('Location: index.php?page=login');
     exit;
 }
 
+// --- Déconnexion ---
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_destroy();
     header('Location: index.php?page=login');
     exit;
 }
 
+// --- Routage de page et titre ---
 $is_admin = $_SESSION['compte_id'] === 1;
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
@@ -35,7 +40,7 @@ $categories = [];
 $category_filter = trim($_GET['category'] ?? '');
 $feedback = '';
 
-// Product types/categories loaded from JSON (used by filter + product forms)
+// --- Catégories produits (JSON) : filtre + selects des formulaires ---
 $categories_file = __DIR__ . '/product_categories.json';
 if (is_readable($categories_file)) {
     $decoded_categories = json_decode(file_get_contents($categories_file), true);
@@ -44,6 +49,7 @@ if (is_readable($categories_file)) {
     }
 }
 
+// --- Connexion BDD (variables d'environnement Docker) ---
 $db_host = getenv('DB_HOST');
 $db_name = getenv('DB_NAME');
 $db_user = getenv('DB_USER');
@@ -54,7 +60,7 @@ try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // --- Users CRUD (add / update / delete) ---
+    // ========== CRUD utilisateurs (ajout / mise à jour / suppression) ==========
     if ($page === 'users' && isset($_POST['form_submitted_value'])) {
         $form_action = $_POST['form_submitted_value'];
         $username = trim($_POST['username'] ?? '');
@@ -63,6 +69,7 @@ try {
         $compte_id = (int) ($_POST['compte_id'] ?? 0);
         $user_id = (int) ($_POST['user_id'] ?? 0);
 
+        // Règles de validation selon l'action demandée
         $needs_fields = $form_action === 'add_user' || $form_action === 'update_user';
         $needs_id = $form_action === 'update_user' || $form_action === 'delete_user';
         $needs_password = $form_action === 'add_user';
@@ -79,6 +86,7 @@ try {
         } else {
             switch ($form_action) {
                 case 'add_user':
+                    // Création : hash bcrypt du mot de passe
                     $stmt = $pdo->prepare(
                         'INSERT INTO user (user_login, user_password, user_mail, user_compte_id)
                          VALUES (:username, :password, :email, :compte_id)'
@@ -91,7 +99,7 @@ try {
                     ]);
                     break;
                 case 'update_user':
-                    // Empty password = keep existing hash
+                    // Mot de passe vide = conserver le hash existant
                     if ($password !== '') {
                         $stmt = $pdo->prepare(
                             'UPDATE user
@@ -130,6 +138,7 @@ try {
                     break;
             }
 
+            // PRG : redirection après succès pour éviter le re-POST
             if (in_array($form_action, ['add_user', 'update_user', 'delete_user'], true)) {
                 header('Location: dashboard.php?page=users');
                 exit;
@@ -137,7 +146,7 @@ try {
         }
     }
 
-    // --- Products CRUD (add / update / delete), includes promotion_p (0–100%) ---
+    // ========== CRUD produits (ajout / mise à jour / suppression + promotion_p) ==========
     if ($page === 'products' && isset($_POST['form_submitted_value'])) {
         $form_action = $_POST['form_submitted_value'];
         $type = trim($_POST['type_p'] ?? '');
@@ -148,7 +157,7 @@ try {
         $promotion_p = (int) ($_POST['promotion_p'] ?? 0);
         $product_id = (int) ($_POST['id_p'] ?? 0);
 
-        // Clamp promotion percentage
+        // Borner le pourcentage de promotion entre 0 et 100
         if ($promotion_p < 0) {
             $promotion_p = 0;
         }
@@ -198,6 +207,7 @@ try {
                     break;
             }
 
+            // PRG : redirection après succès
             if (in_array($form_action, ['add_product', 'update_product', 'delete_product'], true)) {
                 header('Location: dashboard.php?page=products');
                 exit;
@@ -205,16 +215,16 @@ try {
         }
     }
 
-
-    // Compte options for user create/edit selects
+    // --- Options de compte pour les selects create/edit utilisateur ---
     if ($page === 'users') {
         $comptes = $pdo->query('SELECT compte_id as id, compte_name as name FROM compte ORDER BY compte_id')->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // --- Load list data for the current page ---
+    // ========== Chargement des listes pour la page courante ==========
     $stmt = null;
     switch ($page) {
         case 'users':
+            // Utilisateurs + nom du compte (jointure)
             $stmt = $pdo->prepare(
                 'SELECT u.user_id as id, u.user_login as name, u.user_mail as email,
                         u.user_compte_id as compte_id, c.compte_name as compte
@@ -224,7 +234,7 @@ try {
             );
             break;
         case 'products':
-            // Optional filter: ?category= matches product.type_p
+            // Filtre optionnel : ?category= correspond à product.type_p
             if ($category_filter !== '') {
                 $stmt = $pdo->prepare(
                     'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date,
@@ -268,17 +278,18 @@ try {
 </head>
 
 <body>
-    <!-- Top bar -->
+    <!-- Barre du haut : déconnexion -->
     <nav id="dashboard-nav" class="dashboard-nav">
         <a href="/dashboard.php?action=logout" id="logout-link" class="nav-link logout-link">Logout</a>
     </nav>
 
-    <!-- Dimmed backdrop when sidebar is expanded -->
+    <!-- Fond assombri quand la barre latérale est ouverte -->
     <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
 
-    <!-- Collapsible sidebar navigation -->
+    <!-- Barre latérale repliable (utilisateurs / produits / compte) -->
     <aside id="dashboard-sidebar" class="dashboard-sidebar">
         <ul id="sidebar-menu" class="sidebar-menu">
+            <!-- Bouton d'ouverture / fermeture de la sidebar -->
             <li class="sidebar-item">
                 <a id="toggle-btn" class="sidebar-link toggle-btn" href="javascript:void(0);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-toggle-right">
@@ -322,12 +333,14 @@ try {
     </aside>
 
     <main>
+        <!-- Message d'erreur / feedback serveur -->
         <?php if ($feedback !== ''): ?>
             <p id="dashboard-feedback" class="dashboard-feedback"><?php echo htmlspecialchars($feedback); ?></p>
         <?php endif; ?>
 
-        <!-- ========== Users page ========== -->
+        <!-- ========== Page utilisateurs ========== -->
         <?php if ($page === 'users'): ?>
+            <!-- Tableau des utilisateurs (clic → dialog détail, data-* pour le JS) -->
             <table>
                 <thead>
                     <tr>
@@ -357,6 +370,7 @@ try {
                 </tbody>
             </table>
 
+            <!-- Bouton d'ouverture de la dialog d'ajout -->
             <button type="button" class="btn btn-primary" id="add-user-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
                     <path d="M12 5v14" />
@@ -365,7 +379,7 @@ try {
                 <span class="btn-text closed">Add User</span>
             </button>
 
-            <!-- Create user dialog -->
+            <!-- Dialog : créer un utilisateur -->
             <dialog id="add-user-dialog" class="product-dialog">
                 <form method="post" id="add-user-form" class="auth-form product-form">
                     <h2>Add User</h2>
@@ -373,16 +387,19 @@ try {
                     <div class="form-field">
                         <label for="user_username">Username</label>
                         <input type="text" name="username" id="user_username" placeholder="Username" required>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
                         <label for="user_email">Email</label>
                         <input type="email" name="email" id="user_email" placeholder="Email" required>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
                         <label for="user_password">Password</label>
                         <input type="password" name="password" id="user_password" placeholder="Password" required>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
@@ -395,6 +412,7 @@ try {
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <span class="field-error"></span>
                     </div>
 
                     <input type="hidden" name="form_submitted_value" value="add_user">
@@ -406,7 +424,7 @@ try {
                 </form>
             </dialog>
 
-            <!-- View / edit / delete user dialog -->
+            <!-- Dialog : consulter / modifier / supprimer un utilisateur -->
             <dialog id="user-detail-dialog" class="product-dialog">
                 <form method="post" id="user-detail-form" class="auth-form product-form">
                     <h2 id="user-detail-title">User details</h2>
@@ -417,16 +435,19 @@ try {
                     <div class="form-field">
                         <label for="detail_user_username">Username</label>
                         <input type="text" name="username" id="detail_user_username" placeholder="Username" required readonly>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
                         <label for="detail_user_email">Email</label>
                         <input type="email" name="email" id="detail_user_email" placeholder="Email" required readonly>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
                         <label for="detail_user_password">Password</label>
                         <input type="password" name="password" id="detail_user_password" placeholder="Leave blank to keep" readonly>
+                        <span class="field-error"></span>
                     </div>
 
                     <div class="form-field">
@@ -438,14 +459,17 @@ try {
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <span class="field-error"></span>
                     </div>
 
+                    <!-- Boutons mode consultation -->
                     <div class="dialog-actions" id="user-detail-actions-view">
                         <button type="button" id="close-user-detail-btn" class="btn">Close</button>
                         <button type="button" id="edit-user-btn" class="btn btn-primary">Update</button>
                         <button type="button" id="delete-user-btn" class="btn btn-danger">Delete</button>
                     </div>
 
+                    <!-- Boutons mode édition -->
                     <div class="dialog-actions hidden" id="user-detail-actions-edit">
                         <button type="button" id="cancel-edit-user-btn" class="btn">Cancel</button>
                         <button type="submit" id="save-user-btn" class="btn btn-primary">Save</button>
@@ -453,7 +477,7 @@ try {
                 </form>
             </dialog>
 
-            <!-- Confirm before deleting a user -->
+            <!-- Dialog : confirmation avant suppression d'un utilisateur -->
             <dialog id="delete-user-confirm-dialog" class="product-dialog confirm-dialog">
                 <div class="confirm-dialog-content">
                     <h2>Delete user</h2>
@@ -466,12 +490,12 @@ try {
             </dialog>
         <?php endif; ?>
 
-        <!-- ========== Products page ========== -->
+        <!-- ========== Page produits ========== -->
         <?php if ($page === 'products'): ?>
-            <!-- Filter list by type_p (from product_categories.json) -->
+            <!-- Filtre par catégorie (type_p, depuis product_categories.json) -->
             <form method="get" id="product-category-filter" class="category-filter">
                 <input type="hidden" name="page" value="products">
-                <label for="category">Category</label>
+                <!-- <label for="category">Category</label> -->
                 <select name="category" id="category" onchange="this.form.submit()">
                     <option value="">All categories</option>
                     <?php foreach ($categories as $category): ?>
@@ -484,6 +508,7 @@ try {
                 </select>
             </form>
 
+            <!-- Tableau des produits (clic → dialog détail, data-* pour le JS) -->
             <table>
                 <thead>
                     <tr>
@@ -500,7 +525,7 @@ try {
                     <?php if ($result): ?>
                         <?php foreach ($result as $row): ?>
                             <?php
-                                // Promo display: strikethrough original + discounted price; last col shows %
+                                // Affichage promo : prix barré + prix remisé ; dernière colonne = %
                                 $promo = (int) ($row['promotion'] ?? 0);
                                 $price = (float) $row['price'];
                                 $promo_price = $promo > 0 ? $price * (1 - ($promo / 100)) : $price;
@@ -536,6 +561,7 @@ try {
                 </tbody>
             </table>
 
+            <!-- Bouton d'ouverture de la dialog d'ajout -->
             <button type="button" class="btn btn-primary" id="add-product-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
                     <path d="M12 5v14" />
@@ -544,7 +570,7 @@ try {
                 <span class="btn-text closed">Add Product</span>
             </button>
 
-            <!-- Create product dialog (type from categories JSON) -->
+            <!-- Dialog : créer un produit (types issus du JSON catégories) -->
             <dialog id="add-product-dialog" class="product-dialog">
                 <form method="post" id="add-product-form" class="auth-form product-form">
                     <h2>Add Product</h2>
@@ -595,7 +621,7 @@ try {
                 </form>
             </dialog>
 
-            <!-- View / edit / delete product dialog -->
+            <!-- Dialog : consulter / modifier / supprimer un produit -->
             <dialog id="product-detail-dialog" class="product-dialog">
                 <form method="post" id="product-detail-form" class="auth-form product-form">
                     <h2 id="product-detail-title">Product details</h2>
@@ -604,7 +630,7 @@ try {
                     <input type="hidden" name="form_submitted_value" id="detail_form_action" value="update_product">
 
                     <div class="form-field">
-                        <!-- <label for="detail_type_p">Product type</label> -->
+                        <!-- Select type : désactivé en vue, réactivé avant POST (JS) -->
                         <select name="type_p" id="detail_type_p" required disabled>
                             <option value="">Select type</option>
                             <?php foreach ($categories as $category): ?>
@@ -640,12 +666,14 @@ try {
                         <input type="number" name="promotion_p" id="detail_promotion_p" min="0" max="100" value="0" placeholder="0" readonly>
                     </div>
 
+                    <!-- Boutons mode consultation -->
                     <div class="dialog-actions" id="product-detail-actions-view">
                         <button type="button" id="close-product-detail-btn" class="btn">Close</button>
                         <button type="button" id="edit-product-btn" class="btn btn-primary">Update</button>
                         <button type="button" id="delete-product-btn" class="btn btn-danger">Delete</button>
                     </div>
 
+                    <!-- Boutons mode édition -->
                     <div class="dialog-actions hidden" id="product-detail-actions-edit">
                         <button type="button" id="cancel-edit-product-btn" class="btn">Cancel</button>
                         <button type="submit" id="save-product-btn" class="btn btn-primary">Save</button>
@@ -653,7 +681,7 @@ try {
                 </form>
             </dialog>
 
-            <!-- Confirm before deleting a product -->
+            <!-- Dialog : confirmation avant suppression d'un produit -->
             <dialog id="delete-confirm-dialog" class="product-dialog confirm-dialog">
                 <div class="confirm-dialog-content">
                     <h2>Delete product</h2>
@@ -672,334 +700,11 @@ try {
     <p>© 2026 Login Page. All rights reserved.</p>
 </footer>
 
-<!-- Sidebar: expand/collapse labels + overlay -->
-<script>
-    const toggleBtn = document.querySelector('#toggle-btn');
-    const sidebar = document.querySelector('#dashboard-sidebar');
-    const sidebarOverlay = document.querySelector('#sidebar-overlay');
-    const sidebarTexts = document.querySelectorAll('.sidebar-text');
-
-    const setSidebarOpen = (isOpen) => {
-        sidebarTexts.forEach((text) => {
-            text.classList.toggle('closed', !isOpen);
-        });
-        sidebar.classList.toggle('expanded', isOpen);
-        sidebarOverlay.classList.toggle('open', isOpen);
-        sidebarOverlay.setAttribute('aria-hidden', String(!isOpen));
-    };
-
-    toggleBtn.addEventListener('click', () => {
-        const isOpen = !sidebar.classList.contains('expanded');
-        setSidebarOpen(isOpen);
-    });
-
-    sidebarOverlay.addEventListener('click', () => {
-        setSidebarOpen(false);
-    });
-</script>
-
-<!-- Open/close add-product and add-user dialogs -->
-<script>
-    const addProductBtn = document.querySelector('#add-product-btn');
-    const addProductDialog = document.querySelector('#add-product-dialog');
-    const cancelProductBtn = document.querySelector('#cancel-product-btn');
-
-    if (addProductBtn && addProductDialog) {
-        addProductBtn.addEventListener('click', () => {
-            addProductDialog.showModal();
-        });
-
-        cancelProductBtn?.addEventListener('click', () => {
-            addProductDialog.close();
-        });
-
-        addProductDialog.addEventListener('click', (event) => {
-            if (event.target === addProductDialog) {
-                addProductDialog.close();
-            }
-        });
-    }
-
-    const addUserBtn = document.querySelector('#add-user-btn');
-    const addUserDialog = document.querySelector('#add-user-dialog');
-    const cancelUserBtn = document.querySelector('#cancel-user-btn');
-
-    if (addUserBtn && addUserDialog) {
-        addUserBtn.addEventListener('click', () => {
-            addUserDialog.showModal();
-        });
-
-        cancelUserBtn?.addEventListener('click', () => {
-            addUserDialog.close();
-        });
-
-        addUserDialog.addEventListener('click', (event) => {
-            if (event.target === addUserDialog) {
-                addUserDialog.close();
-            }
-        });
-    }
-</script>
-
-<!-- Product row click: view / edit / delete -->
-<script>
-    const productDetailDialog = document.querySelector('#product-detail-dialog');
-    const productDetailForm = document.querySelector('#product-detail-form');
-    const productDetailTitle = document.querySelector('#product-detail-title');
-    const detailActionInput = document.querySelector('#detail_form_action');
-    const detailTypeSelect = document.querySelector('#detail_type_p');
-    const detailFields = [
-        document.querySelector('#detail_designation_p'),
-        document.querySelector('#detail_prix_ht'),
-        document.querySelector('#detail_date_in'),
-        document.querySelector('#detail_stock_p'),
-        document.querySelector('#detail_promotion_p'),
-    ];
-    const viewActions = document.querySelector('#product-detail-actions-view');
-    const editActions = document.querySelector('#product-detail-actions-edit');
-    const editProductBtn = document.querySelector('#edit-product-btn');
-    const deleteProductBtn = document.querySelector('#delete-product-btn');
-    const closeProductDetailBtn = document.querySelector('#close-product-detail-btn');
-    const cancelEditProductBtn = document.querySelector('#cancel-edit-product-btn');
-    const deleteConfirmDialog = document.querySelector('#delete-confirm-dialog');
-    const deleteConfirmMessage = document.querySelector('#delete-confirm-message');
-    const confirmDeleteBtn = document.querySelector('#confirm-delete-btn');
-    const cancelDeleteBtn = document.querySelector('#cancel-delete-btn');
-    const productRows = document.querySelectorAll('.product-row');
-
-    let currentProduct = null;
-
-    // Toggle readonly fields and action buttons (view vs edit)
-    const setDetailMode = (mode) => {
-        const isEdit = mode === 'edit';
-        detailFields.forEach((field) => {
-            if (!field) return;
-            field.readOnly = !isEdit;
-        });
-        if (detailTypeSelect) {
-            detailTypeSelect.disabled = !isEdit;
-        }
-        viewActions?.classList.toggle('hidden', isEdit);
-        editActions?.classList.toggle('hidden', !isEdit);
-        productDetailTitle.textContent = isEdit ? 'Update product' : 'Product details';
-        detailActionInput.value = 'update_product';
-        productDetailForm?.classList.toggle('editing', isEdit);
-    };
-
-    const fillProductDetail = (product) => {
-        document.querySelector('#detail_id_p').value = product.id;
-        if (detailTypeSelect) {
-            // Keep legacy type values visible even if missing from JSON list
-            const hasOption = [...detailTypeSelect.options].some((option) => option.value === product.type);
-            if (product.type && !hasOption) {
-                const option = document.createElement('option');
-                option.value = product.type;
-                option.textContent = product.type;
-                detailTypeSelect.appendChild(option);
-            }
-            detailTypeSelect.value = product.type;
-        }
-        document.querySelector('#detail_designation_p').value = product.name;
-        document.querySelector('#detail_prix_ht').value = product.price;
-        document.querySelector('#detail_date_in').value = product.date;
-        document.querySelector('#detail_stock_p').value = product.stock;
-        document.querySelector('#detail_promotion_p').value = product.promotion ?? 0;
-    };
-
-    // Disabled selects are not submitted; re-enable before POST
-    productDetailForm?.addEventListener('submit', () => {
-        if (detailTypeSelect) {
-            detailTypeSelect.disabled = false;
-        }
-    });
-
-    const openProductDetail = (row) => {
-        currentProduct = {
-            id: row.dataset.id,
-            type: row.dataset.type,
-            name: row.dataset.name,
-            price: row.dataset.price,
-            date: row.dataset.date,
-            stock: row.dataset.stock,
-            promotion: row.dataset.promotion ?? '0',
-        };
-        fillProductDetail(currentProduct);
-        setDetailMode('view');
-        productDetailDialog.showModal();
-    };
-
-    productRows.forEach((row) => {
-        row.addEventListener('click', () => openProductDetail(row));
-    });
-
-    editProductBtn?.addEventListener('click', () => {
-        setDetailMode('edit');
-    });
-
-    cancelEditProductBtn?.addEventListener('click', () => {
-        if (currentProduct) {
-            fillProductDetail(currentProduct);
-        }
-        setDetailMode('view');
-    });
-
-    closeProductDetailBtn?.addEventListener('click', () => {
-        productDetailDialog.close();
-    });
-
-    deleteProductBtn?.addEventListener('click', () => {
-        if (!currentProduct || !deleteConfirmDialog) return;
-        deleteConfirmMessage.textContent =
-            `Are you sure you want to delete "${currentProduct.name}" (#${currentProduct.id})? This cannot be undone.`;
-        deleteConfirmDialog.showModal();
-    });
-
-    cancelDeleteBtn?.addEventListener('click', () => {
-        deleteConfirmDialog?.close();
-    });
-
-    confirmDeleteBtn?.addEventListener('click', () => {
-        if (!currentProduct) return;
-        detailActionInput.value = 'delete_product';
-        deleteConfirmDialog?.close();
-        productDetailForm.submit();
-    });
-
-    deleteConfirmDialog?.addEventListener('click', (event) => {
-        if (event.target === deleteConfirmDialog) {
-            deleteConfirmDialog.close();
-        }
-    });
-
-    productDetailDialog?.addEventListener('click', (event) => {
-        if (event.target === productDetailDialog) {
-            productDetailDialog.close();
-        }
-    });
-
-    productDetailDialog?.addEventListener('close', () => {
-        setDetailMode('view');
-    });
-</script>
-
-<!-- User row click: view / edit / delete -->
-<script>
-    const userDetailDialog = document.querySelector('#user-detail-dialog');
-    const userDetailForm = document.querySelector('#user-detail-form');
-    const userDetailTitle = document.querySelector('#user-detail-title');
-    const detailUserActionInput = document.querySelector('#detail_user_form_action');
-    const detailUserFields = [
-        document.querySelector('#detail_user_username'),
-        document.querySelector('#detail_user_email'),
-        document.querySelector('#detail_user_password'),
-    ];
-    const detailUserCompte = document.querySelector('#detail_user_compte_id');
-    const userViewActions = document.querySelector('#user-detail-actions-view');
-    const userEditActions = document.querySelector('#user-detail-actions-edit');
-    const editUserBtn = document.querySelector('#edit-user-btn');
-    const deleteUserBtn = document.querySelector('#delete-user-btn');
-    const closeUserDetailBtn = document.querySelector('#close-user-detail-btn');
-    const cancelEditUserBtn = document.querySelector('#cancel-edit-user-btn');
-    const deleteUserConfirmDialog = document.querySelector('#delete-user-confirm-dialog');
-    const deleteUserConfirmMessage = document.querySelector('#delete-user-confirm-message');
-    const confirmDeleteUserBtn = document.querySelector('#confirm-delete-user-btn');
-    const cancelDeleteUserBtn = document.querySelector('#cancel-delete-user-btn');
-    const userRows = document.querySelectorAll('.user-row');
-
-    let currentUser = null;
-
-    // Toggle readonly fields and action buttons (view vs edit)
-    const setUserDetailMode = (mode) => {
-        const isEdit = mode === 'edit';
-        detailUserFields.forEach((field) => {
-            if (!field) return;
-            field.readOnly = !isEdit;
-        });
-        if (detailUserCompte) {
-            detailUserCompte.disabled = !isEdit;
-        }
-        userViewActions?.classList.toggle('hidden', isEdit);
-        userEditActions?.classList.toggle('hidden', !isEdit);
-        userDetailTitle.textContent = isEdit ? 'Update user' : 'User details';
-        detailUserActionInput.value = 'update_user';
-        userDetailForm?.classList.toggle('editing', isEdit);
-    };
-
-    const fillUserDetail = (user) => {
-        document.querySelector('#detail_user_id').value = user.id;
-        document.querySelector('#detail_user_username').value = user.name;
-        document.querySelector('#detail_user_email').value = user.email;
-        document.querySelector('#detail_user_password').value = '';
-        if (detailUserCompte) {
-            detailUserCompte.value = user.compteId;
-        }
-    };
-
-    const openUserDetail = (row) => {
-        currentUser = {
-            id: row.dataset.id,
-            name: row.dataset.name,
-            email: row.dataset.email,
-            compteId: row.dataset.compteId,
-            compte: row.dataset.compte,
-        };
-        fillUserDetail(currentUser);
-        setUserDetailMode('view');
-        userDetailDialog.showModal();
-    };
-
-    userRows.forEach((row) => {
-        row.addEventListener('click', () => openUserDetail(row));
-    });
-
-    editUserBtn?.addEventListener('click', () => {
-        setUserDetailMode('edit');
-    });
-
-    cancelEditUserBtn?.addEventListener('click', () => {
-        if (currentUser) {
-            fillUserDetail(currentUser);
-        }
-        setUserDetailMode('view');
-    });
-
-    closeUserDetailBtn?.addEventListener('click', () => {
-        userDetailDialog.close();
-    });
-
-    deleteUserBtn?.addEventListener('click', () => {
-        if (!currentUser || !deleteUserConfirmDialog) return;
-        deleteUserConfirmMessage.textContent =
-            `Are you sure you want to delete "${currentUser.name}" (#${currentUser.id})? This cannot be undone.`;
-        deleteUserConfirmDialog.showModal();
-    });
-
-    cancelDeleteUserBtn?.addEventListener('click', () => {
-        deleteUserConfirmDialog?.close();
-    });
-
-    confirmDeleteUserBtn?.addEventListener('click', () => {
-        if (!currentUser) return;
-        detailUserActionInput.value = 'delete_user';
-        deleteUserConfirmDialog?.close();
-        userDetailForm.submit();
-    });
-
-    deleteUserConfirmDialog?.addEventListener('click', (event) => {
-        if (event.target === deleteUserConfirmDialog) {
-            deleteUserConfirmDialog.close();
-        }
-    });
-
-    userDetailDialog?.addEventListener('click', (event) => {
-        if (event.target === userDetailDialog) {
-            userDetailDialog.close();
-        }
-    });
-
-    userDetailDialog?.addEventListener('close', () => {
-        setUserDetailMode('view');
-    });
-</script>
+<!-- Scripts dashboard : validation commune + sidebar + dialogs + produits + utilisateurs -->
+<script src="script/common/validation.js"></script>
+<script src="script/dashboard/sidebar.js"></script>
+<script src="script/dashboard/dialogs.js"></script>
+<script src="script/dashboard/products.js"></script>
+<script src="script/dashboard/users.js"></script>
 
 </html>

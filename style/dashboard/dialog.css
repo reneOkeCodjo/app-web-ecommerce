@@ -1,11 +1,16 @@
 .product-dialog {
-  border: 1px solid var(--color-primary);
-  border-radius: 0.5rem;
-  background-color: #1a1716;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.75rem;
+  background-color: rgba(26, 23, 22, 0.55);
   color: var(--color-primary);
   max-width: 420px;
   margin: auto;
   width: calc(100% - 2rem);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .product-dialog form {
@@ -13,7 +18,9 @@
 }
 
 .product-dialog::backdrop {
-  background-color: rgba(61, 49, 41, 0.431);
+  background-color: rgba(26, 23, 22, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .product-form {
@@ -24,26 +31,6 @@
 .product-form h2 {
   margin-bottom: 1.5rem;
   text-align: center;
-}
-
-.product-form select {
-  width: 100%;
-  padding: 5px;
-  font-size: var(--input-font-size);
-  outline: none;
-  background-color: transparent;
-  color: var(--color-primary);
-  border: none;
-  border-bottom: 2px solid var(--color-primary);
-}
-
-.product-form select:disabled {
-  opacity: 0.85;
-  cursor: default;
-}
-
-.product-form.editing select:disabled {
-  opacity: 1;
 }
 
 .product-form input[readonly] {

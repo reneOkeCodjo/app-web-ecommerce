@@ -1,0 +1,51 @@
+.category-filter select,
+.product-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 0.55rem 2.25rem 0.55rem 0.5rem;
+  font-size: var(--input-font-size, 1rem);
+  color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.04);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e7770e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1rem;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0.25rem 0.25rem 0 0;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.category-filter select:hover,
+.product-form select:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.category-filter select:focus,
+.product-form select:focus {
+  border-bottom-color: var(--accent-color);
+  background-color: rgba(231, 119, 14, 0.08);
+}
+
+.category-filter select option,
+.product-form select option {
+  color: var(--color-primary);
+  background-color: #1a1716;
+}
+
+.product-form select:disabled {
+  opacity: 0.85;
+  cursor: default;
+  background-image: none;
+}
+
+.product-form.editing select:disabled {
+  opacity: 1;
+}

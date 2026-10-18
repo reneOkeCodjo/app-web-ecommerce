@@ -26,7 +26,17 @@ if ($page === 'users') {
 $pdo = null;
 $result = null;
 $comptes = [];
+$categories = [];
+$category_filter = trim($_GET['category'] ?? '');
 $feedback = '';
+
+$categories_file = __DIR__ . '/product_categories.json';
+if (is_readable($categories_file)) {
+    $decoded_categories = json_decode(file_get_contents($categories_file), true);
+    if (is_array($decoded_categories)) {
+        $categories = $decoded_categories;
+    }
+}
 
 $db_host = getenv('DB_HOST');
 $db_name = getenv('DB_NAME');
@@ -193,11 +203,24 @@ try {
             );
             break;
         case 'products':
-            $stmt = $pdo->prepare(
-                'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
-                 FROM product
-                 ORDER BY id_p DESC'
-            );
+            if ($category_filter !== '') {
+                $stmt = $pdo->prepare(
+                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
+                     FROM product
+                     WHERE type_p = :category
+                     ORDER BY id_p DESC'
+                );
+                $stmt->execute(['category' => $category_filter]);
+            } else {
+                $stmt = $pdo->prepare(
+                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
+                     FROM product
+                     ORDER BY id_p DESC'
+                );
+                $stmt->execute();
+            }
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt = null;
             break;
     }
     if ($stmt) {
@@ -418,6 +441,21 @@ try {
         <?php endif; ?>
 
         <?php if ($page === 'products'): ?>
+            <form method="get" id="product-category-filter" class="category-filter">
+                <input type="hidden" name="page" value="products">
+                <label for="category">Category</label>
+                <select name="category" id="category" onchange="this.form.submit()">
+                    <option value="">All categories</option>
+                    <?php foreach ($categories as $category): ?>
+                        <option
+                            value="<?php echo htmlspecialchars($category['categorie']); ?>"
+                            <?php echo $category_filter === $category['categorie'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($category['categorie']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+
             <table>
                 <thead>
                     <tr>
@@ -465,8 +503,15 @@ try {
                     <h2>Add Product</h2>
 
                     <div class="form-field">
-                        <label for="type_p">Type</label>
-                        <input type="text" name="type_p" id="type_p" placeholder="Type" required>
+                        <label for="type_p">Category</label>
+                        <select name="type_p" id="type_p" required>
+                            <option value="">Select category</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo htmlspecialchars($category['categorie']); ?>">
+                                    <?php echo htmlspecialchars($category['categorie']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <div class="form-field">
@@ -506,8 +551,14 @@ try {
                     <input type="hidden" name="form_submitted_value" id="detail_form_action" value="update_product">
 
                     <div class="form-field">
-                        <label for="detail_type_p">Type</label>
-                        <input type="text" name="type_p" id="detail_type_p" placeholder="Type" required readonly>
+                        <label for="detail_type_p">Category</label>
+                        <select name="type_p" id="detail_type_p" required disabled>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo htmlspecialchars($category['categorie']); ?>">
+                                    <?php echo htmlspecialchars($category['categorie']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <div class="form-field">
@@ -585,6 +636,7 @@ try {
         setSidebarOpen(false);
     });
 </script>
+<!-- Add Product -->
 <script>
     const addProductBtn = document.querySelector('#add-product-btn');
     const addProductDialog = document.querySelector('#add-product-dialog');
@@ -626,13 +678,15 @@ try {
         });
     }
 </script>
+
+<!-- Product Detail -->
 <script>
     const productDetailDialog = document.querySelector('#product-detail-dialog');
     const productDetailForm = document.querySelector('#product-detail-form');
     const productDetailTitle = document.querySelector('#product-detail-title');
     const detailActionInput = document.querySelector('#detail_form_action');
+    const detailTypeSelect = document.querySelector('#detail_type_p');
     const detailFields = [
-        document.querySelector('#detail_type_p'),
         document.querySelector('#detail_designation_p'),
         document.querySelector('#detail_prix_ht'),
         document.querySelector('#detail_date_in'),
@@ -658,10 +712,13 @@ try {
             if (!field) return;
             field.readOnly = !isEdit;
         });
+        if (detailTypeSelect) {
+            detailTypeSelect.disabled = !isEdit;
+        }
         viewActions?.classList.toggle('hidden', isEdit);
         editActions?.classList.toggle('hidden', !isEdit);
         productDetailTitle.textContent = isEdit ? 'Update product' : 'Product details';
-        detailActionInput.value = isEdit ? 'update_product' : 'update_product';
+        detailActionInput.value = 'update_product';
         productDetailForm?.classList.toggle('editing', isEdit);
     };
 
@@ -741,6 +798,8 @@ try {
         setDetailMode('view');
     });
 </script>
+
+<!-- User Detail -->
 <script>
     const userDetailDialog = document.querySelector('#user-detail-dialog');
     const userDetailForm = document.querySelector('#user-detail-form');

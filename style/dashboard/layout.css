@@ -25,3 +25,21 @@ main {
 .hidden {
   display: none !important;
 }
+
+.category-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 0 1.25rem;
+}
+
+.category-filter label {
+  position: static;
+  white-space: nowrap;
+}
+
+.category-filter select {
+  flex: 1;
+}

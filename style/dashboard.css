@@ -3,63 +3,69 @@ body {
     flex-direction: row;
     height: 100%;
 }
+
 nav {
     color: #fff;
     padding: 10px;
     text-align: center;
 }
+
 aside {
     background-color: var(--color-secondary);
     padding: 10px;
     width: fit-content;
     height: 100%;
-    transition: all 3s ease;
+    transition: width 0.3s ease;
 }
 
-aside:has(.closed) {
-    background-color: red;
-    display: flex;
-    flex-direction: column;
-    
+.sidebar-menu {
+    list-style: none;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     color: var(--color-primary);
     text-decoration: none;
     overflow: hidden;
-}
-
-
-.sidebar-text.closed {
-    width: 0;
-    white-space: nowrap;  
+    white-space: nowrap;
 }
 
 .sidebar-text {
-    width: 110px;
-    background-color: blue;
+    width: fit-content;
+    max-width: 16rem;
+    overflow: hidden;
     white-space: nowrap;
-    transition-property: width, white-space;
-    transition-delay: 0s, 3s;
-    transition-duration: 1s, 1s;
-    transition-timing-function: ease;
+    opacity: 1;
+    transition:
+        max-width 0.3s ease,
+        opacity 0.2s ease,
+        margin 0.3s ease;
+}
+
+.sidebar-text.closed {
+    max-width: 0;
+    margin: 0;
+    opacity: 0;
 }
 
 main {
     flex: 1;
+    min-width: 0;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
 }
+
 thead {
     background-color: var(--color-primary);
     color: var(--color-secondary);
     text-align: left;
 }
+
 tbody {
     background-color: var(--color-secondary);
 }
-

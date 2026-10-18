@@ -460,7 +460,7 @@ try {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Type</th>
+                        <th>Category</th>
                         <th>Name</th>
                         <th>Price HT</th>
                         <th>Date</th>
@@ -503,9 +503,9 @@ try {
                     <h2>Add Product</h2>
 
                     <div class="form-field">
-                        <label for="type_p">Category</label>
+                        <label for="type_p">Product type</label>
                         <select name="type_p" id="type_p" required>
-                            <option value="">Select category</option>
+                            <option value="">Select type</option>
                             <?php foreach ($categories as $category): ?>
                                 <option value="<?php echo htmlspecialchars($category['categorie']); ?>">
                                     <?php echo htmlspecialchars($category['categorie']); ?>
@@ -551,8 +551,9 @@ try {
                     <input type="hidden" name="form_submitted_value" id="detail_form_action" value="update_product">
 
                     <div class="form-field">
-                        <label for="detail_type_p">Category</label>
+                        <label for="detail_type_p">Product type</label>
                         <select name="type_p" id="detail_type_p" required disabled>
+                            <option value="">Select type</option>
                             <?php foreach ($categories as $category): ?>
                                 <option value="<?php echo htmlspecialchars($category['categorie']); ?>">
                                     <?php echo htmlspecialchars($category['categorie']); ?>
@@ -724,12 +725,27 @@ try {
 
     const fillProductDetail = (product) => {
         document.querySelector('#detail_id_p').value = product.id;
-        document.querySelector('#detail_type_p').value = product.type;
+        if (detailTypeSelect) {
+            const hasOption = [...detailTypeSelect.options].some((option) => option.value === product.type);
+            if (product.type && !hasOption) {
+                const option = document.createElement('option');
+                option.value = product.type;
+                option.textContent = product.type;
+                detailTypeSelect.appendChild(option);
+            }
+            detailTypeSelect.value = product.type;
+        }
         document.querySelector('#detail_designation_p').value = product.name;
         document.querySelector('#detail_prix_ht').value = product.price;
         document.querySelector('#detail_date_in').value = product.date;
         document.querySelector('#detail_stock_p').value = product.stock;
     };
+
+    productDetailForm?.addEventListener('submit', () => {
+        if (detailTypeSelect) {
+            detailTypeSelect.disabled = false;
+        }
+    });
 
     const openProductDetail = (row) => {
         currentProduct = {

@@ -1,117 +1,204 @@
 body {
-    display: flex;
-    flex-direction: row;
-    height: 100%;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 }
 
 nav {
-    color: #fff;
-    padding: 10px;
-    text-align: center;
-    z-index: 30;
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  z-index: 30;
 }
 .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.45);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 15;
-    transition: opacity 0.3s ease;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.3s ease;
 }
 
 .sidebar-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 aside {
-    position: fixed;
-    top: 50px;
-    left: 0;
-    bottom: 0;
-    z-index: 20;
-    background-color: var(--color-secondary);
-    padding: 10px;
-    width: fit-content;
-    box-shadow: none;
-    transition: box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+  position: fixed;
+  top: 50px;
+  left: 0;
+  bottom: 50px;
+  z-index: 20;
+  background-color: var(--color-secondary);
+  padding: 10px;
+  width: fit-content;
+  box-shadow: none;
+  transition: box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 aside.expanded {
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
 }
 
 .sidebar-menu {
-    list-style: none;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
 }
 
 .sidebar-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-primary);
-    text-decoration: none;
-    overflow: hidden;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.sidebar-link:has(.closed) {
+  gap: 0;
 }
 
 .sidebar-text {
-    width: fit-content;
-    max-width: 16rem;
-    overflow: hidden;
-    white-space: nowrap;
-    opacity: 1;
-    transition:
-        max-width 0.3s ease,
-        opacity 0.2s ease,
-        margin 0.3s ease;
+  width: fit-content;
+  max-width: 16rem;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    max-width 0.3s ease,
+    opacity 0.2s ease,
+    margin 0.3s ease;
 }
 
 .sidebar-text.closed {
-    max-width: 0;
-    margin: 0;
-    opacity: 0;
+  max-width: 0;
+  margin: 0;
+  opacity: 0;
 }
 
 main {
-    flex: 1;
-    min-width: 0;
-    margin-left: 3.5rem;
+  flex: 1;
+  min-width: 0;
+  margin-left: 4rem;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 thead {
-    background-color: var(--color-primary);
-    color: var(--color-secondary);
-    text-align: left;
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
+  text-align: left;
 }
 
 tbody {
-    background-color: var(--color-secondary);
+  background-color: var(--color-secondary);
+}
+tbody tr {
+  border-bottom: 1px solid var(--color-primary);
+
+  &:hover {
+    background-color: var(--color-primary);
+    color: var(--color-secondary);
+    cursor: pointer;
+  }
+}
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover > .btn-text {
+    max-width: 16rem;
+    opacity: 1;
+  }
 }
 
-.btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
+.btn:has(.closed) {
+    gap: 0;
+}
+
+
+.btn-text {
+  max-width: 0;
+  gap: 0;
+  opacity: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 #add-product-btn {
-    position: fixed;
-    bottom: 5rem;
-    right: 1rem;
+  position: fixed;
+  bottom: 5rem;
+  right: 1rem;
+}
+
+.dashboard-feedback {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.product-dialog {
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  background-color: #1a1716;
+  color: var(--color-primary);
+  /* padding: 1.5rem; */
+  max-width: 420px;
+  margin: auto;
+  width: calc(100% - 2rem);
+}
+.product-dialog form {
+  padding: 1.5rem;
+}
+
+.product-dialog::backdrop {
+  background-color: rgba(61, 49, 41, 0.431);
+}
+
+.product-form {
+  margin: 0;
+  max-width: none;
+}
+
+.product-form h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.dialog-actions .btn {
+  width: auto;
+}
+
+#cancel-product-btn {
+  background-color: var(--color-secondary);
+  color: red;
+  border: 1px solid red;
 }

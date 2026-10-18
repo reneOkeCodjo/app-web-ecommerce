@@ -25,6 +25,7 @@ if ($page === 'users') {
 
 $pdo = null;
 $result = null;
+$feedback = '';
 
 $db_host = getenv('DB_HOST');
 $db_name = getenv('DB_NAME');
@@ -35,13 +36,48 @@ $db_port = getenv('DB_PORT');
 try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if (
+        $page === 'products'
+        && isset($_POST['form_submitted_value'])
+        && $_POST['form_submitted_value'] === 'add_product'
+    ) {
+        $type = trim($_POST['type_p'] ?? '');
+        $designation = trim($_POST['designation_p'] ?? '');
+        $prix_ht = $_POST['prix_ht'] ?? '';
+        $date_in = $_POST['date_in'] ?? '';
+        $stock_p = $_POST['stock_p'] ?? 0;
+
+        if ($type === '' || $designation === '' || $prix_ht === '' || $date_in === '') {
+            $feedback = 'All product fields are required';
+        } else {
+            $stmt = $pdo->prepare(
+                'INSERT INTO product (type_p, designation_p, prix_ht, date_in, stock_p)
+                 VALUES (:type_p, :designation_p, :prix_ht, :date_in, :stock_p)'
+            );
+            $stmt->execute([
+                'type_p' => $type,
+                'designation_p' => $designation,
+                'prix_ht' => $prix_ht,
+                'date_in' => $date_in,
+                'stock_p' => (int) $stock_p,
+            ]);
+            header('Location: dashboard.php?page=products');
+            exit;
+        }
+    }
+
     $stmt = null;
     switch ($page) {
         case 'users':
             $stmt = $pdo->prepare('SELECT user_id as id, user_login as name, user_mail as email FROM user');
             break;
         case 'products':
-            $stmt = $pdo->prepare('SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock FROM product');
+            $stmt = $pdo->prepare(
+                'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
+                 FROM product
+                 ORDER BY id_p DESC'
+            );
             break;
     }
     if ($stmt) {
@@ -49,7 +85,7 @@ try {
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (PDOException $e) {
-    echo 'Error: ' . $e->getMessage();
+    $feedback = 'Error: ' . $e->getMessage();
 }
 ?>
 
@@ -121,6 +157,10 @@ try {
         </ul>
     </aside>
     <main>
+        <?php if ($feedback !== ''): ?>
+            <p id="dashboard-feedback" class="dashboard-feedback"><?php echo htmlspecialchars($feedback); ?></p>
+        <?php endif; ?>
+
         <?php if ($page === 'users'): ?>
             <table>
                 <thead>
@@ -128,71 +168,93 @@ try {
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Stock</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($result as $row): ?>
-                        <tr>
-                            <td><?php echo $row['id']; ?></td>
-                            <td><?php echo $row['name']; ?></td>
-                            <td><?php echo $row['email']; ?></td>
-                            <td><?php echo $row['date']; ?></td>
-                            <td><?php echo $row['type']; ?></td>
-                            <td><?php echo $row['stock']; ?></td>
+                        <tr class="user-row">
+                            <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <td><?php echo htmlspecialchars($row['name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['email']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php endif; ?>
+
         <?php if ($page === 'products'): ?>
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Type</th>
                         <th>Name</th>
-                        <th>Price</th>
-                        <th>Actions</th>
+                        <th>Price HT</th>
+                        <th>Date</th>
+                        <th>Stock</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($result as $row): ?>
-                        <tr>
-                            <td><?php echo $row['id']; ?></td>
-                            <td><?php echo $row['name']; ?></td>
-                            <td><?php echo $row['price']; ?></td>
-                            <td>
-                                <button class="btn btn-primary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit">
-                                        <path d="M12 20h9" />
-                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 5-9 14-5a2.121 2.121 0 0 1 3 3L16.5 3.5z" />
-                                    </svg>
-                                    Edit
-                                </button>
-                                <button class="btn btn-danger">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2">
-                                        <path d="M3 6h18" />
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                    </svg>
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+                    <?php if ($result): ?>
+                        <?php foreach ($result as $row): ?>
+                            <tr class="product-row">
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['type']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['price']); ?></td>
+                                <td><?php echo htmlspecialchars($row['date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['stock']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
 
-            <button class="btn btn-primary" id="add-product-btn">
+            <button type="button" class="btn btn-primary" id="add-product-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
                     <path d="M12 5v14" />
                     <path d="M5 12h14" />
                 </svg>
-                Add Product
+                <span class="btn-text closed">Add Product</span>
             </button>
+
+            <dialog id="add-product-dialog" class="product-dialog">
+                <form method="post" id="add-product-form" class="auth-form product-form">
+                    <h2>Add Product</h2>
+
+                    <div class="form-field">
+                        <label for="type_p">Type</label>
+                        <input type="text" name="type_p" id="type_p" placeholder="Type" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="designation_p">Designation</label>
+                        <input type="text" name="designation_p" id="designation_p" placeholder="Designation" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="prix_ht">Price HT</label>
+                        <input type="number" name="prix_ht" id="prix_ht" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="date_in">Date</label>
+                        <input type="date" name="date_in" id="date_in" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="stock_p">Stock</label>
+                        <input type="number" name="stock_p" id="stock_p" min="0" value="0" placeholder="0">
+                    </div>
+
+                    <input type="hidden" name="form_submitted_value" value="add_product">
+
+                    <div class="dialog-actions">
+                        <button type="button" id="cancel-product-btn" class="btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </dialog>
         <?php endif; ?>
     </main>
 </body>
@@ -224,6 +286,29 @@ try {
     sidebarOverlay.addEventListener('click', () => {
         setSidebarOpen(false);
     });
+</script>
+<script>
+    const addProductBtn = document.querySelector('#add-product-btn');
+    const addProductDialog = document.querySelector('#add-product-dialog');
+    const cancelProductBtn = document.querySelector('#cancel-product-btn');
+
+    if (addProductBtn && addProductDialog) {
+        addProductBtn.addEventListener('click', () => {
+            addProductDialog.showModal();
+        });
+
+        cancelProductBtn?.addEventListener('click', () => {
+            addProductDialog.close();
+        });
+
+        addProductDialog.addEventListener('click', (event) => {
+            if (event.target === addProductDialog) {
+                addProductDialog.close();
+            }
+        });
+    }
+
+
 </script>
 
 </html>

@@ -36,7 +36,8 @@
 }
 
 html {
-  font-size: max(min(3vw, 20px), 13px);
+  color: var(--color-secondary);
+  font-size: max(min(2vw, 20px), 10px);
   height: 100%;
 }
 

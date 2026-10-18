@@ -1,0 +1,15 @@
+#feedback-message {
+  height: 0;
+  margin-bottom: 30px;
+  overflow: hidden;
+  font-size: 1em;
+  border: none;
+  transition: all 1s ease;
+}
+
+#feedback-message.show {
+  height: 30px;
+  line-height: 30px;
+  color: red;
+  border-bottom: 1px solid red;
+}

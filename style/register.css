@@ -1,0 +1,53 @@
+.password-helper {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  display: flex;
+  align-items: center;
+}
+
+.password-helper .password-toggle {
+  position: unset;
+}
+
+.password-helper > .password-rules {
+  position: relative;
+
+  &:hover > .password-rules-list {
+    display: block;
+  }
+}
+
+.password-helper > .password-rules > .password-rules-list {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  display: none;
+  padding: 10px;
+  background-color: var(--color-secondary);
+}
+
+.password-helper > .password-rules > .password-rules-list > ul {
+  padding: 0;
+  margin: 0;
+  font-size: 0.8em;
+  white-space: nowrap;
+  list-style: none;
+}
+
+.auth-form
+  > .form-field:has(input:focus)
+  > .password-helper
+  > .password-rules
+  > .password-rules-list {
+  display: block;
+}
+
+.field-error {
+  display: block;
+  width: 100%;
+  font-size: 0.8em;
+  font-style: italic;
+  color: red;
+  text-align: right;
+}

@@ -1,0 +1,48 @@
+services:
+  php:     
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: app-web-ecommerce-php
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT}
+    networks:
+      - ecommerce-network
+      - db-network
+    depends_on:
+      - ecommerce-db
+  ecommerce-db:
+    image: mysql:8.0
+    container_name: ecommerce-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PORT: ${MYSQL_PORT}
+    networks:
+      - db-network
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./sql/01_create_user.sql:/docker-entrypoint-initdb.d/01_create_user.sql
+      - ./sql/02_insert_compte.sql:/docker-entrypoint-initdb.d/02_insert_compte.sql
+      - ./sql/03_insert_admin.sql:/docker-entrypoint-initdb.d/03_insert_admin.sql
+ 
+ 
+networks:
+  ecommerce-network:
+    driver: bridge
+  db-network:
+    driver: bridge
+    internal: true
+
+volumes:
+  db_data:

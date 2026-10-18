@@ -1,0 +1,251 @@
+/*
+  Shared styles for authentication pages
+*/
+:root {
+  --input-font-size: 1.2em;
+  --input-placeholder-opacity: 0;
+  --input-placeholder-font-style: italic;
+  --input-placeholder-font-size: 0.8em;
+  --color-primary: #fff;
+  --color-secondary: #000;
+  --accent-color: #e7770e;
+  --hover-color: #0e73e7;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hover-color);
+}
+
+html {
+  font-size: max(min(3vw, 20px), 13px);
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  color: var(--color-primary);
+  background-color: #1a1716;
+  display: flex;
+  flex-direction: column;
+  padding: 50px 0;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--color-secondary);
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9em;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: var(--color-secondary);
+  text-align: right;
+  padding: 0 10px;
+}
+
+nav > a {
+  color: var(--accent-color);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--hover-color);
+  }
+}
+
+main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+h1 > span {
+  border-bottom: 3px solid var(--accent-color);
+  padding-bottom: 10px;
+}
+
+p {
+  font-size: 0.9em;
+  margin-top: 10px;
+  text-align: center;
+}
+
+p > a {
+  color: var(--accent-color);
+}
+
+.auth-form {
+  width: 100%;
+  min-width: 200px;
+  max-width: 400px;
+  margin-bottom: 100px;
+}
+
+.auth-form > .form-field {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.auth-form .form-field > input {
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+input {
+  width: 100%;
+  padding: 5px;
+  font-size: var(--input-font-size);
+  outline: none;
+  background-color: transparent;
+  color: var(--color-primary);
+}
+
+label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  transition: all 0.3s ease;
+}
+
+.auth-form .form-field:has(input:focus) label,
+.auth-form .form-field:has(input:not(:placeholder-shown)) label {
+  top: -1em;
+  left: 0;
+  transform: scale(0.9);
+  font-style: var(--input-placeholder-font-style);
+}
+
+.auth-form .form-field:has(input:not(:placeholder-shown)) label {
+  transform: scale(0.8);
+  color: var(--accent-color);
+}
+
+.auth-form .form-field:has(input:not(:placeholder-shown)) input {
+  transition: all 0.5s ease;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+input::placeholder {
+  opacity: var(--input-placeholder-opacity);
+  transition: all 0.5s ease;
+}
+
+.auth-form input:focus::placeholder {
+  opacity: 1;
+  font-style: var(--input-placeholder-font-style);
+  font-size: var(--input-placeholder-font-size);
+}
+
+button {
+  width: 50%;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 1px solid var(--color-primary);
+
+  &:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+}
+
+.auth-form .auth-submit {
+  display: block;
+  margin: 0 auto;
+}
+
+.password-toggle {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: fit-content;
+  padding: 0 3px;
+  border: none;
+  transform-origin: 12px 12px;
+
+  &:hover {
+    color: var(--accent-color);
+  }
+
+  &:focus {
+    outline: 1px dashed var(--accent-color);
+    outline-offset: -1px;
+  }
+}
+
+.lid-top,
+.lid-bottom,
+circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.closed .lid-top {
+  transform: translateY(10px) rotate3d(1, 0, 0, 180deg);
+  stroke: var(--accent-color);
+}
+
+.closed .lid-bottom {
+  opacity: 0;
+}
+
+.closed circle {
+  opacity: 0;
+  transform: scaleY(0);
+}
+
+#feedback-server {
+  height: 0;
+  overflow: hidden;
+  font-size: 1em;
+  border: none;
+  transition: all 1s ease;
+}
+
+#feedback-server.show {
+  width: fit-content;
+  margin: 0 auto;
+  height: 30px;
+  line-height: 30px;
+  color: var(--accent-color);
+  border-bottom: 1px solid var(--accent-color);
+}

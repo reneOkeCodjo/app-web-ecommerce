@@ -1,0 +1,65 @@
+body {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+nav {
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+}
+aside {
+    background-color: var(--color-secondary);
+    padding: 10px;
+    width: fit-content;
+    height: 100%;
+    transition: all 3s ease;
+}
+
+aside:has(.closed) {
+    background-color: red;
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    color: var(--color-primary);
+    text-decoration: none;
+    overflow: hidden;
+}
+
+
+.sidebar-text.closed {
+    width: 0;
+    white-space: nowrap;  
+}
+
+.sidebar-text {
+    width: 110px;
+    background-color: blue;
+    white-space: nowrap;
+    transition-property: width, white-space;
+    transition-delay: 0s, 3s;
+    transition-duration: 1s, 1s;
+    transition-timing-function: ease;
+}
+
+main {
+    flex: 1;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead {
+    background-color: var(--color-primary);
+    color: var(--color-secondary);
+    text-align: left;
+}
+tbody {
+    background-color: var(--color-secondary);
+}
+

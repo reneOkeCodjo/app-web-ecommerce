@@ -1,6 +1,11 @@
 <?php
+/**
+ * Dashboard: auth gate, users/products CRUD, category filter, promotions.
+ * Pages via ?page=users|products (default dashboard title when other).
+ */
 session_start();
 
+// --- Auth: require login; handle logout ---
 if (empty($_SESSION['user_id'])) {
     header('Location: index.php?page=login');
     exit;
@@ -11,8 +16,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     header('Location: index.php?page=login');
     exit;
 }
-$is_admin = $_SESSION['compte_id'] === 1;
 
+$is_admin = $_SESSION['compte_id'] === 1;
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
 if ($page === 'users') {
@@ -30,6 +35,7 @@ $categories = [];
 $category_filter = trim($_GET['category'] ?? '');
 $feedback = '';
 
+// Product types/categories loaded from JSON (used by filter + product forms)
 $categories_file = __DIR__ . '/product_categories.json';
 if (is_readable($categories_file)) {
     $decoded_categories = json_decode(file_get_contents($categories_file), true);
@@ -48,6 +54,7 @@ try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // --- Users CRUD (add / update / delete) ---
     if ($page === 'users' && isset($_POST['form_submitted_value'])) {
         $form_action = $_POST['form_submitted_value'];
         $username = trim($_POST['username'] ?? '');
@@ -84,6 +91,7 @@ try {
                     ]);
                     break;
                 case 'update_user':
+                    // Empty password = keep existing hash
                     if ($password !== '') {
                         $stmt = $pdo->prepare(
                             'UPDATE user
@@ -129,6 +137,7 @@ try {
         }
     }
 
+    // --- Products CRUD (add / update / delete), includes promotion_p (0–100%) ---
     if ($page === 'products' && isset($_POST['form_submitted_value'])) {
         $form_action = $_POST['form_submitted_value'];
         $type = trim($_POST['type_p'] ?? '');
@@ -136,7 +145,16 @@ try {
         $prix_ht = $_POST['prix_ht'] ?? '';
         $date_in = $_POST['date_in'] ?? '';
         $stock_p = (int) ($_POST['stock_p'] ?? 0);
+        $promotion_p = (int) ($_POST['promotion_p'] ?? 0);
         $product_id = (int) ($_POST['id_p'] ?? 0);
+
+        // Clamp promotion percentage
+        if ($promotion_p < 0) {
+            $promotion_p = 0;
+        }
+        if ($promotion_p > 100) {
+            $promotion_p = 100;
+        }
 
         $needs_fields = $form_action === 'add_product' || $form_action === 'update_product';
         $needs_id = $form_action === 'update_product' || $form_action === 'delete_product';
@@ -154,13 +172,14 @@ try {
                 'prix_ht' => $prix_ht,
                 'date_in' => $date_in,
                 'stock_p' => $stock_p,
+                'promotion_p' => $promotion_p,
             ];
 
             switch ($form_action) {
                 case 'add_product':
                     $stmt = $pdo->prepare(
-                        'INSERT INTO product (type_p, designation_p, prix_ht, date_in, stock_p)
-                         VALUES (:type_p, :designation_p, :prix_ht, :date_in, :stock_p)'
+                        'INSERT INTO product (type_p, designation_p, prix_ht, date_in, stock_p, promotion_p)
+                         VALUES (:type_p, :designation_p, :prix_ht, :date_in, :stock_p, :promotion_p)'
                     );
                     $stmt->execute($product_params);
                     break;
@@ -168,7 +187,7 @@ try {
                     $stmt = $pdo->prepare(
                         'UPDATE product
                          SET type_p = :type_p, designation_p = :designation_p, prix_ht = :prix_ht,
-                             date_in = :date_in, stock_p = :stock_p
+                             date_in = :date_in, stock_p = :stock_p, promotion_p = :promotion_p
                          WHERE id_p = :id_p'
                     );
                     $stmt->execute($product_params + ['id_p' => $product_id]);
@@ -187,10 +206,12 @@ try {
     }
 
 
+    // Compte options for user create/edit selects
     if ($page === 'users') {
         $comptes = $pdo->query('SELECT compte_id as id, compte_name as name FROM compte ORDER BY compte_id')->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // --- Load list data for the current page ---
     $stmt = null;
     switch ($page) {
         case 'users':
@@ -203,9 +224,11 @@ try {
             );
             break;
         case 'products':
+            // Optional filter: ?category= matches product.type_p
             if ($category_filter !== '') {
                 $stmt = $pdo->prepare(
-                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
+                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date,
+                            type_p as type, stock_p as stock, promotion_p as promotion
                      FROM product
                      WHERE type_p = :category
                      ORDER BY id_p DESC'
@@ -213,7 +236,8 @@ try {
                 $stmt->execute(['category' => $category_filter]);
             } else {
                 $stmt = $pdo->prepare(
-                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date, type_p as type, stock_p as stock
+                    'SELECT id_p as id, designation_p as name, prix_ht as price, date_in as date,
+                            type_p as type, stock_p as stock, promotion_p as promotion
                      FROM product
                      ORDER BY id_p DESC'
                 );
@@ -244,18 +268,19 @@ try {
 </head>
 
 <body>
+    <!-- Top bar -->
     <nav id="dashboard-nav" class="dashboard-nav">
         <a href="/dashboard.php?action=logout" id="logout-link" class="nav-link logout-link">Logout</a>
     </nav>
-    <!-- Sidebar overlay -->
+
+    <!-- Dimmed backdrop when sidebar is expanded -->
     <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
-    <!-- Sidebar -->
+
+    <!-- Collapsible sidebar navigation -->
     <aside id="dashboard-sidebar" class="dashboard-sidebar">
-        <!-- Sidebar menu -->
         <ul id="sidebar-menu" class="sidebar-menu">
             <li class="sidebar-item">
                 <a id="toggle-btn" class="sidebar-link toggle-btn" href="javascript:void(0);">
-                    <!-- Toggle icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-toggle-right">
                         <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                         <path d="M12 3v18" />
@@ -264,7 +289,6 @@ try {
             </li>
             <li class="sidebar-item">
                 <a href="/dashboard.php?page=users" id="users-link" class="sidebar-link users-link">
-                    <!-- User icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
@@ -274,7 +298,6 @@ try {
             </li>
             <li class="sidebar-item">
                 <a href="/dashboard.php?page=products" id="products-link" class="sidebar-link products-link">
-                    <!-- Product icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-product">
                         <rect width="20" height="14" x="2" y="5" rx="2" />
                         <line x1="2" y1="10" x2="22" y2="10" />
@@ -284,11 +307,9 @@ try {
             </li>
         </ul>
 
-        <!-- Account menu -->
         <ul>
             <li>
                 <a href="/dashboard.php?page=users" id="users-link" class="sidebar-link users-link">
-                    <!-- Account icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-account">
                         <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
                         <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
@@ -299,11 +320,13 @@ try {
             </li>
         </ul>
     </aside>
+
     <main>
         <?php if ($feedback !== ''): ?>
             <p id="dashboard-feedback" class="dashboard-feedback"><?php echo htmlspecialchars($feedback); ?></p>
         <?php endif; ?>
 
+        <!-- ========== Users page ========== -->
         <?php if ($page === 'users'): ?>
             <table>
                 <thead>
@@ -342,6 +365,7 @@ try {
                 <span class="btn-text closed">Add User</span>
             </button>
 
+            <!-- Create user dialog -->
             <dialog id="add-user-dialog" class="product-dialog">
                 <form method="post" id="add-user-form" class="auth-form product-form">
                     <h2>Add User</h2>
@@ -382,6 +406,7 @@ try {
                 </form>
             </dialog>
 
+            <!-- View / edit / delete user dialog -->
             <dialog id="user-detail-dialog" class="product-dialog">
                 <form method="post" id="user-detail-form" class="auth-form product-form">
                     <h2 id="user-detail-title">User details</h2>
@@ -428,6 +453,7 @@ try {
                 </form>
             </dialog>
 
+            <!-- Confirm before deleting a user -->
             <dialog id="delete-user-confirm-dialog" class="product-dialog confirm-dialog">
                 <div class="confirm-dialog-content">
                     <h2>Delete user</h2>
@@ -440,7 +466,9 @@ try {
             </dialog>
         <?php endif; ?>
 
+        <!-- ========== Products page ========== -->
         <?php if ($page === 'products'): ?>
+            <!-- Filter list by type_p (from product_categories.json) -->
             <form method="get" id="product-category-filter" class="category-filter">
                 <input type="hidden" name="page" value="products">
                 <label for="category">Category</label>
@@ -465,11 +493,18 @@ try {
                         <th>Price HT</th>
                         <th>Date</th>
                         <th>Stock</th>
+                        <th>Promotion</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($result): ?>
                         <?php foreach ($result as $row): ?>
+                            <?php
+                                // Promo display: strikethrough original + discounted price; last col shows %
+                                $promo = (int) ($row['promotion'] ?? 0);
+                                $price = (float) $row['price'];
+                                $promo_price = $promo > 0 ? $price * (1 - ($promo / 100)) : $price;
+                            ?>
                             <tr
                                 class="product-row"
                                 data-id="<?php echo htmlspecialchars($row['id']); ?>"
@@ -477,13 +512,24 @@ try {
                                 data-name="<?php echo htmlspecialchars($row['name']); ?>"
                                 data-price="<?php echo htmlspecialchars($row['price']); ?>"
                                 data-date="<?php echo htmlspecialchars($row['date']); ?>"
-                                data-stock="<?php echo htmlspecialchars($row['stock']); ?>">
+                                data-stock="<?php echo htmlspecialchars($row['stock']); ?>"
+                                data-promotion="<?php echo htmlspecialchars((string) $promo); ?>">
                                 <td><?php echo htmlspecialchars($row['id']); ?></td>
                                 <td><?php echo htmlspecialchars($row['type']); ?></td>
                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
-                                <td><?php echo htmlspecialchars($row['price']); ?></td>
+                                <td class="price-cell">
+                                    <?php if ($promo > 0): ?>
+                                        <span class="price-old"><?php echo number_format($price, 2, '.', ''); ?></span>
+                                        <span class="price-new"><?php echo number_format($promo_price, 2, '.', ''); ?></span>
+                                    <?php else: ?>
+                                        <span class="price-current"><?php echo number_format($price, 2, '.', ''); ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($row['date']); ?></td>
                                 <td><?php echo htmlspecialchars($row['stock']); ?></td>
+                                <td>
+                                    <?php echo $promo > 0 ? '-' . htmlspecialchars((string) $promo) . '%' : '—'; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -498,6 +544,7 @@ try {
                 <span class="btn-text closed">Add Product</span>
             </button>
 
+            <!-- Create product dialog (type from categories JSON) -->
             <dialog id="add-product-dialog" class="product-dialog">
                 <form method="post" id="add-product-form" class="auth-form product-form">
                     <h2>Add Product</h2>
@@ -534,6 +581,11 @@ try {
                         <input type="number" name="stock_p" id="stock_p" min="0" value="0" placeholder="0">
                     </div>
 
+                    <div class="form-field">
+                        <label for="promotion_p">Promotion (%)</label>
+                        <input type="number" name="promotion_p" id="promotion_p" min="0" max="100" value="0" placeholder="0">
+                    </div>
+
                     <input type="hidden" name="form_submitted_value" value="add_product">
 
                     <div class="dialog-actions">
@@ -543,6 +595,7 @@ try {
                 </form>
             </dialog>
 
+            <!-- View / edit / delete product dialog -->
             <dialog id="product-detail-dialog" class="product-dialog">
                 <form method="post" id="product-detail-form" class="auth-form product-form">
                     <h2 id="product-detail-title">Product details</h2>
@@ -551,7 +604,7 @@ try {
                     <input type="hidden" name="form_submitted_value" id="detail_form_action" value="update_product">
 
                     <div class="form-field">
-                        <label for="detail_type_p">Product type</label>
+                        <!-- <label for="detail_type_p">Product type</label> -->
                         <select name="type_p" id="detail_type_p" required disabled>
                             <option value="">Select type</option>
                             <?php foreach ($categories as $category): ?>
@@ -582,6 +635,11 @@ try {
                         <input type="number" name="stock_p" id="detail_stock_p" min="0" placeholder="0" readonly>
                     </div>
 
+                    <div class="form-field">
+                        <label for="detail_promotion_p">Promotion (%)</label>
+                        <input type="number" name="promotion_p" id="detail_promotion_p" min="0" max="100" value="0" placeholder="0" readonly>
+                    </div>
+
                     <div class="dialog-actions" id="product-detail-actions-view">
                         <button type="button" id="close-product-detail-btn" class="btn">Close</button>
                         <button type="button" id="edit-product-btn" class="btn btn-primary">Update</button>
@@ -595,6 +653,7 @@ try {
                 </form>
             </dialog>
 
+            <!-- Confirm before deleting a product -->
             <dialog id="delete-confirm-dialog" class="product-dialog confirm-dialog">
                 <div class="confirm-dialog-content">
                     <h2>Delete product</h2>
@@ -613,6 +672,7 @@ try {
     <p>© 2026 Login Page. All rights reserved.</p>
 </footer>
 
+<!-- Sidebar: expand/collapse labels + overlay -->
 <script>
     const toggleBtn = document.querySelector('#toggle-btn');
     const sidebar = document.querySelector('#dashboard-sidebar');
@@ -637,7 +697,8 @@ try {
         setSidebarOpen(false);
     });
 </script>
-<!-- Add Product -->
+
+<!-- Open/close add-product and add-user dialogs -->
 <script>
     const addProductBtn = document.querySelector('#add-product-btn');
     const addProductDialog = document.querySelector('#add-product-dialog');
@@ -680,7 +741,7 @@ try {
     }
 </script>
 
-<!-- Product Detail -->
+<!-- Product row click: view / edit / delete -->
 <script>
     const productDetailDialog = document.querySelector('#product-detail-dialog');
     const productDetailForm = document.querySelector('#product-detail-form');
@@ -692,6 +753,7 @@ try {
         document.querySelector('#detail_prix_ht'),
         document.querySelector('#detail_date_in'),
         document.querySelector('#detail_stock_p'),
+        document.querySelector('#detail_promotion_p'),
     ];
     const viewActions = document.querySelector('#product-detail-actions-view');
     const editActions = document.querySelector('#product-detail-actions-edit');
@@ -707,6 +769,7 @@ try {
 
     let currentProduct = null;
 
+    // Toggle readonly fields and action buttons (view vs edit)
     const setDetailMode = (mode) => {
         const isEdit = mode === 'edit';
         detailFields.forEach((field) => {
@@ -726,6 +789,7 @@ try {
     const fillProductDetail = (product) => {
         document.querySelector('#detail_id_p').value = product.id;
         if (detailTypeSelect) {
+            // Keep legacy type values visible even if missing from JSON list
             const hasOption = [...detailTypeSelect.options].some((option) => option.value === product.type);
             if (product.type && !hasOption) {
                 const option = document.createElement('option');
@@ -739,8 +803,10 @@ try {
         document.querySelector('#detail_prix_ht').value = product.price;
         document.querySelector('#detail_date_in').value = product.date;
         document.querySelector('#detail_stock_p').value = product.stock;
+        document.querySelector('#detail_promotion_p').value = product.promotion ?? 0;
     };
 
+    // Disabled selects are not submitted; re-enable before POST
     productDetailForm?.addEventListener('submit', () => {
         if (detailTypeSelect) {
             detailTypeSelect.disabled = false;
@@ -755,6 +821,7 @@ try {
             price: row.dataset.price,
             date: row.dataset.date,
             stock: row.dataset.stock,
+            promotion: row.dataset.promotion ?? '0',
         };
         fillProductDetail(currentProduct);
         setDetailMode('view');
@@ -815,7 +882,7 @@ try {
     });
 </script>
 
-<!-- User Detail -->
+<!-- User row click: view / edit / delete -->
 <script>
     const userDetailDialog = document.querySelector('#user-detail-dialog');
     const userDetailForm = document.querySelector('#user-detail-form');
@@ -841,6 +908,7 @@ try {
 
     let currentUser = null;
 
+    // Toggle readonly fields and action buttons (view vs edit)
     const setUserDetailMode = (mode) => {
         const isEdit = mode === 'edit';
         detailUserFields.forEach((field) => {

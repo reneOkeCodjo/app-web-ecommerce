@@ -24,5 +24,6 @@ CREATE TABLE `ecommerce`.`product` (
     `date_in` DATE NOT NULL,
     `times_in` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `stock_p` INT DEFAULT 0,
+    `promotion_p` INT NOT NULL DEFAULT 0,
     PRIMARY KEY (`id_p`)
 ) ENGINE = InnoDB;

@@ -27,3 +27,25 @@ tbody tr {
   display: flex;
   gap: 0.5rem;
 }
+
+.price-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.price-old {
+  text-decoration: line-through;
+  opacity: 0.65;
+  font-size: 0.85em;
+}
+
+.price-new {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+tbody tr:hover .price-new {
+  color: var(--color-secondary);
+}

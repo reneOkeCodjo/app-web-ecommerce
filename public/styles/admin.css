@@ -334,3 +334,25 @@
   text-align: right;
   justify-self: end;
 }
+
+/* Sortable table headers */
+
+.admin-th--sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.admin-th--sortable:hover {
+  color: var(--color-text);
+}
+
+.admin-th--sorted {
+  color: var(--color-accent);
+}
+
+.admin-sort-indicator {
+  font-size: 0.7em;
+  vertical-align: middle;
+}

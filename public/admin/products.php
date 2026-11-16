@@ -235,7 +235,15 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produits admin</title>
-    <link rel="stylesheet" href="../styles.css">
+    <?php
+    // Cache-busting: append each asset's mtime so browsers reload after changes.
+    $assetVersion = static function (string $relativePath): string {
+        $absolute = __DIR__ . '/' . $relativePath;
+        $mtime = is_file($absolute) ? filemtime($absolute) : false;
+        return $relativePath . ($mtime !== false ? '?v=' . $mtime : '');
+    };
+    ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars($assetVersion('../styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 
 <body>
@@ -273,6 +281,14 @@ try {
                         <?php endforeach; ?>
                     </select>
                 </label>
+                <label class="admin-filter">
+                    <span>Par page</span>
+                    <select id="admin-page-size" aria-label="Produits par page">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
                 <button type="button" class="admin-btn" data-open-dialog="product-form-dialog" data-form-mode="create">
                     Ajouter
                 </button>
@@ -283,12 +299,12 @@ try {
                     <thead>
                         <tr>
                             <th scope="col">Image</th>
-                            <th scope="col">Id</th>
-                            <th scope="col">Catégorie</th>
-                            <th scope="col">Désignation</th>
-                            <th scope="col">Prix HT</th>
-                            <th scope="col">Prix dispo.</th>
-                            <th scope="col">Stock</th>
+                            <th scope="col" data-sort-key="id">Id</th>
+                            <th scope="col" data-sort-key="type">Catégorie</th>
+                            <th scope="col" data-sort-key="designation">Désignation</th>
+                            <th scope="col" data-sort-key="prixHt">Prix HT</th>
+                            <th scope="col" data-sort-key="prixDisponible">Prix dispo.</th>
+                            <th scope="col" data-sort-key="stock">Stock</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -347,6 +363,8 @@ try {
                     </tbody>
                 </table>
             </div>
+
+            <nav id="admin-pagination" class="catalog-pagination admin-pagination" aria-label="Pagination"></nav>
 
             <p class="auth-switch">
                 <a href="index.php">Retour admin</a>
@@ -506,7 +524,7 @@ try {
             JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
         ) ?>;
     </script>
-    <script type="module" src="../scripts/admin-products.js"></script>
+    <script type="module" src="<?= htmlspecialchars($assetVersion('../scripts/admin-products.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 
 </html>

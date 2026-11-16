@@ -60,11 +60,11 @@ class DatabaseConfig
         $dotenv->load();
 
         // Load configuration from environment variables
-        self::$host = $_ENV['DB_HOST'] ?: 'localhost';
-        self::$port = (int) ($_ENV['DB_PORT'] ?: 3306);
-        self::$database = $_ENV['DB_NAME'] ?: $_ENV['DB_NAME'] ?: 'my_database';
-        self::$username = $_ENV['DB_USER'] ?: $_ENV['DB_USER'] ?: 'root';
-        self::$password = $_ENV['DB_PASSWORD'] ?: '';
+        self::$host = $_ENV['DB_HOST'] ?? 'localhost';
+        self::$port = (int) ($_ENV['DB_PORT'] ?? 3306);
+        self::$database = $_ENV['DB_NAME'] ?? 'my_database';
+        self::$username = $_ENV['DB_USER'] ?? 'root';
+        self::$password = $_ENV['DB_PASSWORD'] ?? '';
     }
 
     // Getters for database configuration properties

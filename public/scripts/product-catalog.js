@@ -112,6 +112,42 @@
     stockBadge.textContent = inStock ? "En stock" : "Rupture de stock";
     body.appendChild(stockBadge);
 
+    // Ajoute le produit courant dans le panier stocké côté serveur.
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "catalog-card__add";
+    addButton.textContent = inStock ? "Ajouter au panier" : "Indisponible";
+    addButton.disabled = !inStock;
+    addButton.addEventListener("click", async () => {
+      // Évite plusieurs clics pendant l'envoi de la requête.
+      addButton.disabled = true;
+      try {
+        const response = await fetch("cart.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            action: "add",
+            product_id: String(product.id),
+            quantity: "1",
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+          throw new Error(result.error || "Impossible d'ajouter le produit.");
+        }
+        addButton.textContent = "Ajouté au panier";
+        setTimeout(() => {
+          addButton.textContent = "Ajouter au panier";
+          addButton.disabled = false;
+        }, 900);
+      } catch (error) {
+        window.alert(error.message);
+        addButton.textContent = "Ajouter au panier";
+        addButton.disabled = false;
+      }
+    });
+    body.appendChild(addButton);
+
     card.appendChild(body);
     return card;
   };

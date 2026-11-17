@@ -9,6 +9,7 @@ use App\Domain\Pricing\ProductPricing;
 use App\Infrastructure\Http\NativeSessionStore;
 use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
+use App\Infrastructure\Persistence\DAO\UserRepository;
 use Db_config\Database;
 
 $session = new NativeSessionStore();
@@ -26,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 }
 
 $userId = $auth->getAuthenticatedUserId();
+$username = 'Utilisateur';
 
 $categoriesPath = __DIR__ . '/data/product-categories.json';
 $categoriesRaw = is_file($categoriesPath) ? file_get_contents($categoriesPath) : false;
@@ -39,6 +41,10 @@ $error = '';
 
 try {
     $connection = Database::connect();
+    $currentUser = (new UserRepository($connection))->findById($userId);
+    if ($currentUser !== null) {
+        $username = $currentUser->getUsername();
+    }
     $productService = new ProductService(new ProductRepository($connection));
 
     $products = $productService->findAll();
@@ -147,6 +153,25 @@ try {
                         <option value="24">24</option>
                     </select>
                 </label>
+                <div class="catalog-toolbar__actions">
+                    <a class="catalog-cart-link" href="cart.php">Voir le panier</a>
+                    <details class="catalog-profile-menu">
+                        <summary aria-label="Ouvrir le menu utilisateur">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <circle cx="12" cy="8" r="3.5"></circle>
+                                <path d="M5 20c.7-3.5 3.2-5.5 7-5.5s6.3 2 7 5.5"></path>
+                            </svg>
+                            <span><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></span>
+                        </summary>
+                        <div class="catalog-profile-menu__content">
+                            <a href="profile.php">Modifier le profil</a>
+                            <form method="post">
+                                <input type="hidden" name="action" value="logout">
+                                <button type="submit">Se déconnecter</button>
+                            </form>
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <div class="catalog-grid" id="catalog-grid">
@@ -155,12 +180,6 @@ try {
 
             <nav id="catalog-pagination" class="catalog-pagination" aria-label="Pagination"></nav>
 
-            <p class="auth-switch">
-                <form method="post" class="login-form" style="display:inline">
-                    <input type="hidden" name="action" value="logout">
-                    <button type="submit">Se déconnecter</button>
-                </form>
-            </p>
         </section>
     </main>
 

@@ -19,6 +19,15 @@ interface UserRepositoryInterface
      */
     public function findByEmail(string $email): ?User;
 
+    public function findById(int $id): ?User;
+
+    public function updateProfile(
+        int $id,
+        string $username,
+        string $email,
+        ?string $passwordHash
+    ): User;
+
     /**
      * Create a user and return the persisted entity.
      */
@@ -96,6 +105,67 @@ class UserRepository implements UserRepositoryInterface
         $stmt->close();
 
         return $this->mapRow($row);
+    }
+
+    public function findById(int $id): ?User
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT u.user_id AS id,
+                    u.user_login AS username,
+                    u.user_mail AS email,
+                    u.user_password AS password,
+                    c.compte_type AS compte_type
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             WHERE u.user_id = ?'
+        );
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        return $this->mapRow($row);
+    }
+
+    public function updateProfile(
+        int $id,
+        string $username,
+        string $email,
+        ?string $passwordHash
+    ): User {
+        if ($passwordHash === null) {
+            $stmt = $this->connection->prepare(
+                'UPDATE users SET user_login = ?, user_mail = ? WHERE user_id = ?'
+            );
+            $stmt->bind_param('ssi', $username, $email, $id);
+        } else {
+            $stmt = $this->connection->prepare(
+                'UPDATE users
+                 SET user_login = ?, user_mail = ?, user_password = ?
+                 WHERE user_id = ?'
+            );
+            $stmt->bind_param('sssi', $username, $email, $passwordHash, $id);
+        }
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new RuntimeException('Unable to update user profile.');
+        }
+        $stmt->close();
+
+        $updated = $this->findById($id);
+        if ($updated === null) {
+            throw new RuntimeException('User profile not found after update.');
+        }
+
+        return $updated;
     }
 
     public function create(string $username, string $email, string $passwordHash, int $compteId): User

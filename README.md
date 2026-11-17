@@ -319,6 +319,7 @@ Pages d’authentification alignées sur la maquette Figma, plus une landing pro
 - `public/index.php` — Login (validation champs + feedback serveur)
 - `public/register.php` — Inscription (username, email, password, confirmation)
 - `public/products.php` — Landing post-auth (placeholder catalogue + logout)
+- `public/profile.php` — Modification du profil et déconnexion
 - `public/styles.css` — Point d’entrée CSS (`@import`)
 - `public/styles/base.css` — Tokens + layout
 - `public/styles/header.css` — Titre auth
@@ -337,6 +338,8 @@ Pages d’authentification alignées sur la maquette Figma, plus une landing pro
 - Succès login/register → redirection `products.php`
 - Utilisateur déjà connecté sur login/register → redirection `products.php`
 - Logout depuis `products.php` → `index.php`
+- Icône utilisateur dans `products.php` → `profile.php` pour modifier le login,
+  l’e-mail, le mot de passe ou se déconnecter
 
 **Accès :**
 ```
@@ -460,6 +463,38 @@ http://localhost:8080/admin/products.php
 ./vendor/bin/phpunit tests/unit/dao/InMemoryProductRepositoryTest.php
 ./vendor/bin/phpunit tests/unit/dao/SessionProductRepositoryTest.php
 ./vendor/bin/phpunit tests/integration/dao/ProductDaoTest.php
+```
+
+---
+
+### Panier
+
+Le panier est stocké dans la session PHP et ne nécessite pas de nouvelle table
+MySQL pour cette étape du fil rouge.
+
+**Fichiers :**
+
+- `src/Application/Services/Cart/CartService.php` — ajout, modification,
+  suppression, contrôle du stock et calcul des montants
+- `public/cart.php` — page du panier et endpoint JSON pour les actions
+- `public/scripts/cart.js` — modification dynamique des quantités et des totaux
+
+**Règles de calcul :**
+
+- Prix du produit après promotion, puis TVA de 20 %
+- Frais d’expédition de 5,99 € si le sous-total TTC est inférieur à 50 €
+- Livraison gratuite à partir de 50 € TTC
+- Une quantité supérieure au stock disponible est refusée côté serveur
+
+Depuis `products.php`, le bouton **Ajouter au panier** appelle l’endpoint du
+panier. La page `cart.php` permet ensuite de modifier les quantités, retirer
+des produits et voir le sous-total HT, la TVA, le sous-total TTC, les frais et
+le total.
+
+**Test métier :**
+
+```bash
+./vendor/bin/phpunit tests/unit/service/CartServiceTest.php
 ```
 
 ---

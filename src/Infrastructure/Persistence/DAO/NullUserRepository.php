@@ -22,6 +22,20 @@ final class NullUserRepository implements UserRepositoryInterface
         return null;
     }
 
+    public function findById(int $id): ?User
+    {
+        return null;
+    }
+
+    public function updateProfile(
+        int $id,
+        string $username,
+        string $email,
+        ?string $passwordHash
+    ): User {
+        throw new RuntimeException('NullUserRepository cannot update users.');
+    }
+
     public function create(string $username, string $email, string $passwordHash, int $compteId): User
     {
         throw new RuntimeException('NullUserRepository cannot create users.');

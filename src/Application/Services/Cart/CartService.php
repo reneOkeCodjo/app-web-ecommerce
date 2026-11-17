@@ -7,13 +7,14 @@ namespace App\Application\Services\Cart;
 use App\Domain\Model\Product;
 use App\Domain\Pricing\ProductPricing;
 use App\Infrastructure\Http\SessionStoreInterface;
+use App\Infrastructure\Persistence\DAO\CartRepositoryInterface;
 use App\Infrastructure\Persistence\DAO\ProductRepositoryInterface;
 use InvalidArgumentException;
 use RuntimeException;
 
 final class CartService
 {
-    // Le panier est conservé dans la session PHP, sans nouvelle table MySQL.
+    // Le panier invité est conservé dans la session PHP.
     private const SESSION_KEY = 'cart_items';
     // Les frais sont gratuits à partir du seuil défini ci-dessous.
     private const SHIPPING_COST = 5.99;
@@ -21,7 +22,8 @@ final class CartService
 
     public function __construct(
         private ProductRepositoryInterface $products,
-        private SessionStoreInterface $session
+        private SessionStoreInterface $session,
+        private ?CartRepositoryInterface $persistentCart = null
     ) {
     }
 
@@ -71,6 +73,12 @@ final class CartService
 
     public function clear(): void
     {
+        $userId = $this->authenticatedUserId();
+        if ($userId !== null && $this->persistentCart !== null) {
+            $this->persistentCart->clear($userId);
+            return;
+        }
+
         $this->session->remove(self::SESSION_KEY);
     }
 
@@ -142,7 +150,12 @@ final class CartService
      */
     private function readItems(): array
     {
-        // Les données de session sont normalisées en identifiants et quantités positifs.
+        $userId = $this->authenticatedUserId();
+        if ($userId !== null && $this->persistentCart !== null) {
+            return $this->persistentCart->findItems($userId);
+        }
+
+        // Les données de session invité sont normalisées en identifiants et quantités positifs.
         $raw = $this->session->get(self::SESSION_KEY);
         if (!is_array($raw)) {
             return [];
@@ -167,6 +180,12 @@ final class CartService
      */
     private function writeItems(array $items): void
     {
+        $userId = $this->authenticatedUserId();
+        if ($userId !== null && $this->persistentCart !== null) {
+            $this->persistentCart->replaceItems($userId, $items);
+            return;
+        }
+
         // On supprime la clé de session lorsque le panier devient vide.
         if ($items === []) {
             $this->clear();
@@ -210,5 +229,17 @@ final class CartService
         }
 
         return $price * (1 - ((float) $promotion / 100));
+    }
+
+    private function authenticatedUserId(): ?int
+    {
+        $raw = $this->session->get('user_id');
+        if ($raw === null || !is_numeric($raw)) {
+            return null;
+        }
+
+        $userId = (int) $raw;
+
+        return $userId > 0 ? $userId : null;
     }
 }

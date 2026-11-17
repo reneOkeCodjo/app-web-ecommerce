@@ -469,13 +469,16 @@ http://localhost:8080/admin/products.php
 
 ### Panier
 
-Le panier est stocké dans la session PHP et ne nécessite pas de nouvelle table
-MySQL pour cette étape du fil rouge.
+Le panier invité est stocké dans la session PHP. Pour un utilisateur connecté,
+les quantités sont persistées dans MySQL et restent disponibles après
+déconnexion puis reconnexion.
 
 **Fichiers :**
 
 - `src/Application/Services/Cart/CartService.php` — ajout, modification,
   suppression, contrôle du stock et calcul des montants
+- `src/Infrastructure/Persistence/DAO/CartRepository.php` — lecture et sauvegarde du
+  panier associé à un utilisateur
 - `public/cart.php` — page du panier et endpoint JSON pour les actions
 - `public/scripts/cart.js` — modification dynamique des quantités et des totaux
 
@@ -490,6 +493,10 @@ Depuis `products.php`, le bouton **Ajouter au panier** appelle l’endpoint du
 panier. La page `cart.php` permet ensuite de modifier les quantités, retirer
 des produits et voir le sous-total HT, la TVA, le sous-total TTC, les frais et
 le total.
+
+Les tables `carts` et `cart_items` sont créées par
+`database/migrations/007_create_carts_tables.sql`. Avec un volume MySQL déjà
+initialisé, cette migration doit être appliquée manuellement une seule fois.
 
 **Test métier :**
 

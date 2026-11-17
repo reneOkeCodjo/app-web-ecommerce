@@ -214,6 +214,17 @@
   margin-left: auto;
 }
 
+.cart-page__toolbar {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.cart-page__toolbar .catalog-toolbar__actions {
+  margin-left: auto;
+}
+
 .catalog-profile-menu {
   position: relative;
   margin-bottom: 0.2rem;

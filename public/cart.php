@@ -5,22 +5,46 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Application\Services\Cart\CartService;
+use App\Application\Services\Auth\Auth;
 use App\Infrastructure\Http\NativeSessionStore;
+use App\Infrastructure\Persistence\DAO\CartRepository;
+use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
+use App\Infrastructure\Persistence\DAO\UserRepository;
 use Db_config\Database;
 
 $session = new NativeSessionStore();
+$auth = new Auth(new NullUserRepository(), $session);
+$username = 'Utilisateur';
+$currentUser = null;
 $connection = null;
 
 try {
     // Le service utilise MySQL pour les produits et la session pour les quantités.
     $connection = Database::connect();
-    $cart = new CartService(new ProductRepository($connection), $session);
+    $userRepository = new UserRepository($connection);
+    $userId = $auth->getAuthenticatedUserId();
+    $currentUser = $userId !== null ? $userRepository->findById($userId) : null;
+    if ($currentUser !== null) {
+        $username = $currentUser->getUsername();
+    }
+
+    $cart = new CartService(
+        new ProductRepository($connection),
+        $session,
+        new CartRepository($connection)
+    );
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Les requêtes POST constituent l'API utilisée par JavaScript.
         $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
         $productId = (int) ($_POST['product_id'] ?? 0);
+
+        if ($action === 'logout') {
+            $auth->logout();
+            header('Location: index.php');
+            exit;
+        }
 
         // Chaque action délègue ses règles métier au CartService.
         switch ($action) {
@@ -81,7 +105,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon panier</title>
-    <?php $cartStylesVersion = is_file(__DIR__ . '/styles.css') ? filemtime(__DIR__ . '/styles.css') : false; ?>
+    <?php $cartStylesVersion = is_file(__DIR__ . '/styles/catalog.css') ? filemtime(__DIR__ . '/styles/catalog.css') : false; ?>
     <link rel="stylesheet" href="styles.css<?= $cartStylesVersion !== false ? '?v=' . $cartStylesVersion : '' ?>">
 </head>
 <body>
@@ -91,6 +115,29 @@ try {
                 <h1 id="cart-title" class="auth-title">
                     <span class="auth-title__text">Mon panier</span>
                 </h1>
+            </div>
+
+            <div class="cart-page__toolbar">
+                <div class="catalog-toolbar__actions">
+                    <?php if ($currentUser !== null): ?>
+                        <details class="catalog-profile-menu">
+                            <summary aria-label="Ouvrir le menu utilisateur">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <circle cx="12" cy="8" r="3.5"></circle>
+                                    <path d="M5 20c.7-3.5 3.2-5.5 7-5.5s6.3 2 7 5.5"></path>
+                                </svg>
+                                <span><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></span>
+                            </summary>
+                            <div class="catalog-profile-menu__content">
+                                <a href="profile.php">Modifier le profil</a>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="logout">
+                                    <button type="submit">Se déconnecter</button>
+                                </form>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <?php if (isset($error)): ?>

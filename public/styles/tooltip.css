@@ -1,80 +1,76 @@
+/*
+  tooltip.css
+  ----------------
+  Info-bulle qui explique les règles du mot de passe.
+*/
+
+/* Conteneur de l'info-bulle, placé dans le champ mot de passe. */
 .tooltip {
   position: absolute;
-  right: 2.25rem;
-  bottom: 0.45rem;
+  right: 2.75rem;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
+/* Petit bouton "i" qui déclenche l'info-bulle. */
 .tooltip__trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
   padding: 0;
   border: 0;
+  border-radius: 50%;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--muted);
   cursor: help;
-  transition: color 0.15s ease;
+  transition: color var(--duration-fast) var(--ease);
 }
 
-.tooltip__trigger svg {
-  display: block;
-  width: 1.125rem;
-  height: 1.125rem;
-  pointer-events: none;
-}
-
+/* Au survol, l'icône devient champagne. */
 .tooltip__trigger:hover,
 .tooltip__trigger:focus-visible,
 .tooltip:focus-within .tooltip__trigger {
-  color: var(--color-accent);
-  outline: none;
+  color: var(--accent);
 }
 
+/* Le panneau de l'info-bulle. */
 .tooltip__content {
   position: absolute;
-  bottom: calc(100% + 0.55rem);
   right: 0;
-  left: auto;
+  bottom: calc(100% + 0.6rem);
   z-index: 10;
-  min-width: 10rem;
-  max-width: 14rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 0.35rem;
-  background-color: #1a1a1f;
-  color: var(--color-text);
+  min-width: 13rem;
+  max-width: 17rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--text);
   font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 1.4;
-  text-align: right;
-  white-space: normal;
-  box-shadow: 0 0.45rem 1rem rgb(0 0 0 / 40%);
+  line-height: 1.5;
+  box-shadow: var(--shadow-elevated);
   opacity: 0;
   visibility: hidden;
-  pointer-events: none;
-  transform: translateY(0.2rem);
+  transform: translateY(0.25rem);
   transition:
-    opacity 0.16s ease,
-    transform 0.16s ease,
-    visibility 0.16s ease;
+    opacity var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease),
+    visibility var(--duration-fast) var(--ease);
 }
 
+/* Petite flèche sous l'info-bulle. */
 .tooltip__content::after {
   content: "";
   position: absolute;
   top: 100%;
-  right: 0.55rem;
-  left: auto;
+  right: 0.7rem;
   border: 0.35rem solid transparent;
-  border-top-color: #1a1a1f;
+  border-top-color: var(--surface-3);
 }
 
+/* L'info-bulle apparaît au survol ou au focus. */
 .tooltip:hover .tooltip__content,
 .tooltip:focus-within .tooltip__content {
   opacity: 1;
@@ -82,19 +78,13 @@
   transform: translateY(0);
 }
 
+/* Liste des règles. */
 .tooltip__content ul {
   margin: 0;
   padding-left: 1.1rem;
-  text-align: left;
 }
 
+/* Chaque règle. */
 .tooltip__content li {
   margin: 0.15rem 0;
-  font-size: 0.5rem; 
-}
-
-.field--password:has(input:focus) .tooltip__content {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
 }

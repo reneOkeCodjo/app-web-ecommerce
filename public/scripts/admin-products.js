@@ -10,7 +10,23 @@ import { initTablePagination } from "./admin/product-pagination.js";
 import { bindProductTableTriggers } from "./admin/product-table.js";
 import { initProductViewDialog } from "./admin/product-view-dialog.js";
 
-const products = readProducts(window.__ADMIN_PRODUCTS__);
+/**
+ * Lit et analyse une balise JSON de la page (sans script inline).
+ * @param {string} id
+ * @param {unknown} fallback
+ * @returns {unknown}
+ */
+function readJson(id, fallback) {
+  const node = document.getElementById(id);
+  if (!node) return fallback;
+  try {
+    return JSON.parse(node.textContent || "");
+  } catch (error) {
+    return fallback;
+  }
+}
+
+const products = readProducts(readJson("admin-products-data", []));
 const byId = indexProductsById(products);
 
 const viewDialog = document.getElementById("product-view-dialog");
@@ -93,7 +109,7 @@ if (
     },
   });
 
-  const formState = window.__ADMIN_FORM_STATE__;
+  const formState = readJson("admin-form-state", null);
   if (
     formState &&
     typeof formState === "object" &&

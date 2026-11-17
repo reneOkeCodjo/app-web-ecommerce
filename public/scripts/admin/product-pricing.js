@@ -2,10 +2,22 @@
  * Client-side mirror of App\Domain\Pricing\ProductPricing (TVA 20 %).
  */
 
-export const TVA_RATE =
-  typeof window.__ADMIN_TVA_RATE__ === "number"
-    ? window.__ADMIN_TVA_RATE__
-    : 0.2;
+/**
+ * Lit la balise JSON du taux de TVA injectée par PHP.
+ * @returns {number}
+ */
+function readTvaRate() {
+  const node = document.getElementById("admin-tva-rate");
+  if (!node) return 0.2;
+  try {
+    const value = JSON.parse(node.textContent || "");
+    return typeof value === "number" ? value : 0.2;
+  } catch (error) {
+    return 0.2;
+  }
+}
+
+export const TVA_RATE = readTvaRate();
 
 /**
  * @param {number} priceHt

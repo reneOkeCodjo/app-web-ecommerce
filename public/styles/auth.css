@@ -1,0 +1,40 @@
+/*
+  auth.css
+  ----------------
+  Compléments spécifiques aux écrans de connexion et d'inscription.
+  La structure principale est dans layout.css.
+*/
+
+/* Le formulaire d'inscription est un peu plus haut : on garde une carte lisible. */
+.auth-card--register {
+  max-width: 25rem;
+}
+
+/* Le lien de retour vers le site. */
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Au survol, le lien devient champagne. */
+.auth-back:hover {
+  color: var(--accent);
+}
+
+/* Le petit texte sous le bouton. */
+.auth-note {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+/* Sur mobile, le titre reste lisible. */
+@media (max-width: 480px) {
+  .auth-title {
+    font-size: 1.7rem;
+  }
+}

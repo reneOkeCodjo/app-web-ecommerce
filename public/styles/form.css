@@ -1,90 +1,265 @@
+/*
+  form.css
+  ----------------
+  Styles des formulaires : champs, étiquettes flottantes,
+  sélecteurs, zones de texte et messages d'erreur.
+*/
+
+/* Le formulaire occupe toute la largeur de sa carte. */
 .login-form {
   width: 100%;
+  display: grid;
+  gap: var(--space-4);
 }
 
+/* Un champ est un conteneur positionné pour placer l'étiquette. */
 .field {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  padding: 0 0.25rem;
+  display: grid;
+  gap: var(--space-2);
 }
 
-.field input {
-  background-color: transparent;
-  border: none;
-  border-bottom: 1px solid var(--color-muted);
-  color: var(--color-text);
-  font-size: .8rem;
-  padding: 0.5rem 0;
+/* Le champ de saisie classique. */
+.field input,
+.input {
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 1.15rem 1rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.92rem;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
 }
 
-.field input::placeholder {
+/* Le champ prend une teinte légèrement plus claire au survol. */
+.field input:hover,
+.input:hover {
+  border-color: var(--border-strong);
+}
+
+/* À l'activation, on affiche un halo champagne. */
+.field input:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  background: var(--surface-3);
+}
+
+/* Le texte d'exemple (placeholder) reste discret. */
+.field input::placeholder,
+.input::placeholder {
   color: transparent;
 }
 
+/* Étiquette flottante placée au-dessus du champ. */
 .field label {
   position: absolute;
-  bottom: 0.5rem;
-  transition: all 0.2s ease-in-out;
+  left: 1rem;
+  top: 0.95rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  pointer-events: none;
+  transform-origin: left top;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    opacity var(--duration-fast) var(--ease);
 }
 
-.field input:not(:placeholder-shown) + label,
-.field input:focus + label {
-  color: var(--color-accent);
-  transform: translateY(-100%);
-  left: 0;
-  scale: 0.8;
+/* Quand le champ est rempli ou actif, l'étiquette monte et rétrécit. */
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label {
+  transform: translateY(-0.55rem) scale(0.78);
+  color: var(--accent);
 }
 
-.field input:focus::placeholder {
-  color: var(--color-muted);
-  opacity: 1;
-  font-style: italic;
-  font-size: 0.75rem;
-  transition: all 0.2s ease-in-out;
-}
-
-.field input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.field input:focus + label {
-  color: var(--color-accent);
-}
-
+/* Champ mot de passe : on laisse de la place aux boutons à droite. */
 .field--password input {
-  padding-right: 2.25rem;
-  padding-left: 0;
+  padding-right: 5rem;
 }
 
-.login-form .field--password:has(.tooltip) input {
-  padding-right: 4.25rem;
+/* Champ email / texte classique. */
+.field input[type="email"],
+.field input[type="text"] {
+  /* Rien de spécial : la règle est ici pour rappeler les types utilisés. */
 }
 
+/* Bouton "afficher le mot de passe". */
+.password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+/* Au survol, l'icône devient champagne. */
+.password-toggle:hover,
+.password-toggle:focus-visible,
+.password-toggle[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+/* Taille de l'icône du bouton. */
+.password-toggle__icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  pointer-events: none;
+}
+
+/* Un bouton masqué n'est pas affiché. */
+.password-toggle__icon[hidden] {
+  display: none;
+}
+
+/* Actions du formulaire (bouton principal). */
 .login-form__actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
+/* Le bouton d'envoi reprend le style premium. */
+.login-form__actions button {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(145deg, var(--accent-hover), var(--accent));
+  color: var(--accent-ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    var(--shadow-inset),
+    0 12px 30px rgba(198, 161, 91, 0.22);
+  transition:
+    transform var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+/* Le bouton se soulève au survol. */
+.login-form__actions button:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(145deg, #e7cb8c, var(--accent-hover));
+}
+
+/* Lien pour changer de formulaire (connexion / inscription). */
 .auth-switch {
-  margin: 1.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
   text-align: center;
-  color: var(--color-muted);
-  font-size: 0.85rem;
 }
 
+/* Le lien est champagne. */
 .auth-switch a {
-  color: var(--color-accent);
-  text-decoration: none;
+  color: var(--accent);
+  font-weight: 700;
 }
 
-.auth-switch a:hover,
-.auth-switch a:focus-visible {
+/* Au survol, il est souligné. */
+.auth-switch a:hover {
   text-decoration: underline;
+}
+
+/* -------------------- Formulaires admin -------------------- */
+
+/* Grille de formulaire sur deux colonnes. */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/* Un champ admin occupe une cellule. */
+.form-field {
+  display: grid;
+  gap: var(--space-2);
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+/* Le libellé du champ admin. */
+.form-field > span:first-child {
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+/* Les champs admin utilisent le même style que les champs classiques. */
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* Au focus, le halo champagne apparaît. */
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
   outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+/* Le sélecteur natif garde une flèche lisible. */
+.form-field select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.15rem) 50%,
+    calc(100% - 0.8rem) 50%;
+  background-size: 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+/* Champ fichier : aspect plus discret. */
+.form-field input[type="file"] {
+  padding: 0.55rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Petit texte d'aide sous un champ. */
+.form-hint {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-style: italic;
+}
+
+/* Champ qui occupe les deux colonnes. */
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+/* Sur mobile, le formulaire passe sur une seule colonne. */
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }

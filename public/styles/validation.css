@@ -1,28 +1,39 @@
-.field--error {
-  margin-bottom: 2.75rem;
+/*
+  validation.css
+  ----------------
+  Styles des erreurs affichées sous chaque champ de formulaire.
+*/
+
+/* Un champ en erreur prend une bordure rouge. */
+.field--error input,
+.form-field--error input,
+.form-field--error select {
+  border-color: var(--danger);
 }
 
-.field--error input {
-  border-color: var(--color-error);
+/* Au focus, le halo devient rouge. */
+.field--error input:focus,
+.form-field--error input:focus,
+.form-field--error select:focus {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
-.field--error input:focus {
-  border-color: var(--color-error);
-}
-
+/* L'étiquette du champ en erreur devient rouge. */
 .field--error label,
 .field--error input:focus + label,
 .field--error input:not(:placeholder-shown) + label {
-  color: var(--color-error);
+  color: var(--danger);
 }
 
-.field__error {
-  color: var(--color-error);
+/* Message d'erreur sous le champ. */
+.field__error,
+.field-error {
+  color: var(--danger);
   font-size: 0.75rem;
-  line-height: 1.25;
-  position: absolute;
-  top: calc(100% + 0.25rem);
-  left: 0;
-  right: 0;
-  margin: 0;
+  line-height: 1.35;
+}
+
+/* Dans un formulaire classique, l'erreur est placée juste sous le champ. */
+.field .field__error {
+  margin-top: var(--space-1);
 }

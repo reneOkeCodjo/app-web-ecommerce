@@ -1,0 +1,123 @@
+/*
+  tokens.css
+  ----------------
+  Ce fichier contient toutes les "variables de design" du site.
+  Une variable commence par -- et permet de changer une couleur,
+  un espacement ou une ombre partout en même temps.
+
+  Thème par défaut : Noir & Champagne (sombre).
+  Thème clair : ajouté par l'attribut data-theme="light" sur <html>.
+*/
+
+:root {
+  /* On indique au navigateur que les contrôles natifs doivent être sombres. */
+  color-scheme: dark;
+
+  /* --- Couleurs du thème sombre --- */
+  --bg: #08080a;                 /* Fond général, presque noir. */
+  --bg-elevated: #0d0d11;        /* Fond légèrement plus clair (header, sidebar). */
+  --surface: #101014;            /* Fond des cartes. */
+  --surface-2: #16161c;          /* Fond secondaire (champs, survols). */
+  --surface-3: #1c1c24;          /* Fond des éléments posés sur une carte. */
+  --text: #f6f1e7;               /* Texte principal, ivoire chaud. */
+  --text-strong: #fffdf8;        /* Texte très important. */
+  --muted: #a7a29a;              /* Texte secondaire, gris chaud. */
+  --muted-strong: #c9c2b6;       /* Texte secondaire plus lisible. */
+  --border: rgba(246, 241, 231, 0.10);       /* Bordure discrète. */
+  --border-strong: rgba(246, 241, 231, 0.18);/* Bordure plus visible. */
+  --accent: #c6a15b;             /* Champagne : couleur de marque. */
+  --accent-hover: #d9b872;       /* Champagne plus lumineux au survol. */
+  --accent-ink: #1a1408;         /* Texte foncé posé sur le champagne. */
+  --copper: #e2763f;             /* Cuivre : accent secondaire, promotions. */
+  --success: #57d6a0;            /* Vert menthe : succès, stock disponible. */
+  --success-bg: rgba(87, 214, 160, 0.12);
+  --danger: #ff6f6f;             /* Rouge corail : erreurs, suppression. */
+  --danger-bg: rgba(255, 111, 111, 0.12);
+  --warning: #f2c46d;            /* Jaune doux : avertissements. */
+  --focus-ring: rgba(198, 161, 91, 0.45); /* Halo autour de l'élément sélectionné. */
+  --overlay: rgba(4, 4, 6, 0.72);          /* Fond derrière les fenêtres modales. */
+
+  /* --- Typographie --- */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif; /* Titres éditoriaux. */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; /* Texte courant. */
+  --font-mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+
+  /* --- Espacements (échelle de 4 pixels) --- */
+  --space-1: 0.25rem;  /*  4 px */
+  --space-2: 0.5rem;   /*  8 px */
+  --space-3: 0.75rem;  /* 12 px */
+  --space-4: 1rem;     /* 16 px */
+  --space-5: 1.5rem;   /* 24 px */
+  --space-6: 2rem;     /* 32 px */
+  --space-7: 3rem;     /* 48 px */
+  --space-8: 4rem;     /* 64 px */
+  --space-9: 6rem;     /* 96 px */
+
+  /* --- Rayons d'arrondi --- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  /* --- Ombres --- */
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 0 6px var(--focus-ring);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* --- Mouvements --- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* Courbe douce et naturelle. */
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+
+  /* --- Largeurs utiles --- */
+  --container: 1280px;
+  --container-narrow: 1120px;
+  --sidebar: 264px;
+
+  /* --- Couches d'empilement --- */
+  --z-header: 50;
+  --z-overlay: 100;
+  --z-toast: 120;
+}
+
+/*
+  Thème clair "Ivoire".
+  Il suffit d'ajouter data-theme="light" sur la balise <html>.
+*/
+[data-theme="light"] {
+  /* Les contrôles natifs passent en mode clair. */
+  color-scheme: light;
+
+  /* --- Couleurs du thème clair --- */
+  --bg: #f7f3ec;
+  --bg-elevated: #fbf8f2;
+  --surface: #ffffff;
+  --surface-2: #f0eae0;
+  --surface-3: #e8e0d3;
+  --text: #171512;
+  --text-strong: #0b0a08;
+  --muted: #6b6459;
+  --muted-strong: #4d473e;
+  --border: rgba(23, 21, 18, 0.12);
+  --border-strong: rgba(23, 21, 18, 0.22);
+  --accent: #9a742f;
+  --accent-hover: #7e5d22;
+  --accent-ink: #fffaf0;
+  --copper: #c25a28;
+  --success: #1f7a55;
+  --success-bg: rgba(31, 122, 85, 0.10);
+  --danger: #b93b3b;
+  --danger-bg: rgba(185, 59, 59, 0.10);
+  --warning: #9a6a12;
+  --focus-ring: rgba(154, 116, 47, 0.30);
+  --overlay: rgba(23, 21, 18, 0.42);
+
+  /* Les ombres sont plus douces en clair. */
+  --shadow-soft: 0 8px 30px rgba(23, 21, 18, 0.10);
+  --shadow-elevated: 0 24px 70px rgba(23, 21, 18, 0.16);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}

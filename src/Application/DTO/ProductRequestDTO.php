@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Application\DTO;
 
 // Informations reçues du formulaire pour ajouter ou modifier un produit.

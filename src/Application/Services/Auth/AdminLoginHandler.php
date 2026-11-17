@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Services\Auth;
 
 use App\Application\DTO\LoginRequestDTO;
+use App\Application\Security\LoginThrottle;
 use App\Infrastructure\Http\SessionStoreInterface;
 use App\Infrastructure\Persistence\DAO\UserRepositoryInterface;
 use InvalidArgumentException;
@@ -51,25 +52,50 @@ final class AdminLoginHandler
             throw new InvalidArgumentException('Login request is required for POST.');
         }
 
+        // On crée le limiteur de tentatives pour cette session.
+        $throttle = new LoginThrottle($this->session);
+
+        // Si l'utilisateur est déjà bloqué, on refuse directement.
+        if ($throttle->isBlocked($request->getUsername())) {
+            return $this->error('Too many attempts. Please try again later.');
+        }
+
+        // On protège le processus contre les erreurs imprévues.
         try {
+            // On prépare le service d'authentification.
             $auth = new Auth($this->userRepository, $this->session);
+
+            // On tente la connexion.
             $authenticated = $auth->login(
                 $request->getUsername(),
                 $request->getPassword()
             );
 
+            // Si les identifiants sont faux...
             if (!$authenticated) {
+                // ...on compte un échec.
+                $throttle->recordFailure($request->getUsername());
+
+                // ...et on affiche un message générique.
                 return $this->error('Invalid username or password.');
             }
 
+            // Si l'utilisateur est connecté mais n'est pas administrateur...
             if (!$auth->isAdmin()) {
+                // ...on le déconnecte immédiatement.
                 $auth->logout();
 
+                // ...et on refuse l'accès.
                 return $this->error('Admin access required.');
             }
 
+            // Si tout est correct, on remet le compteur d'échecs à zéro.
+            $throttle->clear($request->getUsername());
+
+            // On renvoie null : la page redirigera vers le tableau de bord admin.
             return null;
         } catch (Throwable $e) {
+            // En cas de problème technique, message générique.
             return $this->error('An error occurred during login. Please try again later.');
         }
     }

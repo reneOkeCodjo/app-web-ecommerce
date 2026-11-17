@@ -1,0 +1,102 @@
+/*
+  toast.css
+  ----------------
+  Messages temporaires affichés après une action (création, suppression…).
+*/
+
+/* Zone fixée en haut à droite de l'écran. */
+.toast-stack {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 200;
+  display: grid;
+  gap: var(--space-2);
+  width: min(24rem, calc(100vw - 2rem));
+}
+
+/* Un message. */
+.toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-elevated);
+  animation: toast-in 220ms var(--ease);
+}
+
+/* Message de succès. */
+.toast--success {
+  border-color: color-mix(in srgb, var(--success) 55%, transparent);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+/* Message d'erreur. */
+.toast--error {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Message d'information. */
+.toast--info {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Texte du message. */
+.toast__message {
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+/* Bouton de fermeture. */
+.toast__close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Animation de sortie. */
+.toast--leaving {
+  opacity: 0;
+  transform: translateX(0.75rem);
+  transition:
+    opacity 200ms var(--ease),
+    transform 200ms var(--ease);
+}
+
+/* Animation d'entrée. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Sur mobile, la zone occupe presque toute la largeur. */
+@media (max-width: 480px) {
+  .toast-stack {
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+  }
+}

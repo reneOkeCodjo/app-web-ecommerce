@@ -1,12 +1,17 @@
 <?php
 
+// On impose des types stricts pour éviter les conversions silencieuses.
 declare(strict_types=1);
 
+// Ce service appartient à la couche « Application », dossier Shared.
 namespace App\Application\Services\Shared;
 
+// On importe les objets de transfert (DTO) renvoyés après validation.
 use App\Application\DTO\LoginRequestDTO;
 use App\Application\DTO\ProductRequestDTO;
 use App\Application\DTO\RegisterRequestDTO;
+
+// On importe chaque validateur spécialisé.
 use App\Application\Validation\Auth\ConfirmPasswordValidator;
 use App\Application\Validation\Auth\EmailValidator;
 use App\Application\Validation\Auth\LoginPasswordValidator;
@@ -20,50 +25,14 @@ use App\Application\Validation\Product\PriceValidator as ProductPriceValidator;
 use App\Application\Validation\Product\PromotionValidator as ProductPromotionValidator;
 use App\Application\Validation\Product\StockValidator as ProductStockValidator;
 
-interface ValidationInterface
-{
-    /**
-     * Validate and normalize a login payload.
-     *
-     * @param mixed $username Raw POST username
-     * @param mixed $password Raw POST password
-     */
-    public function validateLogin(mixed $username, mixed $password): ValidationResult;
-
-    /**
-     * Validate and normalize a registration payload.
-     *
-     * @param mixed $username Raw POST username
-     * @param mixed $email Raw POST email
-     * @param mixed $password Raw POST password
-     * @param mixed $passwordConfirm Raw POST password confirmation
-     */
-    public function validateRegister(
-        mixed $username,
-        mixed $email,
-        mixed $password,
-        mixed $passwordConfirm
-    ): ValidationResult;
-
-    /**
-     * Validate and normalize a product create/update payload.
-     */
-    public function validateProduct(
-        mixed $type,
-        mixed $designation,
-        mixed $priceHt,
-        mixed $stock,
-        mixed $dateIn,
-        mixed $promotion = null,
-        mixed $image = null
-    ): ValidationResult;
-}
-
 /**
- * Orchestrates field validators for request payloads.
+ * Orchestre les validateurs de champs pour chaque formulaire.
  */
-class Validation implements ValidationInterface
+final class Validation implements ValidationInterface
 {
+    /**
+     * On reçoit tous les validateurs, avec une instance par défaut si besoin.
+     */
     public function __construct(
         private UsernameValidator $usernameValidator = new UsernameValidator(),
         private PasswordValidator $passwordValidator = new PasswordValidator(),
@@ -81,29 +50,31 @@ class Validation implements ValidationInterface
     }
 
     /**
-     * Validate the login payload.
-     * @param mixed $username The username.
-     * @param mixed $password The password.
-     * @return ValidationResult The validation result.
+     * Valide les champs de connexion.
      */
     public function validateLogin(mixed $username, mixed $password): ValidationResult
     {
+        // On prépare la liste des erreurs.
         $errors = [];
 
+        // On vérifie le nom de connexion.
         $usernameResult = $this->usernameValidator->validate($username);
         if (!$usernameResult->isValid()) {
             $errors['user_login'] = (string) $usernameResult->getError();
         }
 
+        // On vérifie le mot de passe.
         $passwordResult = $this->loginPasswordValidator->validate($password);
         if (!$passwordResult->isValid()) {
             $errors['user_password'] = (string) $passwordResult->getError();
         }
 
+        // S'il y a des erreurs, on les renvoie.
         if ($errors !== []) {
             return new ValidationResult($errors);
         }
 
+        // Sinon, on renvoie un objet de connexion prêt à l'emploi.
         return new ValidationResult(
             [],
             new LoginRequestDTO(
@@ -113,6 +84,9 @@ class Validation implements ValidationInterface
         );
     }
 
+    /**
+     * Valide les champs d'inscription.
+     */
     public function validateRegister(
         mixed $username,
         mixed $email,
@@ -121,21 +95,25 @@ class Validation implements ValidationInterface
     ): ValidationResult {
         $errors = [];
 
+        // Nom de connexion.
         $usernameResult = $this->usernameValidator->validate($username);
         if (!$usernameResult->isValid()) {
             $errors['user_login'] = (string) $usernameResult->getError();
         }
 
+        // Adresse e-mail.
         $emailResult = $this->emailValidator->validate($email);
         if (!$emailResult->isValid()) {
             $errors['user_mail'] = (string) $emailResult->getError();
         }
 
+        // Mot de passe.
         $passwordResult = $this->passwordValidator->validate($password);
         if (!$passwordResult->isValid()) {
             $errors['user_password'] = (string) $passwordResult->getError();
         }
 
+        // Confirmation du mot de passe.
         $confirmResult = $this->confirmPasswordValidator->validate($password, $passwordConfirm);
         if (!$confirmResult->isValid()) {
             $errors['password_confirm'] = (string) $confirmResult->getError();
@@ -145,6 +123,7 @@ class Validation implements ValidationInterface
             return new ValidationResult($errors);
         }
 
+        // On renvoie l'objet d'inscription validé.
         return new ValidationResult(
             [],
             null,
@@ -156,6 +135,9 @@ class Validation implements ValidationInterface
         );
     }
 
+    /**
+     * Valide les champs d'un produit.
+     */
     public function validateProduct(
         mixed $type,
         mixed $designation,
@@ -167,36 +149,43 @@ class Validation implements ValidationInterface
     ): ValidationResult {
         $errors = [];
 
+        // Catégorie.
         $typeResult = $this->productCategoryValidator->validate($type);
         if (!$typeResult->isValid()) {
             $errors['type_p'] = (string) $typeResult->getError();
         }
 
+        // Désignation.
         $designationResult = $this->productDesignationValidator->validate($designation);
         if (!$designationResult->isValid()) {
             $errors['designation_p'] = (string) $designationResult->getError();
         }
 
+        // Prix HT.
         $priceResult = $this->productPriceValidator->validate($priceHt);
         if (!$priceResult->isValid()) {
             $errors['prix_ht'] = (string) $priceResult->getError();
         }
 
+        // Stock.
         $stockResult = $this->productStockValidator->validate($stock);
         if (!$stockResult->isValid()) {
             $errors['stock_p'] = (string) $stockResult->getError();
         }
 
+        // Date d'entrée.
         $dateResult = $this->productDateInValidator->validate($dateIn);
         if (!$dateResult->isValid()) {
             $errors['date_in'] = (string) $dateResult->getError();
         }
 
+        // Promotion.
         $promotionResult = $this->productPromotionValidator->validate($promotion);
         if (!$promotionResult->isValid()) {
             $errors['ppromo'] = (string) $promotionResult->getError();
         }
 
+        // Image.
         $imageResult = $this->productImageValidator->validate($image);
         if (!$imageResult->isValid()) {
             $errors['product_image'] = (string) $imageResult->getError();
@@ -206,6 +195,7 @@ class Validation implements ValidationInterface
             return new ValidationResult($errors);
         }
 
+        // On renvoie l'objet produit validé.
         return new ValidationResult(
             [],
             null,

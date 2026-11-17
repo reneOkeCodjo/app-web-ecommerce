@@ -1,15 +1,64 @@
 <?php
 
+// Ce script remplit la table `product` avec des données de démonstration.
+// Il ne s'exécute que depuis la ligne de commande.
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+// On refuse un appel depuis le navigateur.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Ce script doit être lancé en ligne de commande.');
+}
 
-use Faker\Factory;
+// On charge l'autoload de Composer.
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (!is_file($autoload)) {
+    fwrite(STDERR, "Dépendances manquantes : lancez « composer install ».\n");
+    exit(1);
+}
+require_once $autoload;
+
+// On importe les classes utiles.
 use Db_config\Database;
+use Faker\Factory;
 
+// On lit les options : « --fresh » vide la table avant de la remplir.
+$options = array_slice($argv, 1);
+$fresh = in_array('--fresh', $options, true);
+
+// On ouvre la connexion à la base.
+try {
+    $db = Database::connect();
+} catch (\Throwable $e) {
+    fwrite(STDERR, "Connexion à la base impossible. Vérifiez votre fichier .env.\n");
+    exit(1);
+}
+
+// On compte les produits déjà présents.
+$existingCount = (int) $db->query('SELECT COUNT(*) FROM `product`')->fetch_row()[0];
+
+// Si la table contient déjà des produits et que l'option --fresh est absente,
+// on s'arrête pour éviter les doublons.
+if ($existingCount > 0 && !$fresh) {
+    echo "La table contient déjà {$existingCount} produit(s).\n";
+    echo "Utilisez « php database/seed.php --fresh » pour la vider et la remplir à nouveau.\n";
+    $db->close();
+    exit(0);
+}
+
+// Avec --fresh, on supprime les produits existants.
+if ($fresh) {
+    $db->query('DELETE FROM `product`');
+    echo "Table produit vidée.\n";
+}
+
+// On crée un générateur de fausses données en français.
 $faker = Factory::create('fr_FR');
-$db    = Database::connect();
 
+// On fixe la graine pour obtenir des données reproductibles.
+$faker->seed(20261117);
+
+// Catalogue de démonstration : catégories, marques, gammes, stockage et prix.
 $catalog = [
     'Smartphone' => [
         'brands'  => ['Apple', 'Samsung', 'Google', 'Xiaomi', 'OnePlus', 'Sony'],
@@ -49,51 +98,71 @@ $catalog = [
     ],
 ];
 
-$colors      = ['Noir', 'Blanc', 'Argent', 'Graphite', 'Bleu', 'Violet', 'Or', 'Titane'];
+// Couleurs et pourcentages de promotion possibles.
+$colors = ['Noir', 'Blanc', 'Argent', 'Graphite', 'Bleu', 'Violet', 'Or', 'Titane'];
 $promoValues = [5.00, 10.00, 15.00, 20.00, 25.00, 30.00, 50.00];
 
-$stmt = $db->prepare(
-    'INSERT INTO `product` (`product_type`, `product_designation`, `product_price_ht`, `product_stock`, `product_date_in`, `ppromo`)
+// On prépare la requête d'insertion.
+$statement = $db->prepare(
+    'INSERT INTO `product`
+        (`product_type`, `product_designation`, `product_price_ht`, `product_stock`, `product_date_in`, `ppromo`)
      VALUES (?, ?, ?, ?, ?, ?)'
 );
 
-// 's' for ppromo so PHP null maps to SQL NULL safely
-$type = $designation = $date = $promo = null;
+// Variables liées à la requête (mysqli exige des références).
+$type = '';
+$designation = '';
 $price = 0.0;
 $stock = 0;
+$date = '';
+$promo = null;
 
-$stmt->bind_param('ssdiss', $type, $designation, $price, $stock, $date, $promo);
+// On associe les variables aux paramètres : texte, texte, décimal, entier, date, texte.
+$statement->bind_param('ssdiss', $type, $designation, $price, $stock, $date, $promo);
 
+// Compteur de produits créés.
 $count = 0;
 
-foreach ($catalog as $categoryName => $cfg) {
-    for ($i = 0; $i < 5; $i++) {
-        $brand   = $faker->randomElement($cfg['brands']);
-        $line    = $faker->randomElement($cfg['lines']);
+// On parcourt chaque catégorie.
+foreach ($catalog as $categoryName => $configuration) {
+    // On crée cinq produits par catégorie.
+    for ($index = 0; $index < 5; $index++) {
+        // On choisit une marque, une gamme, un numéro et une couleur.
+        $brand = $faker->randomElement($configuration['brands']);
+        $line = $faker->randomElement($configuration['lines']);
         $version = $faker->numberBetween(5, 15);
-        $color   = $faker->randomElement($colors);
+        $color = $faker->randomElement($colors);
 
-        $type        = $categoryName;
-        $designation = "$brand $line $version";
+        // On construit le nom du produit.
+        $designation = "{$brand} {$line} {$version}";
 
-        if (!empty($cfg['storage'])) {
-            $designation .= ' ' . $faker->randomElement($cfg['storage']);
+        // On ajoute le stockage si la catégorie en propose.
+        if (!empty($configuration['storage'])) {
+            $designation .= ' ' . $faker->randomElement($configuration['storage']);
         }
 
-        $designation .= " $color";
+        // On termine par la couleur.
+        $designation .= " {$color}";
 
-        [$minPrice, $maxPrice] = $cfg['price'];
-        $price = $faker->randomFloat(2, $minPrice, $maxPrice);
+        // On prépare les valeurs du produit.
+        [$minimumPrice, $maximumPrice] = $configuration['price'];
+        $type = $categoryName;
+        $price = $faker->randomFloat(2, $minimumPrice, $maximumPrice);
         $stock = $faker->numberBetween(0, 200);
-        $date  = $faker->dateTimeBetween('-2 years', 'now')->format('Y-m-d');
-        $promo = $faker->boolean(30) ? (string) $faker->randomElement($promoValues) : null;
+        $date = $faker->dateTimeBetween('-2 years', 'now')->format('Y-m-d');
+        $promo = $faker->boolean(30)
+            ? (string) $faker->randomElement($promoValues)
+            : null;
 
-        $stmt->execute();
+        // On enregistre le produit.
+        $statement->execute();
         $count++;
     }
 }
 
-$stmt->close();
+// On ferme la requête et la connexion.
+$statement->close();
 $db->close();
 
-echo "Seeded {$count} products successfully.\n";
+// On affiche le résultat.
+echo "{$count} produit(s) de démonstration créé(s).\n";

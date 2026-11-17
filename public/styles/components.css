@@ -1,0 +1,394 @@
+/*
+  components.css
+  ----------------
+  Petits blocs réutilisables partout dans le site :
+  boutons, cartes, badges, statistiques, messages, etc.
+*/
+
+/* -------------------- Boutons -------------------- */
+
+/* Base commune à tous les boutons. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.9rem;
+  padding: 0.7rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+/* Le bouton se soulève légèrement au survol. */
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Il s'enfonce quand on clique. */
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Bouton principal : dégradé champagne et texte foncé. */
+.btn--primary {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: linear-gradient(145deg, var(--accent-hover), var(--accent));
+  color: var(--accent-ink);
+  box-shadow:
+    var(--shadow-inset),
+    0 12px 30px rgba(198, 161, 91, 0.22);
+}
+
+/* Au survol, le dégradé s'éclaircit. */
+.btn--primary:hover {
+  background: linear-gradient(145deg, #e7cb8c, var(--accent-hover));
+  box-shadow:
+    var(--shadow-inset),
+    0 16px 36px rgba(198, 161, 91, 0.30);
+}
+
+/* Bouton secondaire : contour discret. */
+.btn--ghost {
+  border-color: var(--border-strong);
+  background: transparent;
+  color: var(--text);
+}
+
+/* Au survol, le fond secondaire apparaît. */
+.btn--ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+
+/* Bouton dangereux : rouge corail. */
+.btn--danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Au survol, le rouge devient plus présent. */
+.btn--danger:hover {
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+/* Bouton pleine largeur. */
+.btn--block {
+  width: 100%;
+}
+
+/* Petit bouton pour les actions de tableau. */
+.btn--sm {
+  min-height: 2.2rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+/* -------------------- Cartes / surfaces -------------------- */
+
+/* Carte standard, posée sur le fond. */
+.surface-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 40%),
+    var(--surface);
+  box-shadow: var(--shadow-soft), var(--shadow-inset);
+}
+
+/* Carte avec un espace intérieur confortable. */
+.surface-card--pad {
+  padding: var(--space-5);
+}
+
+/* Carte de statistique. */
+.stat-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-inset);
+}
+
+/* Libellé de la statistique. */
+.stat-card__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Valeur principale de la statistique. */
+.stat-card__value {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Petite précision sous la valeur. */
+.stat-card__hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+/* -------------------- Badges / pastilles -------------------- */
+
+/* Base des badges. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Badge "en stock". */
+.badge--success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+/* Badge "rupture". */
+.badge--danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Badge promotion. */
+.badge--promo {
+  background: color-mix(in srgb, var(--copper) 18%, transparent);
+  color: var(--copper);
+}
+
+/* Badge neutre. */
+.badge--neutral {
+  background: var(--surface-2);
+  color: var(--muted-strong);
+}
+
+/* -------------------- Messages -------------------- */
+
+/* Message de succès ou d'erreur. */
+.feedback {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+/* Message d'erreur. */
+.feedback-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Message de succès. */
+.feedback-success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+/* Petit rond avec un symbole devant le message. */
+.feedback::before {
+  content: "!";
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Symbole différent pour un succès. */
+.feedback-success::before {
+  content: "✓";
+}
+
+/* -------------------- Divers -------------------- */
+
+/* Ligne de séparation. */
+.divider {
+  height: 1px;
+  border: 0;
+  background: var(--border);
+  margin: 0;
+}
+
+/* Texte secondaire. */
+.muted {
+  color: var(--muted);
+}
+
+/* Prix : chiffres alignés et lisibles. */
+.price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Ancien prix barré. */
+.price--was {
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+/* Prix promotionnel en cuivre. */
+.price--promo {
+  color: var(--copper);
+}
+
+/* Lien texte souligné au survol. */
+.link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* État vide (aucun produit, aucune donnée). */
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Grand symbole dans l'état vide. */
+.empty-state__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+/* Barre d'actions alignée à droite. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Barre d'outils générique. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Champ de recherche avec icône. */
+.search-field {
+  position: relative;
+  min-width: min(20rem, 100%);
+}
+
+/* Icône loupe dans le champ. */
+.search-field__icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Le champ laisse de la place à l'icône. */
+.search-field .input {
+  padding-left: 2.6rem;
+}
+
+/* -------------------- Fenêtres modales -------------------- */
+
+/* Fond sombre derrière les dialogues natifs. */
+dialog::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(6px);
+}
+
+/* Panneau du dialogue. */
+.dialog-panel {
+  width: min(34rem, 100%);
+  margin: auto;
+  padding: var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* En-tête du dialogue. */
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+/* Bouton de fermeture du dialogue. */
+.dialog-close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Au survol, le bouton devient champagne. */
+.dialog-close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Pied du dialogue avec les actions. */
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}

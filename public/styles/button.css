@@ -1,52 +1,59 @@
-.login-form__actions button {
-  background-color: transparent;
-  width: 100%;
-  margin-top: 1rem;
-  border: 1px solid var(--color-accent);
-  color: var(--color-text);
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  align-self: center;
-}
+/*
+  button.css
+  ----------------
+  Ce fichier complète components.css pour les boutons spécifiques
+  qui existaient déjà dans l'ancienne version du site.
+  Les nouveaux boutons utilisent la classe .btn (voir components.css).
+*/
 
-.login-form__actions button:hover,
-.login-form__actions button:focus-visible {
-  background-color: var(--color-accent);
-  color: var(--color-text);
-  outline: none;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 0;
-  bottom: 0.35rem;
+/* Bouton générique de l'administration. */
+.admin-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: 0;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--color-muted);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
 }
 
-.password-toggle:hover,
-.password-toggle:focus-visible,
-.password-toggle[aria-pressed="true"] {
-  color: var(--color-accent);
-  outline: none;
+/* Au survol, le bouton se remplit de champagne. */
+.admin-btn:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: translateY(-1px);
 }
 
-.password-toggle__icon {
-  display: block;
-  width: 1.25rem;
-  height: 1.25rem;
-  pointer-events: none;
+/* Variante discrète. */
+.admin-btn--ghost {
+  border-color: var(--border-strong);
+  color: var(--muted-strong);
 }
 
-.password-toggle__icon[hidden] {
-  display: none;
+/* Variante discrète au survol. */
+.admin-btn--ghost:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Variante dangereuse. */
+.admin-btn--danger {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  color: var(--danger);
+}
+
+/* Variante dangereuse au survol. */
+.admin-btn--danger:hover {
+  background: var(--danger);
+  color: #fff;
 }

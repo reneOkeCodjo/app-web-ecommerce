@@ -1,9 +1,54 @@
+/*
+  styles.css
+  ----------------
+  Point d'entrée unique des styles.
+  On importe d'abord les polices, puis les variables, puis les blocs.
+*/
+
+/* On charge Fraunces (titres) et Manrope (texte) depuis Google Fonts. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* Variables de design (couleurs, espacements, ombres...). */
+@import url("styles/tokens.css");
+
+/* Remise à zéro et règles de base. */
 @import url("styles/base.css");
+
+/* Grandes structures de page. */
+@import url("styles/layout.css");
+
+/* Composants réutilisables. */
+@import url("styles/components.css");
+
+/* En-tête et marque. */
 @import url("styles/header.css");
+
+/* Formulaires. */
 @import url("styles/form.css");
+
+/* Boutons spécifiques à l'administration. */
 @import url("styles/button.css");
+
+/* Info-bulle du mot de passe. */
 @import url("styles/tooltip.css");
+
+/* Messages de succès et d'erreur. */
 @import url("styles/feedback.css");
+
+/* Erreurs de validation. */
 @import url("styles/validation.css");
-@import url("styles/admin.css");
+
+/* Écrans de connexion. */
+@import url("styles/auth.css");
+
+/* Catalogue public. */
 @import url("styles/catalog.css");
+
+/* Back-office. */
+@import url("styles/admin.css");
+
+/* Messages temporaires. */
+@import url("styles/toast.css");
+
+/* Animations et préférences de mouvement. */
+@import url("styles/motion.css");

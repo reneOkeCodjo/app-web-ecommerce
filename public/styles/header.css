@@ -1,30 +1,48 @@
-/* Title / header — Figma Title Component */
-.auth-header {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  margin: 0 0 2.5rem;
+/*
+  header.css
+  ----------------
+  Compléments pour l'en-tête et la marque.
+  Les règles principales sont dans layout.css.
+*/
+
+/* Au survol, le monogramme s'illumine légèrement. */
+.brand:hover .brand__mark {
+  border-color: var(--accent);
+  box-shadow:
+    var(--shadow-inset),
+    0 0 24px rgba(198, 161, 91, 0.28);
 }
 
-.auth-title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 18.4375rem; /* 295px */
-  margin: 0;
-  border-bottom: 1px solid var(--color-border);
-  text-align: center;
+/* Transition douce du monogramme. */
+.brand__mark {
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
 }
 
-.auth-title__text {
-  display: inline-block;
-  box-shadow: 0 1px 0 0px var(--color-accent);
-  padding-bottom: 0.15rem;
-  color: var(--color-text);
-  font-family: var(--font-family);
-  font-size: 1.875rem; /* 30px */
-  font-weight: 600;
-  letter-spacing: 0.1em; /* ~2.4px */
-  white-space: nowrap;
+/* Le nom de marque reste lisible même sur petit écran. */
+@media (max-width: 480px) {
+  .brand__name {
+    display: none;
+  }
+}
+
+/* Par défaut (thème sombre), on montre l'icône "soleil" pour passer en clair. */
+.theme-toggle__sun {
+  display: block;
+}
+
+/* Par défaut (thème sombre), l'icône "lune" est cachée. */
+.theme-toggle__moon {
+  display: none;
+}
+
+/* En thème clair, on cache le soleil. */
+[data-theme="light"] .theme-toggle__sun {
+  display: none;
+}
+
+/* En thème clair, on montre la lune pour revenir au sombre. */
+[data-theme="light"] .theme-toggle__moon {
+  display: block;
 }

@@ -1,0 +1,525 @@
+/*
+  layout.css
+  ----------------
+  Ce fichier découpe les grands blocs de page :
+  - le conteneur central ;
+  - l'en-tête du site ;
+  - l'écran de connexion en deux colonnes ;
+  - l'interface d'administration avec menu latéral.
+*/
+
+/* Conteneur central réutilisable. */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+/* Version plus étroite pour les formulaires et textes longs. */
+.container--narrow {
+  max-width: var(--container-narrow);
+}
+
+/* -------------------- En-tête du site -------------------- */
+
+/* Barre du haut, collée en haut de l'écran avec un effet de verre dépoli. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* Contenu interne du header : marque à gauche, navigation à droite. */
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 4.5rem;
+}
+
+/* La marque regroupe le monogramme et le nom. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Monogramme carré, champagne, très reconnaissable. */
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(145deg, rgba(198, 161, 91, 0.28), rgba(198, 161, 91, 0.06));
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-inset);
+}
+
+/* Nom de la marque en petites capitales espacées. */
+.brand__name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Navigation principale. */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Lien de navigation discret. */
+.site-nav__link {
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  transition:
+    color var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+/* Lien survolé ou actif. */
+.site-nav__link:hover,
+.site-nav__link[aria-current="page"] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Le formulaire de déconnexion reste sur une seule ligne dans la navigation. */
+.site-nav__form {
+  display: inline;
+  margin: 0;
+}
+
+/* Le bouton de déconnexion ressemble à un lien de navigation. */
+.site-nav__form button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Bouton de changement de thème (soleil / lune). */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted-strong);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+
+/* Le bouton se soulève légèrement au survol. */
+.theme-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* -------------------- Connexion / inscription -------------------- */
+
+/* L'écran d'authentification occupe toute la hauteur disponible. */
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+/* Carte principale en deux colonnes : marque à gauche, formulaire à droite. */
+.auth-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  width: 100%;
+  max-width: 72rem;
+  min-height: 40rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+}
+
+/* Colonne de gauche : univers de marque. */
+.auth-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-7);
+  background:
+    radial-gradient(32rem 24rem at 10% 0%, rgba(198, 161, 91, 0.22), transparent 60%),
+    radial-gradient(28rem 22rem at 100% 100%, rgba(226, 118, 63, 0.16), transparent 60%),
+    linear-gradient(160deg, #111118, #08080a 70%);
+  color: #f6f1e7;
+  overflow: hidden;
+}
+
+/* Un halo animé très lent donne un effet de respiration luxueux. */
+.auth-brand::after {
+  content: "";
+  position: absolute;
+  width: 28rem;
+  height: 28rem;
+  right: -10rem;
+  top: -8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(198, 161, 91, 0.18), transparent 65%);
+  animation: brand-breathe 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* À l'intérieur du panneau de marque, on garde le texte au-dessus du halo. */
+.auth-brand > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Bloc central du panneau de marque. */
+.auth-brand__content {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 26rem;
+}
+
+/* Grand titre éditorial. */
+.auth-brand__title {
+  color: #f6f1e7;
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  line-height: 1.02;
+}
+
+/* Texte d'accompagnement. */
+.auth-brand__lead {
+  color: rgba(246, 241, 231, 0.72);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+/* Liste de preuves / arguments. */
+.auth-brand__proof {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Chaque argument commence par une petite puce champagne. */
+.auth-brand__proof li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: rgba(246, 241, 231, 0.82);
+  font-size: 0.88rem;
+}
+
+/* Puce décorative. */
+.auth-brand__proof li::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.18);
+}
+
+/* Petit texte de pied du panneau. */
+.auth-brand__foot {
+  color: rgba(246, 241, 231, 0.42);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Colonne de droite : formulaire. */
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6) clamp(1.5rem, 4vw, 3.5rem);
+  background: var(--surface);
+}
+
+/* Barre supérieure du panneau (bouton thème). */
+.auth-panel__top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Carte du formulaire, centrée verticalement. */
+.auth-card {
+  width: 100%;
+  max-width: 24rem;
+  margin-block: auto;
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* En-tête du formulaire. */
+.auth-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Petit libellé au-dessus du titre. */
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Titre principal du formulaire. */
+.auth-title {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+/* Sous-titre. */
+.auth-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* -------------------- Administration -------------------- */
+
+/* L'interface admin utilise toute la largeur et la hauteur. */
+.admin-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+/* Menu latéral fixe. */
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-4);
+  border-right: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+/* Navigation du menu latéral. */
+.admin-nav {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* Lien du menu. */
+.admin-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition:
+    color var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+/* Lien actif ou survolé. */
+.admin-nav__link:hover,
+.admin-nav__link[aria-current="page"] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Petite icône dans le menu. */
+.admin-nav__icon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: currentColor;
+}
+
+/* Zone principale à droite du menu. */
+.admin-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre supérieure de l'admin. */
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 4.5rem;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+/* Fil d'Ariane. */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* Liens du fil d'Ariane. */
+.breadcrumb a {
+  color: var(--muted);
+  transition: color var(--duration-fast) var(--ease);
+}
+
+/* Au survol, le lien s'éclaire. */
+.breadcrumb a:hover {
+  color: var(--accent);
+}
+
+/* Séparateur du fil d'Ariane. */
+.breadcrumb__sep {
+  color: var(--border-strong);
+}
+
+/* Contenu principal de l'admin. */
+.admin-content {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  max-width: 96rem;
+  width: 100%;
+}
+
+/* En-tête de page (titre + actions). */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Titre de page. */
+.page-title {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+/* Texte sous le titre. */
+.page-lead {
+  max-width: 44rem;
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+/* Grille de statistiques. */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/* -------------------- Réponses adaptatives -------------------- */
+
+/* Sur tablette, la colonne de marque se réduit. */
+@media (max-width: 960px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .auth-brand {
+    padding: var(--space-6);
+  }
+
+  .auth-brand__content {
+    max-width: none;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Sur mobile, le menu admin passe en haut. */
+@media (max-width: 820px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .admin-topbar {
+    padding-inline: var(--space-4);
+  }
+
+  .admin-content {
+    padding: var(--space-4);
+  }
+}
+
+/* Sur petit mobile, le panneau de marque est masqué pour aller à l'essentiel. */
+@media (max-width: 640px) {
+  .auth-brand {
+    display: none;
+  }
+
+  .auth-panel {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding-inline: var(--space-4);
+  }
+}

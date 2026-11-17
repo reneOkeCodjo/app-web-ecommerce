@@ -122,6 +122,11 @@ Deux services conteneurisés ont été initialisés pour créer un environnement
 - `php/Dockerfile` — Définition de l'image PHP personnalisée
 - `docker-compose.yml` — Orchestration des services PHP et MySQL
 
+
+### Démarrage
+```bash
+docker-compose up -d
+```
 ---
 
 ### Accès aux données (DAO)

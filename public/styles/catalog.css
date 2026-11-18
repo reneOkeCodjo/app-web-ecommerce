@@ -18,7 +18,7 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: var(--space-6);
   align-items: end;
-  padding-block: var(--space-8) var(--space-6);
+  padding-block: clamp(4.5rem, 9vw, 7rem) var(--space-7);
 }
 
 /* Grand titre du catalogue. */
@@ -67,9 +67,7 @@
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-soft);
+  background: var(--surface);
 }
 
 /* Groupe de champ dans la barre. */
@@ -130,9 +128,9 @@
 /* La grille s'adapte automatiquement à la largeur disponible. */
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: var(--space-4);
-  margin-top: var(--space-5);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-6);
 }
 
 /* Carte produit. */
@@ -224,56 +222,13 @@
   letter-spacing: 0.04em;
 }
 
-/* Bouton "voir" qui apparaît au survol. */
-.catalog-card__quick {
-  position: absolute;
-  right: var(--space-3);
-  bottom: var(--space-3);
-  z-index: 2;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: var(--radius-pill);
-  background: rgba(8, 8, 10, 0.55);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(6px);
-  transition:
-    opacity var(--duration-base) var(--ease),
-    transform var(--duration-base) var(--ease),
-    background var(--duration-fast) var(--ease);
-}
-
-/* Le bouton apparaît au survol. */
-.catalog-card:hover .catalog-card__quick,
-.catalog-card:focus-within .catalog-card__quick {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Au survol du bouton, le fond s'assombrit. */
-.catalog-card__quick:hover {
-  background: rgba(8, 8, 10, 0.78);
-}
-
 /* Corps de la carte. */
 .catalog-card__body {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4);
-}
-
-/* Catégorie du produit. */
-.catalog-card__category {
-  color: var(--accent);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  padding: var(--space-4) var(--space-4) var(--space-5);
 }
 
 /* Nom du produit. */
@@ -336,38 +291,10 @@
   background: currentColor;
 }
 
-/* Stock disponible. */
-.catalog-card__stock--in {
-  background: var(--success-bg);
-  color: var(--success);
-}
-
 /* Rupture de stock. */
 .catalog-card__stock--out {
   background: var(--danger-bg);
   color: var(--danger);
-}
-
-/* Invitation discrète à ouvrir la fiche produit. */
-.catalog-card__cta {
-  margin-top: var(--space-2);
-  color: var(--accent);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0;
-  transform: translateY(4px);
-  transition:
-    opacity var(--duration-base) var(--ease),
-    transform var(--duration-base) var(--ease);
-}
-
-/* L'invitation apparaît au survol ou au focus de la carte. */
-.catalog-card:hover .catalog-card__cta,
-.catalog-card:focus-visible .catalog-card__cta {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* -------------------- État vide -------------------- */
@@ -578,20 +505,11 @@
 @media (max-width: 640px) {
   .catalog-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
+    gap: var(--space-4);
   }
 
   .catalog-card__body {
     padding: var(--space-3);
-  }
-
-  .catalog-card__quick {
-    display: none;
-  }
-
-  .catalog-card__cta {
-    opacity: 1;
-    transform: none;
   }
 }
 

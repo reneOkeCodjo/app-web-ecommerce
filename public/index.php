@@ -113,7 +113,8 @@ $userLoginError = $fieldErrors['user_login'] ?? null;
 $userPasswordError = $fieldErrors['user_password'] ?? null;
 
 // On prépare la page et ses fichiers communs.
-$pageTitle = 'Connexion — Site de Vente';
+$pageTitle = 'ATLAS — Votre nouvelle vie commence ici';
+$pageDescription = 'Connectez-vous à ATLAS pour trouver les essentiels tech et les repères concrets de la vie étudiante en France.';
 $assetPrefix = '';
 ?>
 <!DOCTYPE html>
@@ -121,66 +122,122 @@ $assetPrefix = '';
 <head>
     <?php require __DIR__ . '/partials/head.php'; ?>
 </head>
-<body>
-    <!-- Lien d'évitement pour les utilisateurs au clavier. -->
+<body class="atlas-page atlas-auth">
     <a class="skip-link" href="#main">Aller au contenu principal</a>
+    <?php require __DIR__ . '/partials/preloader.php'; ?>
 
-    <main id="main" class="auth-page">
-        <!-- Carte en deux colonnes : univers de marque à gauche, formulaire à droite. -->
-        <section class="auth-split" aria-labelledby="login-title">
-            <!-- Colonne de gauche : présentation de la marque. -->
-            <aside class="auth-brand">
-                <!-- Marque cliquable qui ramène à l'accueil. -->
-                <a class="brand" href="index.php" aria-label="Site de Vente, accueil">
-                    <span class="brand__mark" aria-hidden="true">SV</span>
-                    <span class="brand__name">Site de Vente</span>
-                </a>
+    <div class="experience">
+        <header class="experience__top">
+            <?php
+            $brandHref = 'index.php';
+            $brandLabel = 'ATLAS, accueil';
+            $brandTagline = 'Student living';
+            require __DIR__ . '/partials/brand.php';
+            ?>
 
-                <!-- Texte éditorial au centre. -->
-                <div class="auth-brand__content">
-                    <p class="eyebrow">Commerce curaté</p>
-                    <h2 class="auth-brand__title">L'essentiel,<br>sans compromis.</h2>
-                    <p class="auth-brand__lead">
-                        Une sélection resserrée, des prix justes et une expérience
-                        pensée pour durer. Retrouvez vos produits favoris en quelques secondes.
+            <nav class="experience__nav" aria-label="Navigation d’accueil">
+                <a href="#connexion">Se connecter</a>
+                <a href="#arrivee">L’arrivée</a>
+                <a href="register.php">Créer un compte</a>
+                <a href="admin/login.php">Accès équipe</a>
+                <?php require __DIR__ . '/partials/theme-toggle.php'; ?>
+            </nav>
+        </header>
+
+        <main id="main" class="auth-stage">
+            <section class="auth-hero" aria-labelledby="login-title">
+                <div class="auth-hero__copy" data-reveal>
+                    <p class="eyebrow">Pour étudiants internationaux · France</p>
+                    <h1 id="login-title" class="atlas-title">
+                        Votre nouvelle vie
+                        <em>commence ici.</em>
+                    </h1>
+                    <p class="atlas-lead">
+                        Les essentiels pour équiper votre quotidien, et les repères concrets pour comprendre
+                        les démarches d’arrivée en France. Sans bruit. Sans zone d’ombre.
                     </p>
-                    <!-- Trois arguments de confiance. -->
-                    <ul class="auth-brand__proof">
-                        <li>Sélection vérifiée par nos équipes</li>
-                        <li>Paiement et données protégés</li>
-                        <li>Livraison suivie partout en France</li>
+
+                    <div class="atlas-actions">
+                        <a class="btn btn--primary" href="register.php">Créer mon compte</a>
+                        <a class="btn btn--ghost" href="#arrivee">Découvrir le guide</a>
+                    </div>
+
+                    <ul class="signal-list" aria-label="Thèmes couverts">
+                        <li>Visa VLS-TS</li>
+                        <li>Logement</li>
+                        <li>Santé</li>
+                        <li>Banque</li>
+                        <li>Campus</li>
                     </ul>
                 </div>
 
-                <!-- Pied du panneau de marque. -->
-                <p class="auth-brand__foot">© 2026 Site de Vente</p>
-            </aside>
+                <div class="arrival-visual" data-reveal data-parallax="0.035" aria-label="Carte d’arrivée ATLAS">
+                    <div class="arrival-visual__halo" aria-hidden="true"></div>
 
-            <!-- Colonne de droite : formulaire de connexion. -->
-            <div class="auth-panel">
-                <!-- Barre supérieure avec le bouton de thème. -->
-                <div class="auth-panel__top">
-                    <?php require __DIR__ . '/partials/theme-toggle.php'; ?>
+                    <svg class="arrival-visual__orbit" viewBox="0 0 620 620" fill="none" aria-hidden="true">
+                        <circle cx="310" cy="310" r="245" stroke="currentColor" stroke-opacity=".14" stroke-dasharray="2 10"/>
+                        <circle cx="310" cy="310" r="176" stroke="currentColor" stroke-opacity=".1"/>
+                        <path d="M78 390C190 330 255 395 330 318s140-106 212-39" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="4 12"/>
+                        <circle cx="78" cy="390" r="4" fill="currentColor"/>
+                        <circle cx="542" cy="279" r="4" fill="currentColor"/>
+                    </svg>
+
+                    <article class="pass-card">
+                        <div class="pass-card__head">
+                            <span>ATLAS / ARRIVAL PASS</span>
+                            <span>FR · 2026</span>
+                        </div>
+                        <div class="pass-card__body">
+                            <p class="pass-card__kicker">Premier chapitre</p>
+                            <h2>Paris,<br>France.</h2>
+                            <span class="pass-card__stamp">VLS-TS</span>
+                        </div>
+                        <div class="pass-card__foot">
+                            <span>Visa</span>
+                            <span>Logement</span>
+                            <span>Banque</span>
+                        </div>
+                    </article>
+
+                    <article class="route-card">
+                        <p class="route-card__label">Votre parcours</p>
+                        <svg viewBox="0 0 240 112" fill="none" aria-hidden="true">
+                            <path class="route-card__line" d="M12 84C48 84 54 34 94 34s44 50 82 50 43-38 52-38"/>
+                            <circle cx="12" cy="84" r="4"/>
+                            <circle cx="94" cy="34" r="4"/>
+                            <circle cx="176" cy="84" r="4"/>
+                            <circle cx="228" cy="46" r="4"/>
+                        </svg>
+                        <ol>
+                            <li><span>01</span>Comprendre</li>
+                            <li><span>02</span>S’installer</li>
+                            <li><span>03</span>Vivre</li>
+                        </ol>
+                    </article>
+
+                    <div class="floating-note floating-note--one">Campus France</div>
+                    <div class="floating-note floating-note--two">CROUS · Visale</div>
+                    <div class="floating-note floating-note--three">Ameli · CAF</div>
+                </div>
+            </section>
+
+            <aside class="access-panel" id="connexion" aria-label="Connexion à votre espace">
+                <div class="access-panel__top">
+                    <span class="pill"><span class="pill__dot" aria-hidden="true"></span> Espace personnel</span>
+                    <span class="access-panel__index">01 / 03</span>
                 </div>
 
-                <!-- Carte du formulaire. -->
-                <div class="auth-card">
-                    <!-- En-tête du formulaire. -->
-                    <header class="auth-header">
-                        <p class="eyebrow">Espace client</p>
-                        <h1 id="login-title" class="auth-title">Bon retour.</h1>
-                        <p class="auth-subtitle">Connectez-vous pour accéder à votre sélection.</p>
+                <div class="access-card" data-reveal>
+                    <header class="access-card__head">
+                        <p class="eyebrow">Déjà membre</p>
+                        <h2>Bon retour.</h2>
+                        <p>Retrouvez votre sélection et vos repères d’arrivée.</p>
                     </header>
 
-                    <!-- Formulaire de connexion. -->
-                    <form method="post" class="login-form">
-                        <!-- Jeton de sécurité invisible. -->
+                    <form method="post" class="login-form login-form--atlas">
                         <?= csrf_field($session) ?>
-
-                        <!-- Message d'erreur global, s'il y en a un. -->
                         <?= $feedbackHtml ?>
 
-                        <!-- Champ nom d'utilisateur. -->
                         <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -196,7 +253,7 @@ $assetPrefix = '';
                                 <?php endif; ?>
                                 required
                             />
-                            <label for="username">Nom d'utilisateur</label>
+                            <label for="username">Nom d’utilisateur</label>
                             <?php if ($userLoginError): ?>
                                 <p class="field__error" id="user_login-error" role="alert">
                                     <?= htmlspecialchars($userLoginError, ENT_QUOTES, 'UTF-8') ?>
@@ -204,7 +261,6 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Champ mot de passe. -->
                         <div class="field field--password<?= $userPasswordError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -221,7 +277,6 @@ $assetPrefix = '';
                             />
                             <label for="password">Mot de passe</label>
 
-                            <!-- Bouton pour afficher ou masquer le mot de passe. -->
                             <button type="button" class="password-toggle" data-password-target="password" aria-label="Afficher le mot de passe" aria-controls="password" aria-pressed="false">
                                 <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
                                     <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
@@ -241,25 +296,74 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Bouton d'envoi. -->
                         <div class="login-form__actions">
-                            <button type="submit">Se connecter</button>
+                            <button type="submit" class="btn btn--primary btn--block">Entrer dans ATLAS</button>
                         </div>
 
-                        <!-- Lien vers l'inscription. -->
                         <p class="auth-switch">
                             Pas encore de compte ?
                             <a href="register.php">Créer un compte</a>
                         </p>
                     </form>
+
+                    <p class="access-card__note">
+                        Un doute sur vos démarches ? Les ressources officielles sont réunies dans le guide.
+                    </p>
                 </div>
+
+                <p class="access-panel__foot">ATLAS · La vie étudiante sans frontières</p>
+            </aside>
+        </main>
+
+        <section class="arrival-band" id="arrivee" aria-labelledby="arrival-title">
+            <div class="arrival-band__intro" data-reveal>
+                <p class="eyebrow">Le premier mois</p>
+                <h2 id="arrival-title">Trois repères pour ne pas avancer à l’aveugle.</h2>
             </div>
+
+            <div class="arrival-band__grid">
+                <article class="arrival-item" data-reveal>
+                    <span class="arrival-item__number">01</span>
+                    <h3>Visa & séjour</h3>
+                    <p>VLS-TS à valider en ligne, titre de séjour, renouvellement : les étapes officielles, sans rumeur.</p>
+                    <a href="https://administration-etrangers-en-france.interieur.gouv.fr/" target="_blank" rel="noopener noreferrer">Administration étrangers en France</a>
+                </article>
+
+                <article class="arrival-item" data-reveal>
+                    <span class="arrival-item__number">02</span>
+                    <h3>Logement & caution</h3>
+                    <p>CROUS, résidences privées, Visale : comprendre les garanties et éviter les fausses annonces.</p>
+                    <a href="https://www.visale.fr/" target="_blank" rel="noopener noreferrer">Visale</a>
+                </article>
+
+                <article class="arrival-item" data-reveal>
+                    <span class="arrival-item__number">03</span>
+                    <h3>Santé & budget</h3>
+                    <p>Sécurité sociale étudiante, Ameli, compte bancaire et aides au logement.</p>
+                    <a href="https://www.ameli.fr/" target="_blank" rel="noopener noreferrer">Ameli</a>
+                </article>
+            </div>
+
+            <p class="arrival-band__note">
+                Informations indicatives. Vérifiez toujours les démarches sur les sites officiels.
+            </p>
         </section>
-    </main>
+
+        <footer class="atlas-footer">
+            <p>ATLAS · Student living</p>
+            <nav aria-label="Liens de pied de page">
+                <a href="register.php">Créer un compte</a>
+                <a href="admin/login.php">Accès équipe</a>
+            </nav>
+        </footer>
+    </div>
 
     <!-- Scripts : thème, affichage du mot de passe et validation des champs. -->
     <script src="<?= e(asset_url('scripts/ui/theme.js')) ?>" defer></script>
     <script src="<?= e(asset_url('scripts/password-toggle.js')) ?>" defer></script>
     <script src="<?= e(asset_url('scripts/form-validation.js')) ?>" defer></script>
+
+    <!-- Globe décoratif : chargé seulement si le thème est sombre. -->
+    <script type="module" src="<?= e(asset_url('scripts/globe-background.js')) ?>"></script>
 </body>
 </html>

@@ -8,15 +8,19 @@ if (!defined('APP_BOOTSTRAPPED')) {
 
 // La page indique quel lien doit être marqué comme actif.
 $activeAdmin = $activeAdmin ?? '';
+
+// La marque renvoie vers le tableau de bord admin.
+$brandHref = 'index.php';
+$brandLabel = 'ATLAS, administration';
+$brandTagline = 'Studio admin';
 ?>
 <aside class="admin-sidebar">
-    <!-- Marque de l'administration. -->
-    <a class="brand" href="index.php" aria-label="Site de Vente, administration">
-        <span class="brand__mark" aria-hidden="true">SV</span>
-        <span class="brand__name">Site de Vente</span>
-    </a>
+    <div class="admin-sidebar__head">
+        <?php require __DIR__ . '/brand.php'; ?>
+    </div>
 
-    <!-- Navigation de l'administration. -->
+    <p class="admin-sidebar__label">Pilotage</p>
+
     <nav class="admin-nav" aria-label="Navigation administration">
         <a class="admin-nav__link" href="index.php"<?= $activeAdmin === 'dashboard' ? ' aria-current="page"' : '' ?>>
             <span class="admin-nav__icon" aria-hidden="true">
@@ -32,18 +36,27 @@ $activeAdmin = $activeAdmin ?? '';
             Produits
         </a>
 
-        <a class="admin-nav__link" href="../products.php">
+        <a class="admin-nav__link" href="users.php"<?= $activeAdmin === 'users' ? ' aria-current="page"' : '' ?>>
             <span class="admin-nav__icon" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18M9 21V9M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </span>
-            Voir le catalogue
+            Utilisateurs
         </a>
     </nav>
 
-    <!-- Déconnexion en bas du menu, protégée par CSRF. -->
-    <form method="post" class="admin-logout">
-        <?= csrf_field($session) ?>
-        <input type="hidden" name="action" value="logout">
-        <button type="submit" class="btn btn--ghost btn--block">Déconnexion</button>
-    </form>
+    <div class="admin-sidebar__foot">
+        <a class="admin-nav__link admin-nav__link--site" href="../products.php">
+            <span class="admin-nav__icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            </span>
+            Voir le site
+        </a>
+
+        <!-- Déconnexion en bas du menu, protégée par CSRF. -->
+        <form method="post" action="index.php" class="admin-logout">
+            <?= csrf_field($session) ?>
+            <input type="hidden" name="action" value="logout">
+            <button type="submit" class="btn btn--ghost btn--block">Déconnexion</button>
+        </form>
+    </div>
 </aside>

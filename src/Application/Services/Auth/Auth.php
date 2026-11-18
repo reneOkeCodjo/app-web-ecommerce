@@ -42,8 +42,11 @@ final class Auth implements AuthInterface
     /**
      * Vérifie les identifiants et connecte l'utilisateur.
      */
-    public function login(string $username, string $password): bool
-    {
+    public function login(
+        string $username,
+        string $password,
+        ?string $requiredCompteType = null
+    ): bool {
         // On cherche l'utilisateur par son nom de connexion.
         $user = $this->userRepository->findByUsername($username);
 
@@ -57,8 +60,16 @@ final class Auth implements AuthInterface
             return false;
         }
 
+        // Un rôle précis peut être exigé, par exemple pour l'administration.
+        if ($requiredCompteType !== null && $user->getCompteType() !== $requiredCompteType) {
+            return false;
+        }
+
         // Tout est correct : on enregistre l'état de connexion.
         $this->persistAuth($user->getId(), $user->getCompteType());
+
+        // On mémorise la date de connexion pour l'administration.
+        $this->userRepository->touchLastLogin($user->getId());
 
         return true;
     }
@@ -130,6 +141,33 @@ final class Auth implements AuthInterface
     {
         return $this->isAuthenticated()
             && $this->getCompteType() === self::COMPTE_TYPE_ADMIN;
+    }
+
+    /**
+     * Revalide le rôle administrateur dans la base de données.
+     *
+     * Cela empêche un utilisateur rétrogradé de conserver les droits admin
+     * grâce à une ancienne valeur stockée en session.
+     */
+    public function isAdminFresh(): bool
+    {
+        $userId = $this->getAuthenticatedUserId();
+
+        if ($userId === null) {
+            return false;
+        }
+
+        $user = $this->userRepository->findById($userId);
+
+        if ($user === null || !$user->isAdmin()) {
+            $this->logout();
+
+            return false;
+        }
+
+        $this->session->set(self::SESSION_COMPTE_TYPE, $user->getCompteType());
+
+        return true;
     }
 
     /**

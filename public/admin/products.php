@@ -16,6 +16,7 @@ use App\Domain\Pricing\ProductPricing;                  // Calcul des prix.
 use App\Infrastructure\Http\NativeSessionStore;         // Session sécurisée.
 use App\Infrastructure\Persistence\DAO\NullUserRepository; // Dépôt vide pour lire la session.
 use App\Infrastructure\Persistence\DAO\ProductRepository;  // Dépôt produits MySQL.
+use App\Infrastructure\Persistence\DAO\UserRepository;      // Dépôt utilisateurs MySQL.
 use App\Infrastructure\Storage\ProductImageUploader;    // Gestion des images.
 use Db_config\Database;                                 // Connexion à la base.
 
@@ -74,6 +75,9 @@ $productsJson = [];
 // Connexion à fermer à la fin.
 $connection = null;
 
+// Nom affiché dans la barre du haut.
+$adminUsername = 'Admin';
+
 // Petite fonction qui recopie un DTO en remplaçant l'image.
 $dtoWithImage = static function (ProductRequestDTO $dto, ?string $imagePath): ProductRequestDTO {
     return new ProductRequestDTO(
@@ -91,6 +95,19 @@ $dtoWithImage = static function (ProductRequestDTO $dto, ?string $imagePath): Pr
 try {
     // On ouvre la connexion à la base.
     $connection = Database::connect();
+
+    // On revalide le rôle admin directement en base avant toute action sensible.
+    $userRepository = new UserRepository($connection);
+    $auth = new Auth($userRepository, $session);
+
+    if (!$auth->isAdminFresh()) {
+        header('Location: login.php');
+        exit;
+    }
+
+    // On prépare le nom affiché dans la barre du haut.
+    $admin = $userRepository->findById((int) $auth->getAuthenticatedUserId());
+    $adminUsername = $admin?->getUsername() ?? 'Admin';
 
     // On crée le service produits.
     $productService = new ProductService(new ProductRepository($connection));
@@ -309,7 +326,8 @@ try {
 }
 
 // On prépare la page et ses fichiers communs.
-$pageTitle = 'Produits — Administration';
+$pageTitle = 'Produits — Administration ATLAS';
+$pageDescription = 'Gérez le catalogue ATLAS, les prix, les promotions et le stock.';
 $assetPrefix = '../';
 $activeAdmin = 'products';
 $breadcrumbLabel = 'Produits';
@@ -319,8 +337,9 @@ $breadcrumbLabel = 'Produits';
 <head>
     <?php require __DIR__ . '/../partials/head.php'; ?>
 </head>
-<body>
+<body class="atlas-admin">
     <a class="skip-link" href="#main">Aller au contenu principal</a>
+    <?php require __DIR__ . '/../partials/preloader.php'; ?>
 
     <!-- Messages temporaires. -->
     <?php require __DIR__ . '/../partials/toasts.php'; ?>
@@ -333,9 +352,9 @@ $breadcrumbLabel = 'Produits';
         <div class="admin-main">
             <?php require __DIR__ . '/../partials/admin-topbar.php'; ?>
 
-            <main id="main" class="admin-content">
+            <main id="main" class="admin-content admin-content--wide">
                 <!-- En-tête de page. -->
-                <div class="page-head">
+                <div class="page-head" data-reveal>
                     <div>
                         <p class="eyebrow">Catalogue</p>
                         <h1 class="page-title">Gestion des produits</h1>
@@ -343,9 +362,12 @@ $breadcrumbLabel = 'Produits';
                             Créez, modifiez ou supprimez une référence. Les prix TTC et promotions sont calculés automatiquement.
                         </p>
                     </div>
-                    <button type="button" class="btn btn--primary" data-open-dialog="product-form-dialog" data-form-mode="create">
-                        Ajouter un produit
-                    </button>
+                    <div class="page-head__actions">
+                        <a class="btn btn--soft" href="../products.php">Voir le site</a>
+                        <button type="button" class="btn btn--primary" data-open-dialog="product-form-dialog" data-form-mode="create">
+                            Ajouter un produit
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Message global. -->

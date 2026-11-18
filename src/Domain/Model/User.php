@@ -15,6 +15,8 @@ class User
     private string $email;
     private string $password;
     private string $compteType;
+    private ?string $dateNew;
+    private ?string $dateLogin;
 
     /**
      * User constructor.
@@ -24,19 +26,25 @@ class User
      * @param string $email The email of the user.
      * @param string $password The password of the user.
      * @param string $compteType Account type (client, admin, vendeur, …).
+     * @param string|null $dateNew Creation date, useful in the admin list.
+     * @param string|null $dateLogin Last successful login date.
      */
     public function __construct(
         int $id,
         string $username,
         string $email,
         string $password,
-        string $compteType = 'client'
+        string $compteType = 'client',
+        ?string $dateNew = null,
+        ?string $dateLogin = null
     ) {
         $this->id = $id;
         $this->username = $username;
         $this->email = $email;
         $this->password = $password;
         $this->compteType = $compteType;
+        $this->dateNew = $dateNew;
+        $this->dateLogin = $dateLogin;
     }
 
     public function getId(): int
@@ -62,6 +70,16 @@ class User
     public function getCompteType(): string
     {
         return $this->compteType;
+    }
+
+    public function getDateNew(): ?string
+    {
+        return $this->dateNew;
+    }
+
+    public function getDateLogin(): ?string
+    {
+        return $this->dateLogin;
     }
 
     public function isAdmin(): bool

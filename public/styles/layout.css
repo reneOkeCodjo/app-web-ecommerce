@@ -23,14 +23,13 @@
 
 /* -------------------- En-tête du site -------------------- */
 
-/* Barre du haut, collée en haut de l'écran avec un effet de verre dépoli. */
+/* Barre du haut, opaque pour rester rapide au défilement. */
 .site-header {
   position: sticky;
   top: 0;
   z-index: var(--z-header);
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
-  backdrop-filter: blur(18px) saturate(140%);
+  background: var(--bg);
 }
 
 /* Contenu interne du header : marque à gauche, navigation à droite. */
@@ -180,7 +179,7 @@
   overflow: hidden;
 }
 
-/* Un halo animé très lent donne un effet de respiration luxueux. */
+/* Halo fixe : même ambiance sans animation permanente. */
 .auth-brand::after {
   content: "";
   position: absolute;
@@ -190,7 +189,6 @@
   top: -8rem;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(198, 161, 91, 0.18), transparent 65%);
-  animation: brand-breathe 12s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -219,42 +217,6 @@
   color: rgba(246, 241, 231, 0.72);
   font-size: 0.98rem;
   line-height: 1.7;
-}
-
-/* Liste de preuves / arguments. */
-.auth-brand__proof {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Chaque argument commence par une petite puce champagne. */
-.auth-brand__proof li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: rgba(246, 241, 231, 0.82);
-  font-size: 0.88rem;
-}
-
-/* Puce décorative. */
-.auth-brand__proof li::before {
-  content: "";
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.18);
-}
-
-/* Petit texte de pied du panneau. */
-.auth-brand__foot {
-  color: rgba(246, 241, 231, 0.42);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* Colonne de droite : formulaire. */
@@ -386,8 +348,7 @@
   min-height: 4.5rem;
   padding: 0 var(--space-6);
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(18px);
+  background: var(--bg);
 }
 
 /* Fil d'Ariane. */
@@ -418,8 +379,8 @@
 /* Contenu principal de l'admin. */
 .admin-content {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-6);
+  gap: var(--space-7);
+  padding: var(--space-7) var(--space-6);
   max-width: 96rem;
   width: 100%;
 }
@@ -449,8 +410,8 @@
 /* Grille de statistiques. */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
 }
 
 /* -------------------- Réponses adaptatives -------------------- */

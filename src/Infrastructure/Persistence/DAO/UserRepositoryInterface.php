@@ -38,4 +38,41 @@ interface UserRepositoryInterface
      * Renvoie l'identifiant du type de compte demandé (ex. « client »).
      */
     public function findCompteIdByType(string $type): ?int;
+
+    /**
+     * Cherche un utilisateur par son identifiant technique.
+     */
+    public function findById(int $id): ?User;
+
+    /**
+     * Renvoie tous les utilisateurs, du plus récent au plus ancien.
+     *
+     * @return array<int, User>
+     */
+    public function findAll(): array;
+
+    /**
+     * Met à jour le profil et le rôle d'un utilisateur.
+     */
+    public function updateProfile(int $id, string $username, string $email, int $compteId): bool;
+
+    /**
+     * Remplace l'empreinte du mot de passe.
+     */
+    public function updatePassword(int $id, string $passwordHash): bool;
+
+    /**
+     * Supprime définitivement un utilisateur.
+     */
+    public function delete(int $id): bool;
+
+    /**
+     * Enregistre l'horodatage de la dernière connexion réussie.
+     */
+    public function touchLastLogin(int $id): void;
+
+    /**
+     * Compte les utilisateurs qui possèdent un rôle donné.
+     */
+    public function countByType(string $type): int;
 }

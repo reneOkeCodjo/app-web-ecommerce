@@ -419,16 +419,6 @@
   margin-top: auto;
 }
 
-/* Titre de la carte d'action rapide. */
-.quick-card__title {
-  font-size: 1.4rem;
-}
-
-/* Texte de la carte d'action rapide. */
-.quick-card__lead {
-  margin-top: 0.5rem;
-}
-
 /* Sur mobile, le tableau garde une taille lisible. */
 @media (max-width: 820px) {
   .admin-topbar {

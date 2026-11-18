@@ -76,7 +76,7 @@
   /* --- Largeurs utiles --- */
   --container: 1280px;
   --container-narrow: 1120px;
-  --sidebar: 264px;
+  --sidebar: 232px;
 
   /* --- Couches d'empilement --- */
   --z-header: 50;

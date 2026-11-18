@@ -31,4 +31,41 @@ final class NullUserRepository implements UserRepositoryInterface
     {
         return null;
     }
+
+    public function findById(int $id): ?User
+    {
+        return null;
+    }
+
+    /**
+     * @return array<int, User>
+     */
+    public function findAll(): array
+    {
+        return [];
+    }
+
+    public function updateProfile(int $id, string $username, string $email, int $compteId): bool
+    {
+        throw new RuntimeException('NullUserRepository cannot update users.');
+    }
+
+    public function updatePassword(int $id, string $passwordHash): bool
+    {
+        throw new RuntimeException('NullUserRepository cannot update passwords.');
+    }
+
+    public function delete(int $id): bool
+    {
+        throw new RuntimeException('NullUserRepository cannot delete users.');
+    }
+
+    public function touchLastLogin(int $id): void
+    {
+    }
+
+    public function countByType(string $type): int
+    {
+        return 0;
+    }
 }

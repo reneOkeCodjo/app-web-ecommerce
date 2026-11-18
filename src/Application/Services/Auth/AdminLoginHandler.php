@@ -52,6 +52,19 @@ final class AdminLoginHandler
             throw new InvalidArgumentException('Login request is required for POST.');
         }
 
+        // On prépare le service d'authentification.
+        $auth = new Auth($this->userRepository, $this->session);
+
+        // Un administrateur déjà connecté repart vers le tableau de bord.
+        if ($auth->isAdminFresh()) {
+            return null;
+        }
+
+        // Toute autre session ouverte est refusée pour empêcher le changement de compte.
+        if ($auth->isAuthenticated()) {
+            return $this->error('Admin access required.');
+        }
+
         // On crée le limiteur de tentatives pour cette session.
         $throttle = new LoginThrottle($this->session);
 
@@ -62,31 +75,31 @@ final class AdminLoginHandler
 
         // On protège le processus contre les erreurs imprévues.
         try {
-            // On prépare le service d'authentification.
-            $auth = new Auth($this->userRepository, $this->session);
-
-            // On tente la connexion.
+            // On tente la connexion en exigeant explicitement le rôle administrateur.
             $authenticated = $auth->login(
                 $request->getUsername(),
-                $request->getPassword()
+                $request->getPassword(),
+                'admin'
             );
 
-            // Si les identifiants sont faux...
+            // Si les identifiants sont faux ou si le rôle ne convient pas...
             if (!$authenticated) {
                 // ...on compte un échec.
                 $throttle->recordFailure($request->getUsername());
 
+                // On distingue un vrai compte non-admin d'un mot de passe incorrect.
+                $candidate = $this->userRepository->findByUsername($request->getUsername());
+
+                if (
+                    $candidate !== null
+                    && !$candidate->isAdmin()
+                    && password_verify($request->getPassword(), $candidate->getPassword())
+                ) {
+                    return $this->error('Admin access required.');
+                }
+
                 // ...et on affiche un message générique.
                 return $this->error('Invalid username or password.');
-            }
-
-            // Si l'utilisateur est connecté mais n'est pas administrateur...
-            if (!$auth->isAdmin()) {
-                // ...on le déconnecte immédiatement.
-                $auth->logout();
-
-                // ...et on refuse l'accès.
-                return $this->error('Admin access required.');
             }
 
             // Si tout est correct, on remet le compteur d'échecs à zéro.

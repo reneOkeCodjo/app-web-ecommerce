@@ -1,19 +1,21 @@
-# Site de Vente
+# ATLAS — Site de vente
 
-Application e-commerce en PHP 8.3, sans framework, avec une architecture inspirée du DDD.
-Le catalogue et le back-office utilisent un design « Noir & Champagne » (thème sombre par défaut,
-thème clair « Ivoire » disponible).
+Application e-commerce en PHP 8.2, sans framework, avec une architecture inspirée du DDD.
+Le catalogue et le back-office utilisent la direction artistique ATLAS : une base sombre
+« Noir & Champagne », un thème clair « Ivoire » et des compositions éditoriales.
 
 ## Fonctionnalités
 
 - Connexion et inscription des clients (mots de passe hachés avec Argon2id).
 - Catalogue avec recherche, filtre par catégorie, pagination et fiche produit rapide.
-- Back-office administrateur : tableau de bord, création, modification et suppression de produits.
+- Back-office administrateur : tableau de bord, catalogue, utilisateurs et gestion des rôles.
 - Gestion des images produits, des promotions et calcul automatique des prix TTC.
 - Protection CSRF sur tous les formulaires sensibles.
 - Limitation des tentatives de connexion (anti-force brute).
+- Revalidation du rôle administrateur en base à chaque accès sensible.
 - En-têtes de sécurité et CSP stricte avec nonce, sans script inline.
 - Thème sombre ou clair mémorisé dans le navigateur.
+- Polices auto-hébergées, préloader WebGL et globe terrestre décoratif.
 
 ## Prérequis
 
@@ -145,16 +147,22 @@ tests/
 - La CSP interdit les scripts inline : les données destinées au JavaScript passent par des
   balises `<script type="application/json" nonce="...">`.
 - Les échecs de connexion répétés sont temporairement bloqués (`LoginThrottle`).
+- Les accès administrateur revalident le rôle en base avant chaque page sensible.
+- Les polices sont servies localement : la CSP n'autorise aucune ressource de police externe.
 
 ## Design
 
 Les styles sont organisés par rôle :
 
+- `styles/fonts.css` : polices auto-hébergées Fraunces et Manrope.
 - `styles/tokens.css` : couleurs, espacements, rayons et ombres.
 - `styles/base.css` : éléments HTML de base.
 - `styles/layout.css` : structure des pages.
 - `styles/components.css`, `form.css`, `button.css`, `feedback.css`, `toast.css` : composants.
 - `styles/catalog.css` et `styles/admin.css` : styles propres au catalogue et au back-office.
+- `styles/atlas.css` : direction artistique ATLAS, pages publiques et administration.
+- `styles/preloader.css` et `preloader.js` : voile d'entrée et shader léger.
+- `styles/globe.css` et `scripts/globe/` : globe terrestre WebGL décoratif.
 - `scripts/ui/` : scripts du thème sombre / clair et des messages temporaires.
 
 ## Licence

@@ -39,6 +39,8 @@ final class UserRepository implements UserRepositoryInterface
                     u.user_login AS username,
                     u.user_mail AS email,
                     u.user_password AS password,
+                    u.user_date_new AS date_new,
+                    u.user_date_login AS date_login,
                     c.compte_type AS compte_type
              FROM users u
              INNER JOIN compte c ON c.compte_id = u.user_compte_id
@@ -75,6 +77,8 @@ final class UserRepository implements UserRepositoryInterface
                     u.user_login AS username,
                     u.user_mail AS email,
                     u.user_password AS password,
+                    u.user_date_new AS date_new,
+                    u.user_date_login AS date_login,
                     c.compte_type AS compte_type
              FROM users u
              INNER JOIN compte c ON c.compte_id = u.user_compte_id
@@ -183,9 +187,155 @@ final class UserRepository implements UserRepositoryInterface
     }
 
     /**
+     * Cherche un utilisateur par son identifiant technique.
+     */
+    public function findById(int $id): ?User
+    {
+        $statement = $this->connection->prepare(
+            'SELECT u.user_id AS id,
+                    u.user_login AS username,
+                    u.user_mail AS email,
+                    u.user_password AS password,
+                    u.user_date_new AS date_new,
+                    u.user_date_login AS date_login,
+                    c.compte_type AS compte_type
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             WHERE u.user_id = ?
+             LIMIT 1'
+        );
+
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $result = $statement->get_result();
+
+        if ($result->num_rows === 0) {
+            $statement->close();
+
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $statement->close();
+
+        return $this->mapRow($row);
+    }
+
+    /**
+     * Renvoie tous les utilisateurs, du plus récent au plus ancien.
+     *
+     * @return array<int, User>
+     */
+    public function findAll(): array
+    {
+        $result = $this->connection->query(
+            'SELECT u.user_id AS id,
+                    u.user_login AS username,
+                    u.user_mail AS email,
+                    u.user_password AS password,
+                    u.user_date_new AS date_new,
+                    u.user_date_login AS date_login,
+                    c.compte_type AS compte_type
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             ORDER BY u.user_date_new DESC, u.user_id DESC'
+        );
+
+        $users = [];
+
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $this->mapRow($row);
+        }
+
+        return $users;
+    }
+
+    /**
+     * Met à jour le profil et le rôle d'un utilisateur.
+     */
+    public function updateProfile(int $id, string $username, string $email, int $compteId): bool
+    {
+        $statement = $this->connection->prepare(
+            'UPDATE users
+             SET user_login = ?, user_mail = ?, user_compte_id = ?
+             WHERE user_id = ?'
+        );
+
+        $statement->bind_param('ssii', $username, $email, $compteId, $id);
+        $success = $statement->execute();
+        $statement->close();
+
+        return $success;
+    }
+
+    /**
+     * Remplace l'empreinte du mot de passe.
+     */
+    public function updatePassword(int $id, string $passwordHash): bool
+    {
+        $statement = $this->connection->prepare(
+            'UPDATE users SET user_password = ? WHERE user_id = ?'
+        );
+
+        $statement->bind_param('si', $passwordHash, $id);
+        $success = $statement->execute();
+        $statement->close();
+
+        return $success;
+    }
+
+    /**
+     * Supprime définitivement un utilisateur.
+     */
+    public function delete(int $id): bool
+    {
+        $statement = $this->connection->prepare('DELETE FROM users WHERE user_id = ?');
+        $statement->bind_param('i', $id);
+        $success = $statement->execute();
+        $statement->close();
+
+        return $success;
+    }
+
+    /**
+     * Enregistre l'horodatage de la dernière connexion réussie.
+     */
+    public function touchLastLogin(int $id): void
+    {
+        $statement = $this->connection->prepare(
+            'UPDATE users SET user_date_login = NOW() WHERE user_id = ?'
+        );
+
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $statement->close();
+    }
+
+    /**
+     * Compte les utilisateurs qui possèdent un rôle donné.
+     */
+    public function countByType(string $type): int
+    {
+        $statement = $this->connection->prepare(
+            'SELECT COUNT(*) AS total
+             FROM users u
+             INNER JOIN compte c ON c.compte_id = u.user_compte_id
+             WHERE c.compte_type = ?'
+        );
+
+        $statement->bind_param('s', $type);
+        $statement->execute();
+        $result = $statement->get_result();
+        $row = $result->fetch_assoc();
+        $statement->close();
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
      * Transforme une ligne SQL en objet User.
      *
-     * @param array{id: int|string, username: string, email: string, password: string, compte_type: string} $row
+     * @param array<string, mixed> $row
      */
     private function mapRow(array $row): User
     {
@@ -194,7 +344,9 @@ final class UserRepository implements UserRepositoryInterface
             (string) $row['username'],
             (string) $row['email'],
             (string) $row['password'],
-            (string) $row['compte_type']
+            (string) $row['compte_type'],
+            isset($row['date_new']) ? (string) $row['date_new'] : null,
+            isset($row['date_login']) ? (string) $row['date_login'] : null
         );
     }
 }

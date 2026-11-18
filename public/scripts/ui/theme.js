@@ -47,6 +47,11 @@
           // Si le stockage est indisponible, le thème reste actif pour cette page.
         }
 
+        // On prévient les autres scripts (par exemple le globe).
+        document.dispatchEvent(
+          new CustomEvent("sv:themechange", { detail: { theme: next } })
+        );
+
         // On met à jour le libellé du bouton.
         syncLabel();
       });

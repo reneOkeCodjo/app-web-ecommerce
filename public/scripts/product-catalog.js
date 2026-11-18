@@ -60,20 +60,37 @@
   /** Formate un nombre en prix lisible. */
   const formatPrice = (value) => moneyFormatter.format(value);
 
-  /** Crée une petite icône d'image manquante (sans emoji). */
-  const buildPlaceholderIcon = () => {
+  /** Tracés éditoriaux utilisés quand un produit n'a pas encore de photo. */
+  const categoryDrawings = {
+    Smartphone:
+      '<rect x="21" y="10" width="22" height="44" rx="5"/><path d="M28 15h8M31 49h2"/><circle cx="32" cy="18" r="1"/>',
+    "Ordinateur portable":
+      '<rect x="12" y="14" width="40" height="26" rx="3"/><path d="M8 47h48l-4 6H12zM27 40h10"/>',
+    "Casque audio":
+      '<path d="M16 38V31a16 16 0 0 1 32 0v7"/><rect x="12" y="35" width="10" height="16" rx="4"/><rect x="42" y="35" width="10" height="16" rx="4"/>',
+    "Montre connectée":
+      '<rect x="21" y="20" width="22" height="24" rx="6"/><path d="M26 20v-7h12v7M26 44v7h12v-7M32 27v6l4 2"/>',
+    Tablette:
+      '<rect x="14" y="13" width="36" height="38" rx="4"/><path d="M26 44h12M46 20v10"/>',
+    Caméra:
+      '<rect x="12" y="22" width="40" height="27" rx="5"/><path d="M23 22l3-6h12l3 6"/><circle cx="32" cy="35" r="8"/><circle cx="32" cy="35" r="3"/>',
+  };
+
+  /** Crée une illustration de catégorie (sans emoji). */
+  const buildPlaceholderIcon = (type) => {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", "36");
-    svg.setAttribute("height", "36");
-    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("viewBox", "0 0 64 64");
     svg.setAttribute("fill", "none");
     svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "1.4");
+    svg.setAttribute("stroke-width", "1.25");
     svg.setAttribute("stroke-linecap", "round");
     svg.setAttribute("stroke-linejoin", "round");
     svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("catalog-card__illustration");
     svg.innerHTML =
-      '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/>';
+      '<circle class="catalog-card__illustration-orbit" cx="32" cy="32" r="25" stroke-dasharray="2 5"/>' +
+      '<circle class="catalog-card__illustration-dot" cx="52" cy="17" r="2" fill="currentColor" stroke="none"/>' +
+      (categoryDrawings[type] || categoryDrawings.Smartphone);
     return svg;
   };
 
@@ -108,19 +125,27 @@
       const placeholder = document.createElement("span");
       placeholder.className = "catalog-card__placeholder";
       placeholder.setAttribute("aria-hidden", "true");
-      placeholder.appendChild(buildPlaceholderIcon());
+      placeholder.appendChild(buildPlaceholderIcon(product.type));
       imageWrap.appendChild(placeholder);
     }
+
+    // Micro-libellé de catégorie posé sur le visuel.
+    const type = document.createElement("span");
+    type.className = "catalog-card__type";
+    type.textContent = product.type;
+    imageWrap.appendChild(type);
+
+    // Numéro d'édition pour donner un rythme de catalogue.
+    const edition = document.createElement("span");
+    edition.className = "catalog-card__edition";
+    edition.textContent = String(product.id).padStart(2, "0");
+    imageWrap.appendChild(edition);
+
     card.appendChild(imageWrap);
 
     // Corps de la carte.
     const body = document.createElement("div");
     body.className = "catalog-card__body";
-
-    const categoryBadge = document.createElement("span");
-    categoryBadge.className = "catalog-card__category";
-    categoryBadge.textContent = product.type;
-    body.appendChild(categoryBadge);
 
     const name = document.createElement("h2");
     name.className = "catalog-card__name";
@@ -149,19 +174,13 @@
     }
     body.appendChild(pricing);
 
-    // Badge de stock.
-    const stockBadge = document.createElement("span");
-    stockBadge.className =
-      "catalog-card__stock " +
-      (inStock ? "catalog-card__stock--in" : "catalog-card__stock--out");
-    stockBadge.textContent = inStock ? "En stock" : "Rupture de stock";
-    body.appendChild(stockBadge);
-
-    // Invitation à ouvrir la fiche.
-    const cta = document.createElement("span");
-    cta.className = "catalog-card__cta";
-    cta.textContent = "Voir le détail";
-    body.appendChild(cta);
+    // On n'affiche un badge que lorsque le produit est en rupture.
+    if (!inStock) {
+      const stockBadge = document.createElement("span");
+      stockBadge.className = "catalog-card__stock catalog-card__stock--out";
+      stockBadge.textContent = "Rupture de stock";
+      body.appendChild(stockBadge);
+    }
 
     card.appendChild(body);
 

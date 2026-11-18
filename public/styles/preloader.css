@@ -1,0 +1,186 @@
+/*
+  preloader.css
+  -------------
+  Voile d'entrée plein écran avec shader discret et tracé orbital.
+  Il est masqué par défaut : le script de thème ajoute .is-intro seulement si besoin.
+*/
+
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    place-items: center;
+    overflow: hidden;
+    background: #050507;
+    pointer-events: none;
+}
+
+html.is-intro .preloader {
+    display: grid;
+    pointer-events: auto;
+    animation: preloader-safe-exit 0.7s ease 4.8s forwards;
+}
+
+html.is-intro body {
+    overscroll-behavior: none;
+}
+
+.preloader__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.9;
+}
+
+.preloader__veil {
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(circle at 50% 46%, rgba(215, 181, 109, 0.14), transparent 24%),
+        radial-gradient(circle at 18% 80%, rgba(111, 140, 255, 0.16), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(217, 255, 112, 0.08), transparent 28%),
+        linear-gradient(180deg, rgba(5, 5, 7, 0.15), rgba(5, 5, 7, 0.9));
+    animation: preloader-breathe 7s ease-in-out infinite alternate;
+}
+
+.preloader__route {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.4;
+}
+
+.preloader__route-line {
+    stroke: rgba(215, 181, 109, 0.55);
+    stroke-width: 1;
+    stroke-dasharray: 3 14;
+    animation: route-dash 16s linear infinite;
+}
+
+.preloader__route-line--soft {
+    stroke: rgba(143, 240, 208, 0.28);
+    animation-duration: 22s;
+    animation-direction: reverse;
+}
+
+.preloader__content {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: 0.85rem;
+    padding: 2rem;
+    text-align: center;
+    color: #f4efe6;
+}
+
+.preloader__mark {
+    display: grid;
+    place-items: center;
+    width: 4.4rem;
+    height: 4.4rem;
+    color: #d7b56d;
+    animation: preloader-mark 2.4s ease-in-out infinite;
+}
+
+.preloader__mark svg {
+    width: 100%;
+    height: 100%;
+}
+
+.preloader__brand {
+    margin: 0.4rem 0 0;
+    font-family: "Manrope", sans-serif;
+    font-size: clamp(1.8rem, 5vw, 2.7rem);
+    font-weight: 800;
+    letter-spacing: 0.42em;
+    line-height: 1;
+    text-indent: 0.42em;
+}
+
+.preloader__tagline {
+    margin: 0;
+    color: rgba(244, 239, 230, 0.58);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.preloader__bar {
+    width: min(18rem, 52vw);
+    height: 1px;
+    margin-top: 1.8rem;
+    overflow: hidden;
+    background: rgba(244, 239, 230, 0.18);
+}
+
+.preloader__bar span {
+    display: block;
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #d7b56d, #8ff0d0);
+    transition: width 0.18s linear;
+}
+
+.preloader__status {
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+    margin: 0;
+    color: rgba(244, 239, 230, 0.48);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.preloader__status [data-preloader-percent] {
+    min-width: 2.2ch;
+    color: #d7b56d;
+    font-variant-numeric: tabular-nums;
+}
+
+.preloader.is-leaving {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.55s ease, visibility 0.55s ease;
+}
+
+@keyframes preloader-safe-exit {
+    to {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+}
+
+@keyframes preloader-breathe {
+    from { transform: scale(1) rotate(0deg); }
+    to { transform: scale(1.08) rotate(1.5deg); }
+}
+
+@keyframes preloader-mark {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    50% { transform: translateY(-6px) rotate(2deg); opacity: 0.78; }
+}
+
+@keyframes route-dash {
+    to { stroke-dashoffset: -340; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.is-intro .preloader {
+        animation-delay: 0.2s;
+    }
+
+    .preloader__veil,
+    .preloader__mark,
+    .preloader__route-line {
+        animation: none;
+    }
+}

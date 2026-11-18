@@ -9,28 +9,28 @@ if (!defined('APP_BOOTSTRAPPED')) {
 // Valeurs fournies par la page.
 $session = $session ?? null;
 $isAdmin = $isAdmin ?? false;
-$activeNav = $activeNav ?? '';
 
 // Le formulaire de déconnexion exige un jeton CSRF et une session valide.
 $canLogout = $session instanceof \App\Infrastructure\Http\SessionStoreInterface;
+
+// La marque renvoie vers le catalogue.
+$brandHref = 'products.php';
+$brandLabel = 'ATLAS, catalogue';
+$brandTagline = 'Student living';
 ?>
 <header class="site-header">
     <div class="container site-header__inner">
-        <!-- Marque cliquable qui ramène au catalogue. -->
-        <a class="brand" href="products.php" aria-label="Site de Vente, catalogue">
-            <span class="brand__mark" aria-hidden="true">SV</span>
-            <span class="brand__name">Site de Vente</span>
-        </a>
+        <?php require __DIR__ . '/brand.php'; ?>
 
         <!-- Navigation principale. -->
         <nav class="site-nav" aria-label="Navigation principale">
-            <?php if ($isAdmin): ?>
-                <a class="site-nav__link" href="admin/index.php">Administration</a>
-            <?php endif; ?>
+            <a class="site-nav__link site-nav__link--active" href="products.php">Catalogue</a>
+            <a class="site-nav__link" href="#arrival">Arrivée</a>
+            <a class="site-nav__link" href="#guide">Guide</a>
 
-            <a class="site-nav__link" href="products.php"<?= $activeNav === 'catalog' ? ' aria-current="page"' : '' ?>>
-                Catalogue
-            </a>
+            <?php if ($isAdmin): ?>
+                <a class="site-nav__link site-nav__link--admin" href="admin/index.php">Administration</a>
+            <?php endif; ?>
 
             <?php require __DIR__ . '/theme-toggle.php'; ?>
 
@@ -39,7 +39,7 @@ $canLogout = $session instanceof \App\Infrastructure\Http\SessionStoreInterface;
                 <form method="post" class="site-nav__form">
                     <?= csrf_field($session) ?>
                     <input type="hidden" name="action" value="logout">
-                    <button type="submit" class="site-nav__link">Déconnexion</button>
+                    <button type="submit" class="site-nav__link site-nav__link--logout">Déconnexion</button>
                 </form>
             <?php endif; ?>
         </nav>

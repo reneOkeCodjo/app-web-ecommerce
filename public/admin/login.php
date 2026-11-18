@@ -112,7 +112,8 @@ $userLoginError = $fieldErrors['user_login'] ?? null;
 $userPasswordError = $fieldErrors['user_password'] ?? null;
 
 // On prépare la page et ses fichiers communs.
-$pageTitle = 'Administration — Site de Vente';
+$pageTitle = 'ATLAS Studio — Connexion équipe';
+$pageDescription = 'Accès réservé à l’équipe ATLAS : catalogue, utilisateurs et pilotage de la plateforme.';
 $assetPrefix = '../';
 ?>
 <!DOCTYPE html>
@@ -120,56 +121,71 @@ $assetPrefix = '../';
 <head>
     <?php require __DIR__ . '/../partials/head.php'; ?>
 </head>
-<body>
+<body class="atlas-page atlas-admin-login">
     <a class="skip-link" href="#main">Aller au contenu principal</a>
+    <?php require __DIR__ . '/../partials/preloader.php'; ?>
 
-    <main id="main" class="auth-page">
-        <section class="auth-split" aria-labelledby="admin-login-title">
-            <!-- Panneau de marque admin. -->
-            <aside class="auth-brand">
-                <a class="brand" href="../index.php" aria-label="Site de Vente, accueil">
-                    <span class="brand__mark" aria-hidden="true">SV</span>
-                    <span class="brand__name">Site de Vente</span>
-                </a>
+    <div class="experience admin-access">
+        <header class="experience__top">
+            <?php
+            $brandHref = '../index.php';
+            $brandLabel = 'ATLAS, accueil';
+            $brandTagline = 'Studio admin';
+            require __DIR__ . '/../partials/brand.php';
+            ?>
 
-                <div class="auth-brand__content">
-                    <p class="eyebrow">Back-office</p>
-                    <h2 class="auth-brand__title">Le contrôle,<br>en toute clarté.</h2>
-                    <p class="auth-brand__lead">
-                        Gérez le catalogue, les prix, les promotions et les images
-                        depuis un espace réservé aux administrateurs.
-                    </p>
-                    <ul class="auth-brand__proof">
-                        <li>Accès strictement réservé aux administrateurs</li>
-                        <li>Modifications en temps réel</li>
-                        <li>Historique des actions protégé</li>
+            <nav class="experience__nav" aria-label="Navigation administration">
+                <a href="../products.php">Retour au site</a>
+                <?php require __DIR__ . '/../partials/theme-toggle.php'; ?>
+            </nav>
+        </header>
+
+        <main id="main" class="admin-access__stage">
+            <section class="admin-access__intro" data-reveal>
+                <p class="eyebrow">ATLAS Studio · Accès réservé</p>
+                <h1 class="atlas-title atlas-title--compact">
+                    Le contrôle,
+                    <em>en toute clarté.</em>
+                </h1>
+                <p class="atlas-lead">
+                    Catalogue, rôles et accès : un espace de pilotage simple pour garder
+                    la plateforme nette et rapide.
+                </p>
+
+                <div class="console-card">
+                    <div class="console-card__head">
+                        <span>SYSTEM / READY</span>
+                        <span class="console-card__dot" aria-hidden="true"></span>
+                    </div>
+                    <ul>
+                        <li><span>Catalogue</span><strong>Produits & stock</strong></li>
+                        <li><span>Utilisateurs</span><strong>Rôles & accès</strong></li>
+                        <li><span>Sécurité</span><strong>CSRF · Argon2id</strong></li>
                     </ul>
                 </div>
 
-                <p class="auth-brand__foot">© 2026 Site de Vente</p>
-            </aside>
+                <p class="admin-access__note">
+                    Toute session déjà ouverte est revalidée en base avant l’accès au tableau de bord.
+                </p>
+            </section>
 
-            <!-- Panneau du formulaire. -->
-            <div class="auth-panel">
-                <div class="auth-panel__top">
-                    <?php require __DIR__ . '/../partials/theme-toggle.php'; ?>
+            <aside class="access-panel" aria-label="Connexion administration">
+                <div class="access-panel__top">
+                    <span class="pill"><span class="pill__dot" aria-hidden="true"></span> Équipe interne</span>
+                    <span class="access-panel__index">ADMIN</span>
                 </div>
 
-                <div class="auth-card">
-                    <header class="auth-header">
-                        <p class="eyebrow">Espace administrateur</p>
-                        <h1 id="admin-login-title" class="auth-title">Connexion admin.</h1>
-                        <p class="auth-subtitle">Identifiants réservés à l'équipe interne.</p>
+                <div class="access-card" data-reveal>
+                    <header class="access-card__head">
+                        <p class="eyebrow">Connexion admin</p>
+                        <h2>Reprendre la main.</h2>
+                        <p>Identifiants réservés à l’équipe ATLAS.</p>
                     </header>
 
-                    <form method="post" class="login-form">
-                        <!-- Jeton de sécurité. -->
+                    <form method="post" class="login-form login-form--atlas">
                         <?= csrf_field($session) ?>
-
-                        <!-- Message global. -->
                         <?= $feedbackHtml ?>
 
-                        <!-- Champ nom d'utilisateur. -->
                         <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -185,7 +201,7 @@ $assetPrefix = '../';
                                 <?php endif; ?>
                                 required
                             />
-                            <label for="username">Nom d'utilisateur</label>
+                            <label for="username">Nom d’utilisateur</label>
                             <?php if ($userLoginError): ?>
                                 <p class="field__error" id="user_login-error" role="alert">
                                     <?= htmlspecialchars($userLoginError, ENT_QUOTES, 'UTF-8') ?>
@@ -193,7 +209,6 @@ $assetPrefix = '../';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Champ mot de passe. -->
                         <div class="field field--password<?= $userPasswordError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -210,7 +225,6 @@ $assetPrefix = '../';
                             />
                             <label for="password">Mot de passe</label>
 
-                            <!-- Bouton afficher / masquer. -->
                             <button type="button" class="password-toggle" data-password-target="password" aria-label="Afficher le mot de passe" aria-controls="password" aria-pressed="false">
                                 <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
                                     <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
@@ -230,19 +244,32 @@ $assetPrefix = '../';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Bouton d'envoi. -->
                         <div class="login-form__actions">
-                            <button type="submit">Se connecter</button>
+                            <button type="submit" class="btn btn--primary btn--block">Ouvrir le studio</button>
                         </div>
 
                         <p class="auth-switch">
-                            <a href="../index.php">Retour à l'espace client</a>
+                            <a href="../index.php">Retour à l’espace étudiant</a>
                         </p>
                     </form>
+
+                    <p class="access-card__note">
+                        Sessions revalidées, rôle vérifié en base, déconnexion protégée par jeton.
+                    </p>
                 </div>
-            </div>
-        </section>
-    </main>
+
+                <p class="access-panel__foot">ATLAS Studio · Accès équipe</p>
+            </aside>
+        </main>
+
+        <footer class="atlas-footer">
+            <p>ATLAS · Studio admin</p>
+            <nav aria-label="Liens de pied de page">
+                <a href="../index.php">Espace étudiant</a>
+                <a href="../products.php">Catalogue</a>
+            </nav>
+        </footer>
+    </div>
 
     <!-- Scripts. -->
     <script src="<?= e(asset_url('scripts/ui/theme.js', '../')) ?>" defer></script>

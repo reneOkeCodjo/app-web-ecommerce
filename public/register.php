@@ -122,7 +122,8 @@ $userPasswordError = $fieldErrors['user_password'] ?? null;
 $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
 
 // On prépare la page et ses fichiers communs.
-$pageTitle = 'Inscription — Site de Vente';
+$pageTitle = 'Créer un compte — ATLAS';
+$pageDescription = 'Créez votre compte ATLAS et retrouvez les essentiels tech et les repères concrets de la vie étudiante en France.';
 $assetPrefix = '';
 ?>
 <!DOCTYPE html>
@@ -130,58 +131,77 @@ $assetPrefix = '';
 <head>
     <?php require __DIR__ . '/partials/head.php'; ?>
 </head>
-<body>
-    <!-- Lien d'évitement clavier. -->
+<body class="atlas-page atlas-auth atlas-register">
     <a class="skip-link" href="#main">Aller au contenu principal</a>
+    <?php require __DIR__ . '/partials/preloader.php'; ?>
 
-    <main id="main" class="auth-page">
-        <!-- Carte en deux colonnes. -->
-        <section class="auth-split" aria-labelledby="register-title">
-            <!-- Panneau de marque. -->
-            <aside class="auth-brand">
-                <a class="brand" href="index.php" aria-label="Site de Vente, accueil">
-                    <span class="brand__mark" aria-hidden="true">SV</span>
-                    <span class="brand__name">Site de Vente</span>
-                </a>
+    <div class="experience">
+        <header class="experience__top">
+            <?php
+            $brandHref = 'index.php';
+            $brandLabel = 'ATLAS, accueil';
+            $brandTagline = 'Student living';
+            require __DIR__ . '/partials/brand.php';
+            ?>
 
-                <div class="auth-brand__content">
-                    <p class="eyebrow">Nouvelle maison</p>
-                    <h2 class="auth-brand__title">Entrez dans<br>la sélection.</h2>
-                    <p class="auth-brand__lead">
-                        Créez votre compte en quelques secondes et retrouvez
-                        une sélection de produits choisis avec exigence.
+            <nav class="experience__nav" aria-label="Navigation d’inscription">
+                <a href="index.php">Se connecter</a>
+                <a href="index.php#arrivee">L’arrivée</a>
+                <?php require __DIR__ . '/partials/theme-toggle.php'; ?>
+            </nav>
+        </header>
+
+        <main id="main" class="auth-stage auth-stage--register">
+            <section class="register-visual" aria-labelledby="register-title" data-reveal>
+                <div class="register-visual__copy">
+                    <p class="eyebrow">Première étape</p>
+                    <h1 id="register-title" class="atlas-title atlas-title--compact">
+                        Ouvrez votre
+                        <em>atlas.</em>
+                    </h1>
+                    <p class="atlas-lead">
+                        Un compte, un accès : les essentiels pour votre quotidien et les repères
+                        pour comprendre l’arrivée en France.
                     </p>
-                    <ul class="auth-brand__proof">
-                        <li>Inscription gratuite et immédiate</li>
-                        <li>Vos données restent confidentielles</li>
-                        <li>Accès à toutes les nouveautés</li>
-                    </ul>
                 </div>
 
-                <p class="auth-brand__foot">© 2026 Site de Vente</p>
-            </aside>
+                <article class="checklist-card">
+                    <div class="checklist-card__head">
+                        <span>ARRIVAL CHECKLIST</span>
+                        <span>01—04</span>
+                    </div>
+                    <ol>
+                        <li class="is-done"><span>01</span><div><strong>Compte ATLAS</strong><small>Vous y êtes presque.</small></div></li>
+                        <li><span>02</span><div><strong>Visa & séjour</strong><small>Les démarches officielles.</small></div></li>
+                        <li><span>03</span><div><strong>Logement</strong><small>CROUS, Visale, caution.</small></div></li>
+                        <li><span>04</span><div><strong>Santé & banque</strong><small>Ameli, CAF, compte français.</small></div></li>
+                    </ol>
+                    <div class="checklist-card__foot">
+                        <span class="pass-card__stamp pass-card__stamp--small">READY</span>
+                        <p>La suite se construit<br>étape par étape.</p>
+                    </div>
+                </article>
 
-            <!-- Panneau du formulaire. -->
-            <div class="auth-panel">
-                <div class="auth-panel__top">
-                    <?php require __DIR__ . '/partials/theme-toggle.php'; ?>
+                <p class="register-visual__note">ATLAS · France · 2026</p>
+            </section>
+
+            <aside class="access-panel access-panel--register" aria-label="Création de compte">
+                <div class="access-panel__top">
+                    <span class="pill"><span class="pill__dot" aria-hidden="true"></span> Nouveau compte</span>
+                    <span class="access-panel__index">01 / 04</span>
                 </div>
 
-                <div class="auth-card auth-card--register">
-                    <header class="auth-header">
-                        <p class="eyebrow">Créer un compte</p>
-                        <h1 id="register-title" class="auth-title">Bienvenue.</h1>
-                        <p class="auth-subtitle">Quelques informations et c'est parti.</p>
+                <div class="access-card" data-reveal>
+                    <header class="access-card__head">
+                        <p class="eyebrow">Bienvenue</p>
+                        <h2>Créer votre accès.</h2>
+                        <p>Quelques informations, puis votre espace est prêt.</p>
                     </header>
 
-                    <form method="post" class="login-form">
-                        <!-- Jeton de sécurité. -->
+                    <form method="post" class="login-form login-form--atlas login-form--register">
                         <?= csrf_field($session) ?>
-
-                        <!-- Message global. -->
                         <?= $feedbackHtml ?>
 
-                        <!-- Nom d'utilisateur. -->
                         <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -197,7 +217,7 @@ $assetPrefix = '';
                                 <?php endif; ?>
                                 required
                             />
-                            <label for="username">Nom d'utilisateur</label>
+                            <label for="username">Nom d’utilisateur</label>
                             <?php if ($userLoginError): ?>
                                 <p class="field__error" id="user_login-error" role="alert">
                                     <?= htmlspecialchars($userLoginError, ENT_QUOTES, 'UTF-8') ?>
@@ -205,7 +225,6 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Adresse email. -->
                         <div class="field<?= $userMailError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -231,7 +250,6 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Mot de passe avec info-bulle. -->
                         <div class="field field--password<?= $userPasswordError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -251,7 +269,6 @@ $assetPrefix = '';
                             />
                             <label for="password">Mot de passe</label>
 
-                            <!-- Bouton d'aide sur les règles du mot de passe. -->
                             <span class="tooltip">
                                 <button type="button" class="tooltip__trigger" aria-label="Règles du mot de passe" aria-describedby="password-hint">
                                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
@@ -272,7 +289,6 @@ $assetPrefix = '';
                                 </span>
                             </span>
 
-                            <!-- Bouton afficher / masquer. -->
                             <button type="button" class="password-toggle" data-password-target="password" aria-label="Afficher le mot de passe" aria-controls="password" aria-pressed="false">
                                 <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
                                     <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
@@ -292,7 +308,6 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Confirmation du mot de passe. -->
                         <div class="field field--password<?= $passwordConfirmError ? ' field--error' : '' ?>">
                             <input
                                 placeholder=" "
@@ -309,7 +324,6 @@ $assetPrefix = '';
                             />
                             <label for="password_confirm">Confirmer le mot de passe</label>
 
-                            <!-- Bouton afficher / masquer la confirmation. -->
                             <button type="button" class="password-toggle" data-password-target="password_confirm" aria-label="Afficher le mot de passe" aria-controls="password_confirm" aria-pressed="false">
                                 <svg class="password-toggle__icon password-toggle__icon--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
                                     <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
@@ -329,9 +343,8 @@ $assetPrefix = '';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Bouton d'inscription. -->
                         <div class="login-form__actions">
-                            <button type="submit">Créer mon compte</button>
+                            <button type="submit" class="btn btn--primary btn--block">Créer mon compte</button>
                         </div>
 
                         <p class="auth-switch">
@@ -339,14 +352,31 @@ $assetPrefix = '';
                             <a href="index.php">Se connecter</a>
                         </p>
                     </form>
+
+                    <p class="access-card__note">
+                        En créant un compte, vous acceptez de recevoir uniquement les informations utiles à votre arrivée.
+                    </p>
                 </div>
-            </div>
-        </section>
-    </main>
+
+                <p class="access-panel__foot">ATLAS · La vie étudiante sans frontières</p>
+            </aside>
+        </main>
+
+        <footer class="atlas-footer">
+            <p>ATLAS · Student living</p>
+            <nav aria-label="Liens de pied de page">
+                <a href="index.php">Se connecter</a>
+                <a href="index.php#arrivee">L’arrivée</a>
+            </nav>
+        </footer>
+    </div>
 
     <!-- Scripts de la page. -->
     <script src="<?= e(asset_url('scripts/ui/theme.js')) ?>" defer></script>
     <script src="<?= e(asset_url('scripts/password-toggle.js')) ?>" defer></script>
     <script src="<?= e(asset_url('scripts/form-validation.js')) ?>" defer></script>
+
+    <!-- Globe décoratif : chargé seulement si le thème est sombre. -->
+    <script type="module" src="<?= e(asset_url('scripts/globe-background.js')) ?>"></script>
 </body>
 </html>

@@ -220,8 +220,8 @@ if (PHP_SAPI !== 'cli') {
         "frame-ancestors 'none'",                           // Personne ne peut nous afficher dans une iframe.
         "form-action 'self'",                               // Les formulaires ne peuvent envoyer que vers notre site.
         "img-src 'self' data: blob:",                       // Images : notre site, données intégrées et aperçus locaux.
-        "font-src 'self' https://fonts.gstatic.com data:",  // Polices : notre site et Google Fonts.
-        "style-src 'self' https://fonts.googleapis.com",     // Feuilles de style : notre site et Google Fonts.
+        "font-src 'self' data:",                              // Polices : servies uniquement par notre site.
+        "style-src 'self'",                                   // Feuilles de style : uniquement notre site.
         "script-src 'self' 'nonce-" . $nonce . "'",          // Scripts : notre site et scripts marqués du nonce.
         "connect-src 'self'",                                // Requêtes réseau : uniquement notre site.
         "manifest-src 'self'",                               // Manifeste d'application : notre site.

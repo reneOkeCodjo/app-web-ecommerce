@@ -13,8 +13,10 @@ interface AuthInterface
 {
     /**
      * Authentifie un utilisateur et mémorise son état dans la session.
+     *
+     * Un rôle requis peut être fourni pour empêcher une connexion hors rôle.
      */
-    public function login(string $username, string $password): bool;
+    public function login(string $username, string $password, ?string $requiredCompteType = null): bool;
 
     /**
      * Inscrit un nouvel utilisateur et le connecte immédiatement.
@@ -35,6 +37,11 @@ interface AuthInterface
      * Indique si l'utilisateur connecté est administrateur.
      */
     public function isAdmin(): bool;
+
+    /**
+     * Revalide le rôle administrateur directement en base.
+     */
+    public function isAdminFresh(): bool;
 
     /**
      * Renvoie l'identifiant de l'utilisateur connecté, ou null.

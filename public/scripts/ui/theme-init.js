@@ -19,6 +19,17 @@
 
     // On l'écrit sur la balise <html> pour que le CSS puisse réagir.
     document.documentElement.setAttribute("data-theme", theme);
+
+    // On affiche le préloader uniquement à la première page de la session.
+    var introSeen = sessionStorage.getItem("atlas-intro-seen");
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!introSeen && !reduceMotion) {
+      document.documentElement.classList.add("is-intro");
+    }
+
+    // Les révélations au scroll sont activées uniquement si JavaScript tourne.
+    document.documentElement.classList.add("motion-ready");
   } catch (error) {
     // En cas de problème, on applique simplement le thème sombre par défaut.
     document.documentElement.setAttribute("data-theme", "dark");

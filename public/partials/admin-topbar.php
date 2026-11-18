@@ -9,8 +9,12 @@ if (!defined('APP_BOOTSTRAPPED')) {
 // Libellé affiché dans le fil d'Ariane.
 $breadcrumbLabel = $breadcrumbLabel ?? 'Administration';
 
-// Identifiant de l'administrateur connecté, s'il existe.
+// Identifiant et nom de l'administrateur connecté.
 $adminUserId = $adminUserId ?? null;
+$adminUsername = $adminUsername ?? 'Admin';
+
+// Initiale affichée dans la pastille utilisateur.
+$adminInitial = mb_strtoupper(mb_substr($adminUsername, 0, 1));
 ?>
 <header class="admin-topbar">
     <!-- Fil d'Ariane. -->
@@ -21,12 +25,19 @@ $adminUserId = $adminUserId ?? null;
     </nav>
 
     <div class="actions">
+        <a class="btn btn--soft btn--sm admin-topbar__site" href="../products.php">
+            Retour au site
+        </a>
+
         <?php require __DIR__ . '/theme-toggle.php'; ?>
 
         <!-- Petite pastille qui rappelle l'utilisateur connecté. -->
-        <span class="admin-user">
-            <span class="admin-user__avatar" aria-hidden="true">A</span>
-            <?= $adminUserId !== null ? 'Admin #' . e((string) $adminUserId) : 'Admin' ?>
+        <span class="admin-user" title="Administrateur connecté">
+            <span class="admin-user__avatar" aria-hidden="true"><?= e($adminInitial) ?></span>
+            <span class="admin-user__copy">
+                <strong><?= e($adminUsername) ?></strong>
+                <span>Administrateur</span>
+            </span>
         </span>
     </div>
 </header>

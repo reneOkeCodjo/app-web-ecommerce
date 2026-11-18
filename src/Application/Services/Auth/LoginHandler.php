@@ -52,6 +52,14 @@ final class LoginHandler
             throw new InvalidArgumentException('Login request is required for POST.');
         }
 
+        // On prépare le service d'authentification avec le dépôt d'utilisateurs et la session.
+        $auth = new Auth($this->userRepository, $this->session);
+
+        // Une session déjà ouverte ne doit jamais permettre de changer de compte.
+        if ($auth->isAuthenticated()) {
+            return $this->error('You are already signed in.');
+        }
+
         // On crée le limiteur de tentatives pour cette session.
         $throttle = new LoginThrottle($this->session);
 
@@ -62,9 +70,6 @@ final class LoginHandler
 
         // On protège l'appel au service d'authentification contre les erreurs imprévues.
         try {
-            // On prépare le service d'authentification avec le dépôt d'utilisateurs et la session.
-            $auth = new Auth($this->userRepository, $this->session);
-
             // On tente la connexion avec le nom d'utilisateur et le mot de passe reçus.
             $authenticated = $auth->login(
                 $request->getUsername(),

@@ -51,8 +51,15 @@ final class RegisterHandler
             throw new InvalidArgumentException('Register request is required for POST.');
         }
 
+        // On prépare le service d'authentification.
+        $auth = new Auth($this->userRepository, $this->session);
+
+        // Une session déjà ouverte ne doit pas permettre de créer un autre compte.
+        if ($auth->isAuthenticated()) {
+            return $this->error('You are already signed in.');
+        }
+
         try {
-            $auth = new Auth($this->userRepository, $this->session);
             $registered = $auth->register(
                 $request->getUsername(),
                 $request->getEmail(),

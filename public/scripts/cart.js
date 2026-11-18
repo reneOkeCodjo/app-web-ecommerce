@@ -1,12 +1,19 @@
+/**
+ * Panier : affichage de l'état renvoyé par le serveur et envoi des actions.
+ * Le HTML contient déjà les données initiales ; ce script gère les mises à jour.
+ */
 (function () {
   "use strict";
 
+  // Sans conteneur de panier, il n'y a rien à mettre à jour.
   const content = document.getElementById("cart-content");
   if (!content) return;
 
   const feedback = document.getElementById("cart-feedback");
+  // Le jeton est fourni par la page et protège chaque action POST.
   const csrfToken = content.dataset.csrf || "";
 
+  // Format commun des montants affichés dans le panier.
   const moneyFormatter = new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
@@ -15,12 +22,21 @@
 
   const formatPrice = (value) => moneyFormatter.format(Number(value) || 0);
 
+  /**
+   * Affiche un message accessible sous le panier.
+   * @param {string} message
+   * @param {boolean} isError
+   */
   const setFeedback = (message, isError) => {
     if (!(feedback instanceof HTMLElement)) return;
     feedback.textContent = message;
     feedback.classList.toggle("cart-feedback--error", Boolean(isError));
   };
 
+  /**
+   * Lit le panier initial depuis la balise JSON protégée par la CSP.
+   * @returns {{ items: Array<Record<string, unknown>>, totals: Record<string, number> }}
+   */
   const readInitialCart = () => {
     const node = document.getElementById("cart-data");
     if (!node) return { items: [], totals: {} };
@@ -28,10 +44,15 @@
     try {
       return JSON.parse(node.textContent || "{}");
     } catch (error) {
+      // Une donnée invalide ne doit pas bloquer l'affichage de la page.
       return { items: [], totals: {} };
     }
   };
 
+  /**
+   * Envoie une action au serveur et renvoie le panier à jour.
+   * @param {Record<string, string>} data
+   */
   const postCartAction = async (data) => {
     const response = await fetch("cart.php", {
       method: "POST",
@@ -45,12 +66,18 @@
     return result.cart;
   };
 
+  // Le serveur reste la source de vérité pour les quantités et les montants.
   let currentCart = readInitialCart();
 
+  /**
+   * Reconstruit le panier à partir de l'état serveur.
+   * @param {{ items: Array<Record<string, unknown>>, totals: Record<string, number> }} cart
+   */
   const render = (cart) => {
     currentCart = cart;
     content.innerHTML = "";
 
+    // Panier vide : on propose directement le retour au catalogue.
     if (!Array.isArray(cart.items) || cart.items.length === 0) {
       const empty = document.createElement("div");
       empty.className = "cart-empty";
@@ -69,6 +96,7 @@
       return;
     }
 
+    // Liste des articles avec leurs actions.
     const list = document.createElement("div");
     list.className = "cart-list";
 
@@ -90,6 +118,7 @@
       heading.append(name, price);
       row.appendChild(heading);
 
+      // La quantité est contrôlée à nouveau par le serveur.
       const quantity = document.createElement("input");
       quantity.type = "number";
       quantity.min = "0";
@@ -116,6 +145,7 @@
       total.textContent = formatPrice(item.lineTtc);
       row.appendChild(total);
 
+      // Bouton de suppression avec un libellé accessible.
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "cart-item__remove";
@@ -139,6 +169,7 @@
     }
     content.appendChild(list);
 
+    // Récapitulatif HT, TVA, livraison et total.
     const totals = document.createElement("dl");
     totals.className = "cart-totals";
     [
@@ -161,5 +192,6 @@
     content.appendChild(totals);
   };
 
+  // Premier rendu à partir des données déjà présentes dans la page.
   render(currentCart);
 })();

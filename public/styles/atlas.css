@@ -2822,6 +2822,7 @@ html.motion-ready [data-reveal][data-parallax]:not(.is-inview) {
 
 /* -------------------- Panier et profil -------------------- */
 
+/* Bouton d'ajout affiché sur les cartes du catalogue. */
 .catalog-card__add {
   display: inline-flex;
   align-items: center;
@@ -2867,11 +2868,13 @@ html.motion-ready [data-reveal][data-parallax]:not(.is-inview) {
   color: var(--accent);
 }
 
+/* Structure commune aux pages panier et profil. */
 .atlas-cart main,
 .atlas-profile main {
   padding-block: clamp(2rem, 5vw, 4.5rem) clamp(3rem, 7vw, 6rem);
 }
 
+/* Page panier. */
 .cart-page {
   max-width: 76rem;
 }
@@ -3066,6 +3069,7 @@ html.motion-ready [data-reveal][data-parallax]:not(.is-inview) {
   font-size: 1.5rem;
 }
 
+/* Page profil. */
 .profile-stage {
   display: grid;
   place-items: start center;
@@ -3102,6 +3106,7 @@ html.motion-ready [data-reveal][data-parallax]:not(.is-inview) {
   margin: 0;
 }
 
+/* Adaptation mobile du panier. */
 @media (max-width: 720px) {
   .cart-item {
     grid-template-columns: 1fr auto;

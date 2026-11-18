@@ -15,9 +15,11 @@ use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\UserRepository;
 use Db_config\Database;
 
+// On démarre la session et on vérifie l'authentification.
 $session = new NativeSessionStore();
 $auth = new Auth(new NullUserRepository(), $session);
 
+// Un visiteur non connecté retourne à la page de connexion.
 if (!$auth->isAuthenticated()) {
     header('Location: index.php');
     exit;
@@ -26,6 +28,8 @@ if (!$auth->isAuthenticated()) {
 $userId = $auth->getAuthenticatedUserId();
 $isAdmin = $auth->isAdmin();
 $connection = null;
+
+// État du formulaire et retour affiché à l'utilisateur.
 $feedback = '';
 $isError = false;
 $fieldErrors = [];
@@ -35,22 +39,26 @@ $values = [
 ];
 
 try {
+    // On recharge l'utilisateur depuis la base, pas seulement depuis la session.
     $connection = Database::connect();
     $repository = new UserRepository($connection);
     $user = $userId !== null ? $repository->findById($userId) : null;
 
+    // Si le compte n'existe plus, on ferme la session devenue invalide.
     if ($user === null || $userId === null) {
         $auth->logout();
         header('Location: index.php');
         exit;
     }
 
+    // Valeurs affichées avant toute modification.
     $values = [
         'user_login' => $user->getUsername(),
         'user_mail' => $user->getEmail(),
     ];
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Toute modification exige un jeton CSRF valide.
         if (!csrf_verify($session)) {
             http_response_code(403);
             $isError = true;
@@ -58,12 +66,14 @@ try {
         } else {
             $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : 'update_profile';
 
+            // La déconnexion reste disponible depuis cette page.
             if ($action === 'logout') {
                 $auth->logout();
                 header('Location: index.php');
                 exit;
             }
 
+            // On nettoie les valeurs saisies avant de les valider.
             $values = [
                 'user_login' => is_string($_POST['user_login'] ?? null) ? trim($_POST['user_login']) : '',
                 'user_mail' => is_string($_POST['user_mail'] ?? null) ? trim($_POST['user_mail']) : '',
@@ -71,6 +81,7 @@ try {
             $newPassword = is_string($_POST['user_password'] ?? null) ? $_POST['user_password'] : '';
             $passwordConfirm = is_string($_POST['password_confirm'] ?? null) ? $_POST['password_confirm'] : '';
 
+            // Les validateurs existants appliquent les règles de l'inscription.
             $usernameResult = (new UsernameValidator())->validate($values['user_login']);
             $emailResult = (new EmailValidator())->validate($values['user_mail']);
 
@@ -82,6 +93,7 @@ try {
                 $fieldErrors['user_mail'] = 'Veuillez saisir une adresse e-mail valide.';
             }
 
+            // Un nom ou un e-mail déjà pris par un autre compte est refusé.
             $existingLogin = $repository->findByUsername($values['user_login']);
             if ($existingLogin !== null && $existingLogin->getId() !== $userId) {
                 $fieldErrors['user_login'] = 'Ce nom d’utilisateur est déjà utilisé.';
@@ -92,6 +104,7 @@ try {
                 $fieldErrors['user_mail'] = 'Cette adresse e-mail est déjà utilisée.';
             }
 
+            // Le mot de passe n'est modifié que si un nouveau est fourni.
             $passwordHash = null;
             if ($newPassword !== '') {
                 $passwordResult = (new PasswordValidator())->validate($newPassword);
@@ -114,6 +127,7 @@ try {
                 }
             }
 
+            // Seule une saisie entièrement valide est enregistrée.
             if ($fieldErrors === []) {
                 $compteId = $repository->findCompteIdByType($user->getCompteType());
 
@@ -121,6 +135,7 @@ try {
                     throw new RuntimeException('Le rôle du compte est introuvable.');
                 }
 
+                // Le rôle existant est conservé lors de la mise à jour.
                 $repository->updateProfile(
                     $userId,
                     $values['user_login'],
@@ -132,6 +147,7 @@ try {
                     $repository->updatePassword($userId, $passwordHash);
                 }
 
+                // On relit les valeurs réellement enregistrées.
                 $user = $repository->findById($userId);
                 $values = [
                     'user_login' => $user?->getUsername() ?? $values['user_login'],
@@ -145,6 +161,7 @@ try {
         }
     }
 } catch (Throwable $e) {
+    // L'utilisateur reçoit un message simple, sans détail technique.
     $isError = true;
     $feedback = 'Impossible de mettre à jour le profil pour le moment.';
 } finally {
@@ -153,6 +170,7 @@ try {
     }
 }
 
+// Métadonnées communes lues par le partial d'en-tête.
 $pageTitle = 'Mon profil — ATLAS';
 $pageDescription = 'Modifiez votre nom, votre adresse e-mail et votre mot de passe ATLAS.';
 $assetPrefix = '';
@@ -171,6 +189,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
     <?php require __DIR__ . '/partials/preloader.php'; ?>
     <?php require __DIR__ . '/partials/site-header.php'; ?>
 
+    <!-- Formulaire de gestion du compte. -->
     <main id="main" class="profile-stage">
         <section class="access-card profile-card" aria-labelledby="profile-title" data-reveal>
             <header class="access-card__head">
@@ -179,6 +198,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                 <p>Mettez à jour vos informations ou choisissez un nouveau mot de passe.</p>
             </header>
 
+            <!-- Retour commun à toutes les actions du formulaire. -->
             <?php if ($feedback !== ''): ?>
                 <p class="feedback <?= $isError ? 'feedback-error' : 'feedback-success' ?>" role="alert">
                     <?= e($feedback) ?>
@@ -186,8 +206,10 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
             <?php endif; ?>
 
             <form method="post" class="login-form login-form--atlas">
+                <!-- Le jeton CSRF est requis pour toute modification. -->
                 <?= csrf_field($session) ?>
 
+                <!-- Informations générales du compte. -->
                 <div class="field<?= $userLoginError ? ' field--error' : '' ?>">
                     <input
                         placeholder=" "
@@ -230,6 +252,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                     <?php endif; ?>
                 </div>
 
+                <!-- Le mot de passe reste facultatif : vide, il n'est pas modifié. -->
                 <div class="field field--password<?= $userPasswordError ? ' field--error' : '' ?>">
                     <input
                         placeholder=" "
@@ -275,6 +298,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
                 </div>
             </form>
 
+            <!-- Actions secondaires : déconnexion et retour au catalogue. -->
             <div class="profile-card__footer">
                 <form method="post">
                     <?= csrf_field($session) ?>
@@ -286,6 +310,7 @@ $passwordConfirmError = $fieldErrors['password_confirm'] ?? null;
         </section>
     </main>
 
+    <!-- Pied de page commun. -->
     <footer class="atlas-footer atlas-footer--wide">
         <div>
             <?php

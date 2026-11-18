@@ -13,12 +13,17 @@ use App\Infrastructure\Persistence\DAO\NullUserRepository;
 use App\Infrastructure\Persistence\DAO\ProductRepository;
 use Db_config\Database;
 
+// On démarre la session et on lit l'état de connexion.
 $session = new NativeSessionStore();
 $auth = new Auth(new NullUserRepository(), $session);
 $isAdmin = $auth->isAdmin();
+
+// Le jeton CSRF protège les actions envoyées en POST.
 $csrfToken = Csrf::token($session);
 $connection = null;
 $error = '';
+
+// État de secours affiché si le panier ne peut pas être chargé.
 $snapshot = [
     'items' => [],
     'totals' => [
@@ -32,6 +37,7 @@ $snapshot = [
 ];
 
 try {
+    // On ouvre la connexion MySQL et on assemble le service panier.
     $connection = Database::connect();
     $cart = new CartService(
         new ProductRepository($connection),
@@ -39,7 +45,9 @@ try {
         new CartRepository($connection)
     );
 
+    // Les actions du panier passent par le même endpoint JSON.
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Sans jeton valide, aucune modification n'est autorisée.
         if (!csrf_verify($session)) {
             http_response_code(403);
             header('Content-Type: application/json; charset=utf-8');
@@ -47,15 +55,18 @@ try {
             exit;
         }
 
+        // On lit l'action et le produit envoyés par le formulaire.
         $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
         $productId = (int) ($_POST['product_id'] ?? 0);
 
+        // La déconnexion reste gérée ici pour l'en-tête commun.
         if ($action === 'logout') {
             $auth->logout();
             header('Location: index.php');
             exit;
         }
 
+        // Le service vérifie les quantités et le stock avant d'écrire.
         switch ($action) {
             case 'add':
                 $cart->add($productId, max(1, (int) ($_POST['quantity'] ?? 1)));
@@ -73,13 +84,16 @@ try {
                 throw new InvalidArgumentException('Action panier invalide.');
         }
 
+        // On renvoie le panier complet pour actualiser l'interface.
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => true, 'cart' => $cart->snapshot()], JSON_THROW_ON_ERROR);
         exit;
     }
 
+    // Premier chargement : on prépare l'état affiché par la page.
     $snapshot = $cart->snapshot();
 } catch (Throwable $e) {
+    // Une action en échec renvoie toujours une réponse JSON au JavaScript.
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(400);
         header('Content-Type: application/json; charset=utf-8');
@@ -87,6 +101,7 @@ try {
         exit;
     }
 
+    // La page reste consultable avec un message d'erreur lisible.
     $error = 'Impossible de charger le panier pour le moment.';
 } finally {
     if ($connection !== null) {
@@ -94,6 +109,7 @@ try {
     }
 }
 
+// Métadonnées communes lues par le partial d'en-tête.
 $pageTitle = 'Mon panier — ATLAS';
 $pageDescription = 'Votre panier ATLAS : quantités, promotions, TVA, livraison et total.';
 $assetPrefix = '';
@@ -108,6 +124,7 @@ $assetPrefix = '';
     <?php require __DIR__ . '/partials/preloader.php'; ?>
     <?php require __DIR__ . '/partials/site-header.php'; ?>
 
+    <!-- Contenu principal du panier. -->
     <main id="main" class="container cart-page">
         <header class="cart-page__head" data-reveal>
             <p class="eyebrow">Votre sélection</p>
@@ -121,6 +138,7 @@ $assetPrefix = '';
             <p class="feedback feedback-error" role="alert"><?= e($error) ?></p>
         <?php endif; ?>
 
+        <!-- Le contenu est rendu par cart.js à partir des données serveur. -->
         <section class="cart-page__panel" aria-labelledby="cart-title">
             <div class="cart-page__panel-head">
                 <h2 id="cart-title">Articles sélectionnés</h2>
@@ -137,6 +155,7 @@ $assetPrefix = '';
         </section>
     </main>
 
+    <!-- Pied de page commun. -->
     <footer class="atlas-footer atlas-footer--wide">
         <div>
             <?php
@@ -155,6 +174,7 @@ $assetPrefix = '';
         <p class="atlas-footer__meta">© <?= date('Y') ?> ATLAS · France</p>
     </footer>
 
+    <!-- État initial du panier, protégé par la CSP et le nonce. -->
     <script type="application/json" id="cart-data" nonce="<?= csp_nonce() ?>"><?= json_encode($snapshot, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
     <script src="<?= e(asset_url('scripts/ui/theme.js')) ?>" defer></script>
     <?php if ($auth->isAuthenticated()): ?>

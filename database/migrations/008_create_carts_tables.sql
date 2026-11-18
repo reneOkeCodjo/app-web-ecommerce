@@ -1,5 +1,6 @@
 -- Migration: Persist user carts in MySQL
 -- Date: 2026-11-17
+-- Un utilisateur possède au plus un panier, réutilisé entre les sessions.
 
 CREATE TABLE IF NOT EXISTS `carts` (
     `cart_id` INT NOT NULL AUTO_INCREMENT,
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `carts` (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Les lignes référencent le panier et le produit, avec une quantité positive.
 CREATE TABLE IF NOT EXISTS `cart_items` (
     `cart_item_id` INT NOT NULL AUTO_INCREMENT,
     `cart_id` INT NOT NULL,

@@ -10,7 +10,7 @@ if (!defined('APP_BOOTSTRAPPED')) {
 $session = $session ?? null;
 $isAdmin = $isAdmin ?? false;
 
-// Le formulaire de déconnexion exige un jeton CSRF et une session valide.
+// Les liens de compte et la déconnexion nécessitent une session disponible.
 $canLogout = $session instanceof \App\Infrastructure\Http\SessionStoreInterface;
 
 // La marque renvoie vers le catalogue.
@@ -28,6 +28,7 @@ $brandTagline = 'Student living';
             <a class="site-nav__link" href="#arrival">Arrivée</a>
             <a class="site-nav__link" href="#guide">Guide</a>
 
+            <!-- Accès rapide au compte pour une session ouverte. -->
             <?php if ($canLogout): ?>
                 <a class="site-nav__link" href="cart.php">Panier</a>
                 <a class="site-nav__link" href="profile.php">Profil</a>

@@ -12,6 +12,7 @@ final class CartRepository implements CartRepositoryInterface
     {
     }
 
+    // Lit les articles du panier persisté pour un utilisateur.
     public function findItems(int $userId): array
     {
         $stmt = $this->connection->prepare(
@@ -34,6 +35,7 @@ final class CartRepository implements CartRepositoryInterface
         return $items;
     }
 
+    // Remplace le panier dans une transaction pour éviter un état partiel.
     public function replaceItems(int $userId, array $items): void
     {
         $this->connection->begin_transaction();
@@ -48,6 +50,7 @@ final class CartRepository implements CartRepositoryInterface
             $delete->execute();
             $delete->close();
 
+            // Un panier vide n'a besoin d'aucune ligne d'article.
             if ($items !== []) {
                 $insert = $this->connection->prepare(
                     'INSERT INTO cart_items (cart_id, product_id, cart_item_quantity)
@@ -69,6 +72,7 @@ final class CartRepository implements CartRepositoryInterface
         }
     }
 
+    // Supprime les articles tout en conservant la ligne du panier.
     public function clear(int $userId): void
     {
         $stmt = $this->connection->prepare(
@@ -82,6 +86,7 @@ final class CartRepository implements CartRepositoryInterface
         $stmt->close();
     }
 
+    // Crée le panier à la première utilisation, puis renvoie son identifiant.
     private function getOrCreateCartId(int $userId): int
     {
         $insert = $this->connection->prepare(

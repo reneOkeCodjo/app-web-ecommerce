@@ -28,6 +28,11 @@ $brandTagline = 'Student living';
             <a class="site-nav__link" href="#arrival">Arrivée</a>
             <a class="site-nav__link" href="#guide">Guide</a>
 
+            <?php if ($canLogout): ?>
+                <a class="site-nav__link" href="cart.php">Panier</a>
+                <a class="site-nav__link" href="profile.php">Profil</a>
+            <?php endif; ?>
+
             <?php if ($isAdmin): ?>
                 <a class="site-nav__link site-nav__link--admin" href="admin/index.php">Administration</a>
             <?php endif; ?>

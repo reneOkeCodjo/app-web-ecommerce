@@ -34,6 +34,7 @@
 
   /** Éléments de la page. */
   const grid = document.getElementById("catalog-grid");
+  const csrfToken = grid instanceof HTMLElement ? grid.dataset.csrf || "" : "";
   const paginationNav = document.getElementById("catalog-pagination");
   const categoryFilter = document.getElementById("catalog-category-filter");
   const sortSelect = document.getElementById("catalog-sort");
@@ -182,12 +183,61 @@
       body.appendChild(stockBadge);
     }
 
+    // Ajoute le produit courant dans le panier stocké côté serveur.
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "catalog-card__add";
+    addButton.textContent = inStock ? "Ajouter au panier" : "Indisponible";
+    addButton.disabled = !inStock;
+
+    const cartFeedback = document.createElement("span");
+    cartFeedback.className = "catalog-card__feedback";
+    cartFeedback.setAttribute("role", "status");
+
+    addButton.addEventListener("click", async (event) => {
+      // Le bouton ne doit pas ouvrir l'aperçu rapide de la carte.
+      event.stopPropagation();
+      addButton.disabled = true;
+      cartFeedback.textContent = "";
+      try {
+        const response = await fetch("cart.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            _csrf: csrfToken,
+            action: "add",
+            product_id: String(product.id),
+            quantity: "1",
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+          throw new Error(result.error || "Impossible d'ajouter le produit.");
+        }
+        addButton.textContent = "Ajouté au panier";
+        cartFeedback.textContent = "Le produit a été ajouté.";
+        setTimeout(() => {
+          addButton.textContent = "Ajouter au panier";
+          cartFeedback.textContent = "";
+          addButton.disabled = false;
+        }, 1400);
+      } catch (error) {
+        cartFeedback.textContent = error.message;
+        addButton.textContent = "Réessayer";
+        addButton.disabled = false;
+      }
+    });
+
+    body.appendChild(addButton);
+    body.appendChild(cartFeedback);
+
     card.appendChild(body);
 
-    // Clic ou clavier : ouvre l'aperçu rapide.
+    // Clic ou clavier : ouvre l'aperçu rapide, sauf depuis les actions de la carte.
     const open = () => openQuickView(product);
     card.addEventListener("click", open);
     card.addEventListener("keydown", (event) => {
+      if (event.target !== card) return;
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         open();

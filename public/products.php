@@ -214,7 +214,7 @@ $categoryCount = count($categories);
             </div>
 
             <!-- Grille des produits, remplie par JavaScript. -->
-            <div class="catalog-grid" id="catalog-grid" aria-live="polite"></div>
+            <div class="catalog-grid" id="catalog-grid" aria-live="polite" data-csrf="<?= e(\App\Infrastructure\Http\Csrf::token($session)) ?>"></div>
 
             <!-- Pagination, remplie par JavaScript. -->
             <nav id="catalog-pagination" class="catalog-pagination" aria-label="Pagination du catalogue"></nav>

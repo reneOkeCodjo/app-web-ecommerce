@@ -8,6 +8,8 @@ Le catalogue et le back-office utilisent la direction artistique ATLAS : une bas
 
 - Connexion et inscription des clients (mots de passe hachés avec Argon2id).
 - Catalogue avec recherche, filtre par catégorie, pagination et fiche produit rapide.
+- Panier invité ou persistant, calcul des promotions, de la TVA et des frais de port.
+- Profil client : modification du nom, de l’e-mail et du mot de passe.
 - Back-office administrateur : tableau de bord, catalogue, utilisateurs et gestion des rôles.
 - Gestion des images produits, des promotions et calcul automatique des prix TTC.
 - Protection CSRF sur tous les formulaires sensibles.
@@ -97,6 +99,29 @@ docker compose up -d
 ```
 
 L'application est alors servie sur `http://localhost:8080`.
+
+## Panier et profil
+
+Le panier invité est conservé dans la session PHP. Pour un utilisateur connecté,
+les quantités sont enregistrées dans MySQL et restaurées après reconnexion.
+
+- `src/Application/Services/Cart/CartService.php` : ajout, modification, suppression,
+  contrôle du stock et calcul des montants.
+- `src/Infrastructure/Persistence/DAO/CartRepository.php` : persistance du panier utilisateur.
+- `public/cart.php` : page du panier et endpoint JSON.
+- `public/profile.php` : modification du profil et du mot de passe.
+- `public/scripts/cart.js` : mise à jour dynamique des quantités et des totaux.
+
+Règles de calcul :
+
+- prix HT après promotion, puis TVA de 20 % ;
+- frais d’expédition de 5,99 € sous 50 € TTC ;
+- livraison gratuite à partir de 50 € TTC ;
+- une quantité supérieure au stock est refusée côté serveur.
+
+Les tables `carts` et `cart_items` sont créées par la migration
+`database/migrations/008_create_carts_tables.sql`. Les actions du panier et du profil
+sont protégées par le jeton CSRF de la session.
 
 ## Tests
 
